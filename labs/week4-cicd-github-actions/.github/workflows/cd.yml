@@ -1,0 +1,83 @@
+name: CD — Deploy StockPro
+
+# ทริกเกอร์เมื่อ push ไปยัง main หรือสร้าง tag v*
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Build Docker images แล้ว push ไป Private Registry
+  # ─────────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # กำหนด tag ของ image: ถ้าเป็น git tag ใช้ tag นั้น, ไม่งั้นใช้ "latest"
+      - name: Determine image version tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      # Login เข้า Private Registry ด้วย Secrets ที่ตั้งค่าไว้
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}
+
+      # Build และ push Backend image (2 tags: version + latest)
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+
+      # Build และ push Frontend image
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Deploy ไปยัง Server ผ่าน SSH (รอ Job 1 เสร็จก่อน)
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/stockpro
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f
+            echo "✅ StockPro ${{ needs.build-and-push.outputs.version }} deployed at $(date)"

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ที่ 1 — Git & Version Control | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #2563eb; --blue-light: #dbeafe;
+      --green: #059669; --green-light: #d1fae5;
+      --purple: #7c3aed; --purple-light: #ede9fe;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.8; }
+
+    .top-bar { background: #1e293b; color: #fff; padding: .75rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    .top-bar a { color: #94a3b8; text-decoration: none; font-size: .85rem; }
+    .top-bar a:hover { color: #fff; }
+    .top-bar .sep { color: #475569; }
+    .top-bar .current { color: #38bdf8; font-weight: 600; font-size: .85rem; }
+
+    .hero { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 3rem 2rem; text-align: center; }
+    .hero .sheet-label { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .3rem 1rem; font-size: .8rem; margin-bottom: 1rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: .4rem; }
+    .hero .subtitle { opacity: .85; font-size: .95rem; }
+    .hero .meta { display: flex; gap: 2rem; justify-content: center; margin-top: 1.5rem; }
+    .hero .meta-item { text-align: center; }
+    .hero .meta-item .val { font-size: 1.1rem; font-weight: 700; }
+    .hero .meta-item .lbl { font-size: .72rem; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    /* SECTION */
+    .section { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+    .section-title .icon { font-size: 1.4rem; }
+
+    /* CONCEPT CARDS */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .concept-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid; }
+    .concept-card .cc-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
+    .concept-card .cc-body { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+    .concept-card.blue   { background: var(--blue-light); border-color: #93c5fd; }
+    .concept-card.green  { background: var(--green-light); border-color: #6ee7b7; }
+    .concept-card.purple { background: var(--purple-light); border-color: #c4b5fd; }
+    .concept-card.amber  { background: var(--amber-light); border-color: #fcd34d; }
+
+    /* DIAGRAM */
+    .diagram { background: #1e293b; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; overflow-x: auto; }
+    .diagram .c-green  { color: #86efac; }
+    .diagram .c-blue   { color: #7dd3fc; }
+    .diagram .c-yellow { color: #fde68a; }
+    .diagram .c-purple { color: #c4b5fd; }
+    .diagram .c-red    { color: #fca5a5; }
+    .diagram .c-gray   { color: #64748b; }
+
+    /* TABLE */
+    .info-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .info-table th { background: #1e293b; color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+    .info-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8fafc; }
+    .info-table code { background: #f1f5f9; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+    /* ALERT */
+    .alert { border-radius: 8px; padding: .9rem 1rem; display: flex; gap: .7rem; font-size: .9rem; margin: 1rem 0; }
+    .alert.info   { background: var(--blue-light); border-left: 4px solid var(--blue); }
+    .alert.tip    { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.note   { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert .ai    { font-size: 1.1rem; flex-shrink: 0; }
+    .alert strong { display: block; margin-bottom: .2rem; }
+
+    /* COMMAND CHEAT */
+    .cheat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .75rem; }
+    .cheat-item { background: #1e293b; border-radius: 8px; padding: .85rem 1rem; }
+    .cheat-item .cmd { color: #7dd3fc; font-family: 'JetBrains Mono', monospace; font-size: .85rem; font-weight: 500; margin-bottom: .3rem; }
+    .cheat-item .desc { color: #94a3b8; font-size: .8rem; }
+
+    /* FLOW STEPS */
+    .flow-steps { display: grid; gap: .6rem; }
+    .flow-step { display: flex; gap: 1rem; align-items: flex-start; padding: .75rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); }
+    .flow-step .fs-num { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: .82rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .flow-step .fs-body .fs-title { font-weight: 600; font-size: .9rem; }
+    .flow-step .fs-body .fs-desc { font-size: .84rem; color: var(--muted); margin-top: .2rem; }
+    .flow-step .fs-body code { background: #e2e8f0; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .8rem; }
+
+    /* KEY TERMS */
+    .term-list { display: grid; gap: .5rem; }
+    .term-item { display: grid; grid-template-columns: 160px 1fr; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+    .term-item:last-child { border-bottom: none; }
+    .term-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+    .term-def { color: var(--muted); }
+
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--border); background: #fff; }
+
+    @media (max-width:600px) { .hero h1 { font-size: 1.5rem; } .term-item { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">DevOps Labs</a>
+  <span class="sep">›</span>
+  <a href="index.html">ใบความรู้</a>
+  <span class="sep">›</span>
+  <span class="current">Git & Version Control</span>
+</div>
+
+<div class="hero">
+  <div class="sheet-label">ใบความรู้ที่ 1 · DevOps 30901-2008</div>
+  <h1>🗂️ Git & Version Control</h1>
+  <p class="subtitle">แนวคิด Version Control System, Git Architecture, และ Workflow พื้นฐาน</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">สัปดาห์ 1</div><div class="lbl">ประกอบกับ Lab</div></div>
+    <div class="meta-item"><div class="val">ทฤษฎี</div><div class="lbl">ประเภท</div></div>
+    <div class="meta-item"><div class="val">30 นาที</div><div class="lbl">เวลาอ่าน</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1. VCS คืออะไร -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📚</span>1. Version Control System คืออะไร?</div>
+    <p>Version Control System (VCS) คือระบบที่บันทึกการเปลี่ยนแปลงของไฟล์ตามเวลา ทำให้เราสามารถย้อนกลับไปดู หรือกู้คืน version ก่อนหน้าได้ รวมถึงทำงานร่วมกับคนอื่นในเวลาเดียวกันได้โดยไม่ชนกัน</p>
+
+    <div class="concept-grid" style="margin-top:1.25rem;">
+      <div class="concept-card blue">
+        <div class="cc-title">🗓️ ไม่มี VCS (ยุคเก่า)</div>
+        <div class="cc-body">บันทึกไฟล์เป็น backup เอง เช่น project_v1.zip, project_final.zip, project_final2.zip — ไม่รู้ว่า version ไหนคืออะไร ทำงานทับกันบ่อย</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">📁 Local VCS</div>
+        <div class="cc-body">บันทึก changes บนเครื่องตัวเอง เช่น RCS — ยังทำงานร่วมกับคนอื่นไม่ได้</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">🌐 Centralized VCS</div>
+        <div class="cc-body">มี server กลาง เช่น SVN, CVS — ทุกคน checkout จาก server เดียวกัน แต่ถ้า server ล่มก็ทำงานต่อไม่ได้</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">🔀 Distributed VCS (Git)</div>
+        <div class="cc-body">ทุกคนมี full history บนเครื่องตัวเอง ทำงาน offline ได้ — Git คือตัวอย่างที่นิยมที่สุดในโลก</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Git Architecture -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🏛️</span>2. Git Architecture — 4 พื้นที่หลัก</div>
+    <p>Git แบ่งการทำงานออกเป็น 4 พื้นที่ ไฟล์เดินทางผ่านพื้นที่เหล่านี้ตามลำดับ</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-gray">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="c-gray">│                      เครื่องของเรา (Local)                          │</span>
+<span class="c-gray">│                                                                     │</span>
+<span class="c-gray">│  ┌─────────────┐  git add  ┌──────────────┐  git commit  ┌────────┐ │</span>
+<span class="c-gray">│  │</span> <span class="c-green">Working Tree</span> <span class="c-gray">│ ──────────► │</span> <span class="c-yellow">Staging Area</span> <span class="c-gray">│ ────────────► │</span> <span class="c-blue">Local</span>  <span class="c-gray">│ │</span>
+<span class="c-gray">│  │</span> <span class="c-green">(ไฟล์จริง) </span> <span class="c-gray">│            │</span> <span class="c-yellow">(Index)     </span> <span class="c-gray">│              │</span> <span class="c-blue"> Repo  </span><span class="c-gray">│ │</span>
+<span class="c-gray">│  └─────────────┘            └──────────────┘              └────────┘ │</span>
+<span class="c-gray">│                 git checkout/restore ◄──────────── git log ───────   │</span>
+<span class="c-gray">└──────────────────────────────┬──────────────────────────────────────┘</span>
+                               <span class="c-gray">│  git push / git pull</span>
+                               <span class="c-gray">▼</span>
+<span class="c-gray">                    ┌──────────────────────┐</span>
+                    <span class="c-gray">│</span>  <span class="c-purple">Remote Repository    </span><span class="c-gray">│</span>
+                    <span class="c-gray">│</span>  <span class="c-purple">  (GitHub/GitLab)    </span><span class="c-gray">│</span>
+                    <span class="c-gray">└──────────────────────┘</span>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card blue">
+        <div class="cc-title">Working Tree</div>
+        <div class="cc-body">ไฟล์จริงๆ ที่เราแก้ไขบนเครื่อง — สถานะ: <strong>Untracked</strong> (ใหม่) หรือ <strong>Modified</strong> (แก้แล้ว)</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">Staging Area (Index)</div>
+        <div class="cc-body">พื้นที่กลางก่อน commit — เราเลือกได้ว่าจะ commit ไฟล์ไหนบ้างใน commit นี้</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">Local Repository</div>
+        <div class="cc-body">ประวัติ commits ทั้งหมดบนเครื่องเรา อยู่ใน folder <code>.git/</code></div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">Remote Repository</div>
+        <div class="cc-body">Server กลางบน GitHub/GitLab ที่ทีมทุกคน push/pull มาแชร์กัน</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. วิธีที่ Git เก็บข้อมูล -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔑</span>3. วิธีที่ Git เก็บข้อมูล — SHA-1 Hash</div>
+    <p>Git ไม่ได้เก็บ "diff" เหมือน SVN — Git เก็บ <strong>snapshot</strong> ของทุกไฟล์ในแต่ละ commit โดยใช้ SHA-1 hash เป็น ID เฉพาะ</p>
+
+    <div class="alert info">
+      <span class="ai">🔒</span>
+      <div>
+        <strong>SHA-1 Hash คืออะไร?</strong>
+        ตัวเลขฐาน 16 ยาว 40 ตัวอักษร เช่น <code style="font-family:'JetBrains Mono',monospace;font-size:.85rem;">a1b2c3d4e5f6...</code><br>
+        ถ้า content ของไฟล์เปลี่ยนแม้แต่ 1 ตัวอักษร — hash จะเปลี่ยนทั้งหมด ทำให้ตรวจสอบ integrity ได้
+      </div>
+    </div>
+
+    <p style="margin-top:1rem;"><strong>Object Types ใน Git:</strong></p>
+    <table class="info-table" style="margin-top:.75rem;">
+      <tr><th>Object</th><th>คืออะไร</th><th>ตัวอย่าง</th></tr>
+      <tr><td><strong>blob</strong></td><td>เนื้อหาของไฟล์หนึ่งไฟล์</td><td>เนื้อหาของ index.js</td></tr>
+      <tr><td><strong>tree</strong></td><td>โครงสร้าง directory (ชี้ไป blobs และ trees อื่น)</td><td>รายการไฟล์ใน /src</td></tr>
+      <tr><td><strong>commit</strong></td><td>ชี้ไป tree + parent commit + metadata</td><td>Snapshot ณ เวลา commit</td></tr>
+      <tr><td><strong>tag</strong></td><td>ชี้ไป commit พร้อมชื่อและ message</td><td>v1.0.0</td></tr>
+    </table>
+  </div>
+
+  <!-- 4. Branching -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🌿</span>4. Branching — Branch คือแค่ Pointer</div>
+    <p>Branch ใน Git ไม่ใช่การ copy ไฟล์ — มันคือ <strong>pointer</strong> (ตัวชี้) ที่ชี้ไปยัง commit ล่าสุด เมื่อเราสร้าง commit ใหม่ pointer จะขยับตามโดยอัตโนมัติ</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-gray">C1 ──── C2 ──── C3  ◄── </span><span class="c-blue">main</span>
+<span class="c-gray">                │</span>
+<span class="c-gray">                └── C4 ──── C5  ◄── </span><span class="c-green">feature/login</span>
+<span class="c-gray">                                         ▲</span>
+<span class="c-gray">                                       </span><span class="c-yellow">HEAD</span><span class="c-gray"> (อยู่ที่นี่ตอนนี้)</span>
+    </div>
+
+    <p style="margin-top:1rem;"><strong>HEAD</strong> คือ pointer ที่บอกว่าเราอยู่ที่ branch/commit ไหนตอนนี้ ปกติ HEAD ชี้ไปที่ branch ล่าสุด</p>
+
+    <div class="alert tip">
+      <span class="ai">💡</span>
+      <div>
+        <strong>ทำไม Git branch ถึงเร็วมาก?</strong>
+        เพราะการสร้าง branch แค่สร้าง file เล็กๆ ที่เก็บ SHA-1 ของ commit ล่าสุด — ไม่ต้อง copy ไฟล์ใดเลย จึงใช้เวลาเพียงไม่กี่ milliseconds
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Merge vs Rebase -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔀</span>5. Merge vs Rebase — ความแตกต่าง</div>
+
+    <div class="concept-grid">
+      <div class="concept-card blue">
+        <div class="cc-title">git merge (Non-destructive)</div>
+        <div class="cc-body">รวม commits โดยสร้าง "Merge Commit" ใหม่ — ประวัติที่แท้จริงจะยังอยู่ครบ เห็นว่า branches รวมกันตรงไหน เหมาะกับ team workflow</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">git rebase (Clean History)</div>
+        <div class="cc-body">ย้าย commits ไปเริ่มต้นใหม่จาก tip ของอีก branch — ประวัติดูตรงเป็นเส้นตรง อ่านง่ายกว่า แต่ <strong>ห้ามใช้กับ commits ที่ push ไปแล้ว</strong></div>
+      </div>
+    </div>
+
+    <div class="alert note">
+      <span class="ai">⚠️</span>
+      <div>
+        <strong>กฎทอง: ห้าม rebase commit ที่ push ขึ้น remote แล้ว</strong>
+        เพราะมันเขียน history ใหม่ — คนอื่นที่ดึงไปแล้วจะเกิด conflict ที่แก้ยาก ใช้ rebase ได้แค่กับ local commits ที่ยังไม่ push
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Git Workflow -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚙️</span>6. Basic Git Workflow ทีละขั้นตอน</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="fs-num">1</div>
+        <div class="fs-body">
+          <div class="fs-title">Clone หรือ Init</div>
+          <div class="fs-desc"><code>git clone URL</code> — ดึง repo มาจาก remote หรือ <code>git init</code> — สร้าง repo ใหม่บนเครื่อง</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">2</div>
+        <div class="fs-body">
+          <div class="fs-title">แก้ไขไฟล์</div>
+          <div class="fs-desc">แก้ไขไฟล์ด้วย VS Code ตามปกติ — ไฟล์จะอยู่ใน "Working Tree" และมีสถานะ Modified</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">3</div>
+        <div class="fs-body">
+          <div class="fs-title">Stage การเปลี่ยนแปลง</div>
+          <div class="fs-desc"><code>git add filename</code> หรือ <code>git add .</code> (ทั้งหมด) — ย้ายไปยัง Staging Area เพื่อเตรียม commit</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">4</div>
+        <div class="fs-body">
+          <div class="fs-title">Commit</div>
+          <div class="fs-desc"><code>git commit -m "message"</code> — บันทึก snapshot ลง Local Repository พร้อม message อธิบาย</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">5</div>
+        <div class="fs-body">
+          <div class="fs-title">Push</div>
+          <div class="fs-desc"><code>git push origin main</code> — ส่ง commits จาก Local ขึ้น Remote Repository (GitHub)</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">6</div>
+        <div class="fs-body">
+          <div class="fs-title">Pull</div>
+          <div class="fs-desc"><code>git pull origin main</code> — ดึง commits ล่าสุดจาก Remote มาที่ Local (= fetch + merge)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Command Cheatsheet -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⌨️</span>7. คำสั่ง Git ที่ต้องรู้</div>
+    <div class="cheat-grid">
+      <div class="cheat-item"><div class="cmd">git status</div><div class="desc">ดูสถานะไฟล์ทั้งหมด</div></div>
+      <div class="cheat-item"><div class="cmd">git log --oneline</div><div class="desc">ดู commit history แบบย่อ</div></div>
+      <div class="cheat-item"><div class="cmd">git diff</div><div class="desc">ดูการเปลี่ยนแปลงที่ยังไม่ stage</div></div>
+      <div class="cheat-item"><div class="cmd">git checkout -b name</div><div class="desc">สร้าง branch ใหม่และสลับไป</div></div>
+      <div class="cheat-item"><div class="cmd">git stash</div><div class="desc">เก็บงานค้างไว้ชั่วคราว</div></div>
+      <div class="cheat-item"><div class="cmd">git stash pop</div><div class="desc">นำงานที่เก็บไว้กลับมา</div></div>
+      <div class="cheat-item"><div class="cmd">git reset HEAD~1</div><div class="desc">ยกเลิก commit ล่าสุด (ไฟล์ยังอยู่)</div></div>
+      <div class="cheat-item"><div class="cmd">git blame filename</div><div class="desc">ดูว่าใคร commit บรรทัดไหน</div></div>
+    </div>
+  </div>
+
+  <!-- 8. Key Terms -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📖</span>8. คำศัพท์ที่ควรรู้</div>
+    <div class="term-list">
+      <div class="term-item"><div class="term-name">repository</div><div class="term-def">ที่เก็บ code พร้อมประวัติ commits ทั้งหมด — มีทั้ง local และ remote</div></div>
+      <div class="term-item"><div class="term-name">commit</div><div class="term-def">จุดบันทึก snapshot ของ code ณ เวลาหนึ่ง มี ID เป็น SHA-1 hash</div></div>
+      <div class="term-item"><div class="term-name">branch</div><div class="term-def">pointer ที่ชี้ไป commit ล่าสุดของสาย development นั้น</div></div>
+      <div class="term-item"><div class="term-name">HEAD</div><div class="term-def">pointer พิเศษที่บอกว่า "คุณอยู่ที่ branch/commit ไหนตอนนี้"</div></div>
+      <div class="term-item"><div class="term-name">origin</div><div class="term-def">ชื่อ default ของ remote repository — ตั้งชื่ออื่นได้แต่ convention คือ origin</div></div>
+      <div class="term-item"><div class="term-name">upstream</div><div class="term-def">remote branch ที่ local branch ติดตามอยู่ ใช้ใน git push -u origin main</div></div>
+      <div class="term-item"><div class="term-name">merge conflict</div><div class="term-def">เกิดเมื่อ 2 branches แก้ไฟล์บรรทัดเดิม — ต้องแก้ด้วยตนเองก่อน commit</div></div>
+      <div class="term-item"><div class="term-name">.gitignore</div><div class="term-def">ไฟล์กำหนดว่าไฟล์/folder ไหนที่ Git จะไม่ track เช่น node_modules, .env</div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  📘 ใบความรู้ที่ 1 · วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)<br>
+  <a href="../week1-git-github/tutorial.html" style="color:#2563eb;text-decoration:none;display:inline-block;margin-top:.5rem;">→ ไปที่ Lab Tutorial สัปดาห์ที่ 1</a>
+</footer>
+
+</body>
+</html>

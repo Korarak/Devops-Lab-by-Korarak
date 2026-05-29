@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Week 3 — StockPro: Vue 3 + Docker | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --primary-light: #ede9fe;
+      --green: #059669;
+      --green-light: #d1fae5;
+      --vue: #42b883;
+      --vue-light: #f0fdf4;
+      --docker: #2496ed;
+      --docker-light: #eff6ff;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --info: #2563eb;
+      --info-light: #dbeafe;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --bg: #f5f3ff;
+      --sidebar-width: 270px;
+      --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    /* TOP BAR */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar .logo { font-weight: 700; color: var(--primary); font-size: .88rem; white-space: nowrap; text-decoration: none; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--vue)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg,#1e1b4b 0%,#7c3aed 50%,#42b883 100%);
+      color: #fff; padding: 3.5rem 2rem 3rem; text-align: center;
+    }
+    .hero .badge {
+      display: inline-block; background: rgba(255,255,255,.18); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
+      padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: 1rem; letter-spacing: .03em;
+    }
+    .hero h1 { font-size: 2.1rem; font-weight: 700; margin-bottom: .5rem; }
+    .hero .subtitle { font-size: 1rem; opacity: .87; margin-bottom: 2rem; }
+    .meta-cards { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .meta-card { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 10px; padding: .65rem 1.3rem; text-align: center; min-width: 110px; }
+    .meta-card .mc-label { font-size: .7rem; opacity: .72; text-transform: uppercase; letter-spacing: .06em; }
+    .meta-card .mc-val { font-size: 1.05rem; font-weight: 700; margin-top: .15rem; }
+
+    /* LAYOUT */
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .84rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    /* MAIN */
+    .main { flex: 1; min-width: 0; }
+
+    /* OVERVIEW */
+    .overview { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 1.6rem; margin-bottom: 2rem; }
+    .overview-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+    .goal-list { list-style: none; display: grid; gap: .5rem; }
+    .goal-list li { display: flex; align-items: flex-start; gap: .7rem; font-size: .94rem; }
+    .goal-icon { width: 20px; height: 20px; border-radius: 5px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 800; flex-shrink: 0; margin-top: .15rem; }
+
+    /* SYSTEM COMPARE */
+    .compare-box { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
+    .compare-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .compare-col { border-radius: 10px; padding: 1rem; border: 1.5px solid; }
+    .compare-col.old { background: #fafafa; border-color: #d1d5db; }
+    .compare-col.new { background: var(--vue-light); border-color: #86efac; }
+    .compare-col .c-h { font-weight: 700; margin-bottom: .6rem; font-size: .9rem; }
+    .compare-col ul { list-style: none; display: grid; gap: .3rem; }
+    .compare-col ul li { font-size: .84rem; display: flex; gap: .4rem; }
+    .compare-col ul li::before { flex-shrink: 0; font-weight: 700; }
+    .compare-col.old ul li::before { content: '→'; color: #9ca3af; }
+    .compare-col.new ul li::before { content: '✓'; color: var(--green); }
+
+    /* ARCH */
+    .arch-box { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
+    .arch-flow { display: flex; align-items: center; justify-content: center; gap: .5rem; flex-wrap: wrap; }
+    .arch-node { border: 1.5px solid var(--border); border-radius: 10px; padding: .55rem .95rem; text-align: center; font-size: .82rem; font-weight: 600; min-width: 95px; }
+    .arch-node.frontend { border-color: var(--vue); background: var(--vue-light); color: #065f46; }
+    .arch-node.backend  { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+    .arch-node.db       { border-color: var(--green); background: var(--green-light); color: #065f46; }
+    .arch-node.registry { border-color: var(--docker); background: var(--docker-light); color: #1d4ed8; }
+    .arch-arrow { color: var(--muted); font-size: 1.2rem; }
+
+    /* STEP CARD */
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),var(--vue)); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; }
+    .step-badge.backend  { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.frontend { background: var(--vue-light); color: #065f46; }
+    .step-badge.docker   { background: var(--docker-light); color: #1d4ed8; }
+    .step-badge.db       { background: var(--green-light); color: #065f46; }
+    .step-badge.setup    { background: #f1f5f9; color: #475569; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    /* CODE */
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .84rem !important; line-height: 1.6 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    /* ALERTS */
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.docker  { background: var(--docker-light); border-left: 4px solid var(--docker); }
+    .alert strong  { display: block; margin-bottom: .25rem; }
+
+    /* DIFF BOX */
+    .diff-box { background: #1e293b; border-radius: 10px; overflow: hidden; }
+    .diff-header { background: #0f172a; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .5rem 1rem; }
+    .diff-body { padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; }
+    .diff-add { color: #86efac; }
+    .diff-rem { color: #fca5a5; }
+    .diff-ctx { color: #64748b; }
+
+    /* FEATURE PREVIEW */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; }
+    .feature-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: .9rem; }
+    .feature-item .fi-icon { font-size: 1.4rem; margin-bottom: .4rem; }
+    .feature-item .fi-title { font-weight: 700; font-size: .88rem; margin-bottom: .2rem; }
+    .feature-item .fi-desc { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+
+    /* VERIFY */
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; align-items: flex-start; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* SUBMIT */
+    .submit-card { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; border-radius: 16px; padding: 2rem; text-align: center; }
+    .submit-card h2 { font-size: 1.4rem; margin-bottom: .75rem; }
+    .submit-list { list-style: none; text-align: left; display: inline-grid; gap: .5rem; margin: 1.25rem auto; }
+    .submit-list li { display: flex; gap: .7rem; font-size: .95rem; }
+    .submit-list li::before { content: '☐'; font-size: 1.1rem; flex-shrink: 0; }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+    @media (max-width: 600px) { .hero h1 { font-size: 1.6rem; } .compare-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a class="logo" href="../index.html">← DevOps Labs</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 15</span>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">สัปดาห์ที่ 3 · DevOps 30901-2008</div>
+  <h1>📦 StockPro — ระบบจัดการสินค้า</h1>
+  <p class="subtitle">Vue 3 + Express + PostgreSQL + Docker Compose + Private Registry</p>
+  <div class="meta-cards">
+    <div class="meta-card"><div class="mc-label">เวลา</div><div class="mc-val">5 ชม.</div></div>
+    <div class="meta-card"><div class="mc-label">ขั้นตอน</div><div class="mc-val">15</div></div>
+    <div class="meta-card"><div class="mc-label">ระดับ</div><div class="mc-val">กลาง</div></div>
+    <div class="meta-card"><div class="mc-label">Stack</div><div class="mc-val">3 Services</div></div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 สารบัญ Week 3</div>
+      <div class="toc-section">ทำความเข้าใจ</div>
+      <a class="toc-link" href="#s1" id="toc-1"><span class="dot"></span>1. ทำความรู้จัก StockPro</a>
+      <a class="toc-link" href="#s2" id="toc-2"><span class="dot"></span>2. Database Schema</a>
+      <a class="toc-link" href="#s3" id="toc-3"><span class="dot"></span>3. Backend API</a>
+      <a class="toc-link" href="#s4" id="toc-4"><span class="dot"></span>4. ทดสอบ API</a>
+      <div class="toc-section">Vue 3 Frontend</div>
+      <a class="toc-link" href="#s5" id="toc-5"><span class="dot"></span>5. Vue 3 vs Vanilla JS</a>
+      <a class="toc-link" href="#s6" id="toc-6"><span class="dot"></span>6. สร้าง Vite Project</a>
+      <a class="toc-link" href="#s7" id="toc-7"><span class="dot"></span>7. Stats Dashboard</a>
+      <a class="toc-link" href="#s8" id="toc-8"><span class="dot"></span>8. Product Grid & Cards</a>
+      <a class="toc-link" href="#s9" id="toc-9"><span class="dot"></span>9. Search & Filter</a>
+      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. Modal Form + Delete</a>
+      <div class="toc-section">Containerize</div>
+      <a class="toc-link" href="#s11" id="toc-11"><span class="dot"></span>11. Dockerfiles</a>
+      <a class="toc-link" href="#s12" id="toc-12"><span class="dot"></span>12. Docker Compose</a>
+      <a class="toc-link" href="#s13" id="toc-13"><span class="dot"></span>13. ทดสอบ Full Stack</a>
+      <a class="toc-link" href="#s14" id="toc-14"><span class="dot"></span>14. Push สู่ Registry</a>
+      <a class="toc-link" href="#s15" id="toc-15"><span class="dot"></span>15. ส่งงาน</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div class="overview">
+      <div class="overview-title">🎯 เป้าหมายของ Lab นี้</div>
+      <ul class="goal-list">
+        <li><div class="goal-icon">01</div><span>สร้าง <strong>StockPro</strong> — ระบบจัดการสินค้าคงคลังแบบ Fullstack ที่ใช้งานได้จริง</span></li>
+        <li><div class="goal-icon">02</div><span>เปลี่ยน Frontend จาก Vanilla JS เป็น <strong>Vue 3 + Vite</strong> พร้อม Components, Computed, และ Reactive State</span></li>
+        <li><div class="goal-icon">03</div><span>เขียน <strong>Dockerfile แบบ Multi-stage</strong> สำหรับ Frontend และ Backend</span></li>
+        <li><div class="goal-icon">04</div><span>รัน 3 Services พร้อมกันด้วย <strong>Docker Compose</strong> (Frontend + Backend + Database)</span></li>
+        <li><div class="goal-icon">05</div><span>Push Docker Images สู่ <strong>Private Registry</strong> ของโรงเรียน</span></li>
+      </ul>
+    </div>
+
+    <!-- SYSTEM COMPARE -->
+    <div class="compare-box">
+      <div class="compare-title">🔄 ทำไมต้องเปลี่ยนจาก Todo เป็น StockPro?</div>
+      <div class="compare-grid">
+        <div class="compare-col old">
+          <div class="c-h">📋 Todo App (Week 2)</div>
+          <ul>
+            <li>ข้อมูลเรียบง่าย — แค่ชื่องานและสถานะ</li>
+            <li>ไม่มี filter หรือ search</li>
+            <li>ไม่มี Dashboard หรือ statistics</li>
+            <li>Frontend เป็น Vanilla JS ไม่มี components</li>
+          </ul>
+        </div>
+        <div class="compare-col new">
+          <div class="c-h">📦 StockPro (Week 3)</div>
+          <ul>
+            <li>ข้อมูลหลายฟิลด์ — ชื่อ, หมวดหมู่, ราคา, สต็อก</li>
+            <li>Search real-time + Filter ตาม category</li>
+            <li>Dashboard: ยอดสต็อก, มูลค่า, สินค้าใกล้หมด</li>
+            <li>Vue 3 Composition API พร้อม computed, reactivity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCH -->
+    <div class="arch-box">
+      <div style="font-weight:700;margin-bottom:1rem;">🏗️ Architecture ของ StockPro</div>
+      <div class="arch-flow">
+        <div class="arch-node frontend">🌐 Frontend<br><small>Vue 3 + Vite<br>Nginx :5173</small></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-node backend">⚙️ Backend<br><small>Express.js<br>:3001</small></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-node db">🗄️ Database<br><small>PostgreSQL<br>:5432</small></div>
+      </div>
+      <div style="text-align:center;margin-top:1.2rem;">
+        <div class="arch-arrow" style="transform:rotate(90deg);display:inline-block">↑</div>
+        <div class="arch-node registry" style="display:inline-flex;margin:0 auto;margin-top:.5rem;">🐳 Private Registry<br><small>Push images ขึ้นที่นี่</small></div>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">ทำความรู้จัก StockPro</div>
+        <div class="step-badge setup">Overview</div>
+      </div>
+      <div class="step-body">
+        <p>StockPro เป็นระบบจัดการสินค้าคงคลัง (Inventory Management System) ที่เราจะสร้างตั้งแต่ Backend API จนถึง Frontend และ Deploy ด้วย Docker</p>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="fi-icon">📊</div>
+            <div class="fi-title">Dashboard Stats</div>
+            <div class="fi-desc">แสดงยอดสินค้า, มูลค่ารวม, และจำนวนสินค้าใกล้หมดแบบ real-time</div>
+          </div>
+          <div class="feature-item">
+            <div class="fi-icon">🔍</div>
+            <div class="fi-title">Search & Filter</div>
+            <div class="fi-desc">ค้นหาสินค้าแบบ debounce + กรองตาม category ทำงานฝั่ง computed</div>
+          </div>
+          <div class="feature-item">
+            <div class="fi-icon">⚠️</div>
+            <div class="fi-title">Low Stock Alert</div>
+            <div class="fi-desc">แจ้งเตือนอัตโนมัติเมื่อสินค้าใดมีสต็อกน้อยกว่า 10 ชิ้น</div>
+          </div>
+          <div class="feature-item">
+            <div class="fi-icon">🗃️</div>
+            <div class="fi-title">CRUD สินค้า</div>
+            <div class="fi-desc">เพิ่ม แก้ไข ลบสินค้า ผ่าน Modal Form พร้อม Confirm Dialog</div>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📁</span>
+          <div>
+            <strong>โครงสร้างไฟล์โปรเจกต์</strong>
+            <code style="display:block;margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.8;">
+week3-containerize/<br>
+├── backend/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Express API<br>
+│&nbsp;&nbsp; ├── index.js<br>
+│&nbsp;&nbsp; ├── db.js<br>
+│&nbsp;&nbsp; └── Dockerfile<br>
+├── frontend/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Vue 3 + Vite<br>
+│&nbsp;&nbsp; ├── src/App.vue<br>
+│&nbsp;&nbsp; ├── index.html<br>
+│&nbsp;&nbsp; └── Dockerfile<br>
+└── docker-compose.yml
+            </code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">Database Schema — ตาราง products</div>
+        <div class="step-badge db">Database</div>
+      </div>
+      <div class="step-body">
+        <p>ต่างจาก Todo ที่มีแค่ <code>title</code> กับ <code>completed</code> — ตาราง <code>products</code> มีฟิลด์ที่สื่อความหมายของสินค้าจริง</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>SQL — สร้างตาราง products</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-sql"><code>CREATE TABLE IF NOT EXISTS products (
+  id          SERIAL PRIMARY KEY,          -- รหัสอัตโนมัติ
+  name        VARCHAR(150) NOT NULL,       -- ชื่อสินค้า
+  category    VARCHAR(80)  NOT NULL,       -- หมวดหมู่
+  price       NUMERIC(12,2) NOT NULL DEFAULT 0,   -- ราคา
+  stock       INTEGER      NOT NULL DEFAULT 0,    -- จำนวนสต็อก
+  description TEXT         DEFAULT '',    -- คำอธิบาย (ถ้ามี)
+  created_at  TIMESTAMPTZ  DEFAULT NOW(),  -- วันที่เพิ่ม
+  updated_at  TIMESTAMPTZ  DEFAULT NOW()   -- วันที่แก้ไขล่าสุด
+);</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ไม่ต้องรัน SQL นี้เอง</strong>
+            Backend จะ auto-create ตารางนี้ตอน startup ผ่าน <code>initDb()</code> function
+            และยังมี Seed Data 10 รายการให้ลองใช้งานทันที
+          </div>
+        </div>
+
+        <p><strong>ความแตกต่างของ Data Type:</strong></p>
+        <ul style="list-style:none;display:grid;gap:.4rem;margin:.5rem 0 0 .5rem;font-size:.9rem;">
+          <li><code>NUMERIC(12,2)</code> — ราคา รองรับทศนิยม 2 ตำแหน่ง (ใช้แทน FLOAT เพราะแม่นยำกว่าสำหรับเงิน)</li>
+          <li><code>INTEGER</code> — จำนวนสต็อก เป็นตัวเลขจำนวนเต็มเสมอ</li>
+          <li><code>TIMESTAMPTZ</code> — Timestamp พร้อม Timezone (ดีกว่า TIMESTAMP เพราะรองรับ UTC)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">Backend API — Products CRUD</div>
+        <div class="step-badge backend">Express</div>
+      </div>
+      <div class="step-body">
+        <p>Backend ของ StockPro มี endpoints มากกว่า Todo — เพิ่ม GET categories และ Search/Filter ผ่าน query parameters</p>
+
+        <p><strong>รายการ API Endpoints ทั้งหมด:</strong></p>
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin:.5rem 0 1rem;">
+          <tr style="background:#1e293b;color:#fff;">
+            <th style="padding:.6rem 1rem;text-align:left;">Method</th>
+            <th style="padding:.6rem 1rem;text-align:left;">URL</th>
+            <th style="padding:.6rem 1rem;text-align:left;">ทำอะไร</th>
+          </tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products?search=&category=</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงรายการสินค้า + filter</td></tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/categories</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงรายการ category ทั้งหมด</td></tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#dbeafe;color:#1e40af;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">POST</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">เพิ่มสินค้าใหม่</td></tr>
+          <tr><td style="padding:.5rem 1em;border-bottom:1px solid #e2e8f0;"><span style="background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">PUT</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">แก้ไขสินค้า</td></tr>
+          <tr><td style="padding:.5rem 1rem;"><span style="background:#fee2e2;color:#991b1b;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">DELETE</span></td><td style="padding:.5rem 1rem;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;">ลบสินค้า</td></tr>
+        </table>
+
+        <p><strong>ส่วนที่น่าสนใจใน backend/index.js:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — GET with Search + Filter</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.get('/api/products', async (req, res) => {
+  const { search = '', category = '' } = req.query;
+  const params = [];
+  let where = 'WHERE 1=1';              // เริ่มต้นด้วย condition ที่เป็น true เสมอ
+
+  if (search) {
+    params.push(`%${search}%`);         // % คือ wildcard ใน SQL LIKE
+    where += ` AND (name ILIKE $${params.length} OR description ILIKE $${params.length})`;
+    // ILIKE = case-insensitive LIKE (ค้นได้ทั้ง uppercase/lowercase)
+  }
+  if (category) {
+    params.push(category);
+    where += ` AND category = $${params.length}`;
+  }
+
+  const { rows } = await pool.query(
+    `SELECT * FROM products ${where} ORDER BY created_at DESC`, params
+  );
+  res.json(rows);
+});</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔒</span>
+          <div>
+            <strong>ทำไมต้องใช้ Parameterized Query ($1, $2)?</strong>
+            ป้องกัน SQL Injection — ถ้า user พิมพ์ <code>'; DROP TABLE products; --</code> ในช่อง search
+            Parameterized Query จะส่งเป็น string ธรรมดา ไม่ execute เป็น SQL
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">ทดสอบ Backend API</div>
+        <div class="step-badge backend">Test</div>
+      </div>
+      <div class="step-body">
+        <p>ก่อน containerize ให้ทดสอบ API รันได้จริงก่อน — เพราะถ้า API พัง docker build ก็ไม่มีประโยชน์</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — รัน Backend ทดสอบ</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>cd backend
+npm install
+
+# ต้องมี PostgreSQL รันอยู่ก่อน (จาก docker หรือ local)
+docker run -d --name pg-test \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=stockpro \
+  -p 5432:5432 postgres:15-alpine
+
+# สร้าง .env จาก .env.example
+cp .env.example .env
+# แก้ไข DATABASE_URL ใน .env ให้ถูกต้อง
+
+node index.js</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — ทดสอบ API ด้วย curl</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># ดึงสินค้าทั้งหมด
+curl http://localhost:3001/api/products
+
+# ค้นหาสินค้า
+curl "http://localhost:3001/api/products?search=macbook"
+
+# กรองตาม category
+curl "http://localhost:3001/api/products?category=Electronics"
+
+# เพิ่มสินค้าใหม่
+curl -X POST http://localhost:3001/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"AirPods Max","category":"Electronics","price":19900,"stock":5}'
+
+# ดู health check
+curl http://localhost:3001/health</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li>GET /api/products คืน array ของ products (มี seed data 10 รายการ)</li>
+              <li>?search=macbook คืนเฉพาะสินค้าที่มีชื่อหรือรายละเอียดตรง</li>
+              <li>GET /health คืน <code>{"status":"ok"}</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">Vue 3 vs Vanilla JS — เปรียบเทียบชัดๆ</div>
+        <div class="step-badge frontend">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>ก่อนเขียน Vue 3 ให้เข้าใจก่อนว่า Vue 3 แก้ปัญหาอะไรของ Vanilla JS — ลองดูตัวอย่างการดึงและแสดงสินค้า</p>
+
+        <div class="diff-box">
+          <div class="diff-header">เปรียบเทียบ: ดึงสินค้าและแสดงบนหน้าเว็บ</div>
+          <div class="diff-body">
+<span class="diff-rem">// ❌ Vanilla JS — ต้อง manipulate DOM เอง</span>
+<span class="diff-rem">async function fetchProducts() {</span>
+<span class="diff-rem">  const res = await fetch('/api/products')</span>
+<span class="diff-rem">  const products = await res.json()</span>
+<span class="diff-rem">  const list = document.getElementById('list')</span>
+<span class="diff-rem">  list.innerHTML = products.map(p =></span>
+<span class="diff-rem">    `&lt;div&gt;${p.name} — ฿${p.price}&lt;/div&gt;`</span>
+<span class="diff-rem">  ).join('')</span>
+<span class="diff-rem">  // ต้องทำใหม่ทุกครั้งที่ข้อมูลเปลี่ยน!</span>
+<span class="diff-rem">}</span>
+<span class="diff-ctx"> </span>
+<span class="diff-add">// ✓ Vue 3 — แค่เปลี่ยน data, Vue อัพเดต DOM ให้อัตโนมัติ</span>
+<span class="diff-add">const products = ref([])          // reactive state</span>
+<span class="diff-add"> </span>
+<span class="diff-add">async function fetchProducts() {</span>
+<span class="diff-add">  const res = await fetch('/api/products')</span>
+<span class="diff-add">  products.value = await res.json() // Vue detect การเปลี่ยนแปลง</span>
+<span class="diff-add">  // DOM อัพเดตอัตโนมัติ ไม่ต้อง innerHTML !</span>
+<span class="diff-add">}</span>
+<span class="diff-add"> </span>
+<span class="diff-add">// ใน template — Vue render loop ให้อัตโนมัติ</span>
+<span class="diff-add">// &lt;div v-for="p in products" :key="p.id"&gt;</span>
+<span class="diff-add">//   {{ p.name }} — ฿{{ p.price }}</span>
+<span class="diff-add">// &lt;/div&gt;</span>
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">⚡</span>
+          <div>
+            <strong>Reactivity คืออะไร?</strong>
+            Vue 3 ติดตาม <code>ref()</code> และ <code>computed()</code> อัตโนมัติ — เมื่อ <code>products.value</code> เปลี่ยน
+            Vue จะ re-render เฉพาะส่วนที่ใช้ products เท่านั้น (Virtual DOM diffing) ทำให้เร็วและมีประสิทธิภาพ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div class="step-title">สร้าง Vue 3 Project ด้วย Vite</div>
+        <div class="step-badge frontend">Setup</div>
+      </div>
+      <div class="step-body">
+        <p>Vite เป็น build tool สมัยใหม่ที่เร็วกว่า webpack มาก — ใช้ ES modules โดยตรงตอน dev ทำให้ hot-reload เกือบ instant</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — สร้าง Vite + Vue 3 project</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># สร้าง project ใน folder frontend/
+npm create vite@latest frontend -- --template vue
+cd frontend
+npm install
+npm run dev        # เปิด http://localhost:5173</code></pre>
+        </div>
+
+        <p><strong>โครงสร้าง frontend/ ที่ได้:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/ structure</span></div>
+          <pre class="language-bash"><code>frontend/
+├── src/
+│   ├── App.vue          ← Component หลัก (เขียน UI ทั้งหมดที่นี่)
+│   ├── main.js          ← Entry point (mount App เข้า #app)
+│   └── assets/          ← รูปภาพ, CSS global
+├── index.html           ← HTML template (Vite inject script เข้าที่นี่)
+├── vite.config.js       ← config สำหรับ proxy API + build
+└── package.json</code></pre>
+        </div>
+
+        <p><strong>ตั้งค่า vite.config.js เพื่อ proxy API:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/vite.config.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    proxy: {
+      // เมื่อ dev server เห็น /api → ส่งต่อไปที่ backend
+      '/api': 'http://localhost:3001'
+    }
+  }
+})</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🔀</span>
+          <div>
+            <strong>ทำไมต้องมี Proxy?</strong>
+            Frontend รันที่ port 5173, Backend รันที่ port 3001<br>
+            Browser บล็อก cross-origin request (CORS) — Proxy ให้ Vite dev server ส่งต่อ <code>/api/*</code>
+            ไปที่ backend แทน เหมือน frontend และ backend อยู่ที่เดียวกัน
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div class="step-title">Stats Dashboard — 4 Metric Cards</div>
+        <div class="step-badge frontend">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>Dashboard แสดงข้อมูลสรุปของสินค้าทั้งหมด — ค่าเหล่านี้คำนวณจากข้อมูลด้วย <code>computed()</code> ไม่ต้องเรียก API เพิ่ม</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — computed stats</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// computed() จะ recalculate อัตโนมัติเมื่อ products.value เปลี่ยน
+const stats = computed(() => ({
+  total:      products.value.length,
+  // สินค้าที่สต็อกน้อยกว่า 10 ชิ้น
+  lowStock:   products.value.filter(p => p.stock < 10).length,
+  // รวมจำนวนสต็อกทั้งหมด
+  totalItems: products.value.reduce((sum, p) => sum + p.stock, 0),
+  // มูลค่ารวม = ราคา × จำนวน
+  totalValue: products.value.reduce(
+    (sum, p) => sum + parseFloat(p.price) * p.stock, 0
+  )
+}))</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue template — Stats Grid</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;div class="stats-grid"&gt;
+  &lt;div class="stat-card"&gt;
+    &lt;div class="stat-icon si-green"&gt;📦&lt;/div&gt;
+    &lt;div&gt;
+      &lt;div class="stat-val"&gt;{{ stats.total }}&lt;/div&gt;
+      &lt;div class="stat-label"&gt;สินค้าทั้งหมด&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;!-- ... อีก 3 cards --&gt;
+&lt;/div&gt;
+
+&lt;!-- แสดง alert banner ถ้ามีสต็อกใกล้หมด --&gt;
+&lt;div class="alert-low" v-if="stats.lowStock &gt; 0"&gt;
+  🚨 มีสินค้า &lt;strong&gt;{{ stats.lowStock }} รายการ&lt;/strong&gt;
+  ที่มีสต็อกน้อยกว่า 10 ชิ้น
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧮</span>
+          <div>
+            <strong>computed() vs methods()</strong>
+            <code>computed()</code> มี cache — ถ้า <code>products.value</code> ไม่เปลี่ยน Vue จะใช้ค่าที่คำนวณไว้แล้ว ไม่ต้อง recalculate ใหม่
+            ต่างจาก <code>methods()</code> ที่รันทุกครั้งที่ template re-render ทำให้ <code>computed()</code> เหมาะกับการคำนวณที่ใช้ทรัพยากร
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div class="step-title">Product Grid & Cards</div>
+        <div class="step-badge frontend">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>Product card แต่ละใบแสดง: ชื่อ, category badge (สีต่างกันตาม category), ราคา, และ stock level bar ที่เปลี่ยนสีตามจำนวน</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — Product Grid template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;div class="product-grid"&gt;
+  &lt;div
+    v-for="p in filtered"     &lt;!-- loop ผ่าน filtered (ไม่ใช่ products ดิบ) --&gt;
+    :key="p.id"               &lt;!-- key ช่วย Vue track แต่ละ element --&gt;
+    class="product-card"
+    :class="{ 'card-low': p.stock &gt; 0 && p.stock &lt; 10, 'card-out': p.stock &lt;= 0 }"
+  &gt;
+    &lt;!-- Category Badge สีต่างกันตาม category --&gt;
+    &lt;span class="cat-badge" :class="catClass(p.category)"&gt;{{ p.category }}&lt;/span&gt;
+
+    &lt;!-- Stock Level Bar --&gt;
+    &lt;div class="stock-track"&gt;
+      &lt;div
+        class="stock-fill"
+        :class="stockClass(p.stock)"
+        :style="{ width: Math.min((p.stock / 80) * 100, 100) + '%' }"
+      &gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Action Buttons --&gt;
+    &lt;button @click="openEdit(p)"&gt;✏️ แก้ไข&lt;/button&gt;
+    &lt;button @click="confirmDelete = p"&gt;🗑️ ลบ&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue script — stockClass() helper</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// กำหนด CSS class ตามจำนวนสต็อก — ใช้กับ stock bar และตัวเลข
+function stockClass(s) {
+  if (s <= 0)  return 'out'   // หมดแล้ว → สีเทา
+  if (s < 10)  return 'low'   // น้อยกว่า 10 → สีแดง
+  if (s < 30)  return 'mid'   // 10-29 → สีเหลือง
+  return 'high'               // 30+ → สีเขียว
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div class="step-title">Search & Filter ด้วย Computed</div>
+        <div class="step-badge frontend">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>Search และ Filter ทำงานด้วย <code>computed()</code> — ผลลัพธ์จะ update ทันทีเมื่อ search หรือ catFilter เปลี่ยน โดยไม่ต้องเรียก API ใหม่</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue script — search + filter logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const search    = ref('')    // ข้อความค้นหา
+const catFilter = ref('')    // category ที่เลือก
+let   debounceTimer = null   // สำหรับ debounce
+
+// computed ที่กรองสินค้าตาม search + category
+const filtered = computed(() => {
+  const s = search.value.toLowerCase()
+  return products.value.filter(p => {
+    // ตรงกับ search? (case-insensitive)
+    const matchSearch = !s ||
+      p.name.toLowerCase().includes(s) ||
+      (p.description || '').toLowerCase().includes(s)
+    // ตรงกับ category filter?
+    const matchCat = !catFilter.value || p.category === catFilter.value
+    return matchSearch && matchCat
+  })
+})
+
+// debounce: รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch
+// (ป้องกัน API ถูกเรียกทุก keystroke)
+function debounceFetch() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(fetchProducts, 280)
+}</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue template — Toolbar</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;div class="toolbar"&gt;
+  &lt;!-- v-model ผูก input กับ search ref --&gt;
+  &lt;!-- @input เรียก debounceFetch แทน fetchProducts โดยตรง --&gt;
+  &lt;input v-model="search" @input="debounceFetch" placeholder="🔍 ค้นหา..." /&gt;
+
+  &lt;!-- v-model ผูก select กับ catFilter ref --&gt;
+  &lt;select v-model="catFilter" @change="fetchProducts"&gt;
+    &lt;option value=""&gt;ทุกหมวดหมู่&lt;/option&gt;
+    &lt;!-- loop ผ่าน categories computed --&gt;
+    &lt;option v-for="c in categories" :key="c" :value="c"&gt;{{ c }}&lt;/option&gt;
+  &lt;/select&gt;
+
+  &lt;span&gt;แสดง {{ filtered.length }} / {{ products.length }} รายการ&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="step-card" id="s10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div class="step-title">Modal Form (Add/Edit) + Delete Confirm</div>
+        <div class="step-badge frontend">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>Modal แสดง/ซ่อนด้วย <code>v-if</code> — ข้อมูลในฟอร์มผูกกับ <code>form</code> ref ด้วย <code>v-model</code></p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue script — Modal logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const showModal    = ref(false)       // แสดง/ซ่อน modal
+const editingId    = ref(null)        // null = กำลัง add, มีค่า = กำลัง edit
+const confirmDelete = ref(null)       // เก็บ product ที่กำลังจะลบ
+
+// form object ที่ผูกกับ input fields ใน modal
+const form = ref({ name: '', category: '', price: '', stock: 0, description: '' })
+
+function openAdd() {
+  editingId.value = null                    // clear editing state
+  form.value = { name: '', category: '', price: '', stock: 0, description: '' }
+  showModal.value = true
+}
+
+function openEdit(p) {
+  editingId.value = p.id                    // บันทึกว่ากำลัง edit id ไหน
+  form.value = {                            // copy ค่าจาก product เข้า form
+    name: p.name, category: p.category,
+    price: p.price, stock: p.stock, description: p.description || ''
+  }
+  showModal.value = true
+}
+
+async function saveProduct() {
+  const body = {
+    name: form.value.name, category: form.value.category,
+    price: parseFloat(form.value.price),    // convert string → number
+    stock: parseInt(form.value.stock),
+    description: form.value.description
+  }
+  // ใช้ URL และ method ต่างกันตาม Add หรือ Edit
+  const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
+  const method = editingId.value ? 'PUT' : 'POST'
+  await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  showModal.value = false
+  fetchProducts()    // reload สินค้าใหม่
+}</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue template — Modal (ตัดสั้น)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- v-if แสดง modal เมื่อ showModal เป็น true --&gt;
+&lt;!-- @click.self = คลิก overlay (ไม่ใช่ modal) ถึงจะปิด --&gt;
+&lt;div class="overlay" v-if="showModal" @click.self="showModal = false"&gt;
+  &lt;div class="modal"&gt;
+    &lt;h2&gt;{{ editingId ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่' }}&lt;/h2&gt;
+    &lt;form @submit.prevent="saveProduct"&gt;
+      &lt;!-- v-model ผูก input กับ form.name อัตโนมัติ --&gt;
+      &lt;input v-model="form.name" required /&gt;
+      &lt;!-- datalist สร้าง autocomplete จาก categories ที่มีอยู่ --&gt;
+      &lt;input v-model="form.category" list="cat-list" /&gt;
+      &lt;datalist id="cat-list"&gt;
+        &lt;option v-for="c in categories" :value="c" /&gt;
+      &lt;/datalist&gt;
+      &lt;button type="submit"&gt;{{ editingId ? 'บันทึก' : 'เพิ่ม' }}&lt;/button&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ทดสอบ Frontend</div>
+            <ul>
+              <li>รัน <code>npm run dev</code> ใน frontend/ → เปิด http://localhost:5173</li>
+              <li>เห็น Dashboard stats + product cards (Seed data 10 รายการ)</li>
+              <li>ค้นหา "mac" เห็นผลทันทีโดยไม่ต้องกด Enter</li>
+              <li>กรอง Electronics เห็นเฉพาะสินค้า Electronics</li>
+              <li>เปิด Modal เพิ่มสินค้า — กรอกครบ กด Save — เห็นสินค้าใหม่ใน grid</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 11 -->
+    <div class="step-card" id="s11">
+      <div class="step-header">
+        <div class="step-num">11</div>
+        <div class="step-title">Dockerfiles — Backend & Frontend</div>
+        <div class="step-badge docker">Docker</div>
+      </div>
+      <div class="step-body">
+        <p>สร้าง Dockerfile สำหรับแต่ละ service — Frontend ใช้ Multi-stage build เพื่อลด image size จาก ~1.2GB เหลือแค่ ~25MB</p>
+
+        <p><strong>backend/Dockerfile:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/Dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-dockerfile"><code>FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files ก่อน — ใช้ประโยชน์ Docker layer cache
+# ถ้า package.json ไม่เปลี่ยน layer นี้จะถูก cache ไว้ npm install ไม่รันซ้ำ
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy source code ทีหลัง (เปลี่ยนบ่อย → layer บน = invalidate น้อยกว่า)
+COPY . .
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -qO- http://localhost:3001/health || exit 1
+
+CMD ["node", "index.js"]</code></pre>
+        </div>
+
+        <p><strong>frontend/Dockerfile (Multi-stage):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/Dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-dockerfile"><code># ═══ Stage 1: Build ════════════════════════════════════════
+# ใช้ image ใหญ่ที่มี Node.js เต็มๆ สำหรับ build เท่านั้น
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+# npm run build สร้างไฟล์ static ใน /app/dist/
+RUN npm run build
+
+# ═══ Stage 2: Production ════════════════════════════════════
+# ใช้ Nginx image เล็กๆ เพื่อ serve ไฟล์ static เท่านั้น
+# ไม่มี Node.js, npm, หรือ source code → image เล็ก + ปลอดภัยกว่า
+FROM nginx:alpine
+
+# Copy เฉพาะผลลัพธ์จาก Stage 1 มา
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📦</span>
+          <div>
+            <strong>ทำไม Multi-stage ถึงสำคัญ?</strong>
+            node:20-alpine มีขนาด ~180MB + dependencies อาจรวมถึง 1GB+<br>
+            nginx:alpine มีขนาดแค่ ~25MB — เหมาะสำหรับ production ที่ต้องการแค่ serve HTML/JS/CSS
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 12 -->
+    <div class="step-card" id="s12">
+      <div class="step-header">
+        <div class="step-num">12</div>
+        <div class="step-title">Docker Compose — 3 Services รวมกัน</div>
+        <div class="step-badge docker">Compose</div>
+      </div>
+      <div class="step-body">
+        <p>docker-compose.yml เชื่อม 3 services เข้าด้วยกันในรัน network เดียว — services คุยกันผ่านชื่อ (DNS resolution)</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>docker-compose.yml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>services:
+  # ── Database ─────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB:       stockpro
+      POSTGRES_USER:     dev
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # persist data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend ───────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
+      # db = ชื่อ service ด้านบน — Docker DNS แก้ไขเป็น IP อัตโนมัติ
+    depends_on:
+      db:
+        condition: service_healthy   # รอให้ DB healthy ก่อน start
+
+  # ── Frontend ──────────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"     # host:container (Nginx รันที่ 80 ใน container)
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:             # Named volume — ข้อมูลไม่หายแม้ restart</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ทำไม Frontend ต้อง proxy ไปที่ backend?</strong>
+            Nginx ใน container ต้องรู้ว่าจะส่ง <code>/api/*</code> ไปที่ไหน — ดู <code>nginx.conf</code> ซึ่งตั้งค่า
+            <code>proxy_pass http://backend:3001/;</code> (ใช้ชื่อ service แทน IP)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 13 -->
+    <div class="step-card" id="s13">
+      <div class="step-header">
+        <div class="step-num">13</div>
+        <div class="step-title">ทดสอบ Full Stack ด้วย Docker Compose</div>
+        <div class="step-badge docker">Test</div>
+      </div>
+      <div class="step-body">
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — รัน ทดสอบ และ debug</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># Build และรันทุก service
+docker compose up --build
+
+# หรือรัน background (-d = detached)
+docker compose up --build -d
+
+# ดู status ของแต่ละ service
+docker compose ps
+
+# ดู logs แบบ real-time (ทุก service)
+docker compose logs -f
+
+# ดู log เฉพาะ backend
+docker compose logs -f backend
+
+# เข้าไปใน container backend เพื่อ debug
+docker compose exec backend sh</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ Full Stack</div>
+            <ul>
+              <li>เปิด http://localhost:5173 → เห็น StockPro UI พร้อม products</li>
+              <li>เพิ่มสินค้าใหม่ → Refresh หน้า → ยังเห็นสินค้านั้นอยู่ (persisted ใน DB)</li>
+              <li>รัน <code>docker compose down</code> แล้ว <code>docker compose up -d</code> ใหม่ → ข้อมูลยังอยู่</li>
+              <li><code>docker compose ps</code> → ทุก service status เป็น "running"</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 14 -->
+    <div class="step-card" id="s14">
+      <div class="step-header">
+        <div class="step-num">14</div>
+        <div class="step-title">Push Images สู่ Private Registry</div>
+        <div class="step-badge docker">Registry</div>
+      </div>
+      <div class="step-body">
+        <p>Push images ขึ้น Private Registry เพื่อให้ server อื่น (หรือ classmate) สามารถ pull และรัน StockPro ได้โดยไม่ต้อง build เอง</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — tag & push images</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># แทน REGISTRY_IP ด้วย IP ของ Private Registry โรงเรียน
+export REGISTRY=192.168.x.x:5000
+
+# Login (ถ้า Registry มี authentication)
+docker login $REGISTRY
+
+# Build images พร้อม tag สำหรับ registry
+docker build -t $REGISTRY/stockpro-backend:latest ./backend
+docker build -t $REGISTRY/stockpro-frontend:latest ./frontend
+
+# Push ขึ้น registry
+docker push $REGISTRY/stockpro-backend:latest
+docker push $REGISTRY/stockpro-frontend:latest
+
+# ยืนยัน: ทดลอง pull กลับมาดู
+docker pull $REGISTRY/stockpro-backend:latest</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>docker-compose.prod.yml — ใช้ image จาก Registry</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>services:
+  backend:
+    image: 192.168.x.x:5000/stockpro-backend:latest   # ดึงจาก Registry
+    # ไม่มี build: — ใช้ image ที่ build ไว้แล้ว
+    ports: ["3001:3001"]
+    environment:
+      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: 192.168.x.x:5000/stockpro-frontend:latest
+    ports: ["5173:80"]
+    depends_on: [backend]
+
+  db:
+    image: postgres:15-alpine
+    environment: { POSTGRES_DB: stockpro, POSTGRES_USER: dev, POSTGRES_PASSWORD: secret }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
+      interval: 10s; timeout: 5s; retries: 5
+
+volumes:
+  pgdata:</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — รัน Production บน server อื่น</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># บน server อื่น (ไม่มี source code)
+docker compose -f docker-compose.prod.yml up -d</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li>ทั้ง stockpro-backend และ stockpro-frontend ปรากฏใน Registry UI</li>
+              <li>ลอง pull image บนเครื่องอื่น → docker compose up สำเร็จ</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 15 -->
+    <div class="step-card" id="s15">
+      <div class="step-header">
+        <div class="step-num">15</div>
+        <div class="step-title">ส่งงาน</div>
+        <div class="step-badge setup">Submit</div>
+      </div>
+      <div class="step-body">
+        <div class="submit-card">
+          <h2>🎉 ส่งงาน Week 3 — StockPro</h2>
+          <p>ตรวจสอบรายการทั้งหมดก่อน push ขึ้น GitHub และส่ง link</p>
+          <ul class="submit-list">
+            <li>README.md อธิบายวิธี clone และรัน docker compose</li>
+            <li>backend/index.js มี API endpoints ครบ (GET/POST/PUT/DELETE + categories)</li>
+            <li>frontend/src/App.vue มี Stats Dashboard + Product Grid + Search + Modal</li>
+            <li>backend/Dockerfile และ frontend/Dockerfile สร้าง image ได้สำเร็จ</li>
+            <li>docker-compose.yml รัน 3 services ได้ด้วยคำสั่งเดียว</li>
+            <li>docker compose ps → ทุก service status เป็น running</li>
+            <li>http://localhost:5173 → เห็น StockPro UI ทำงานได้</li>
+            <li>Push backend + frontend images ขึ้น Private Registry สำเร็จ</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:2rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ · Lab Week 3 — StockPro
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 15;
+  const KEY = 'w3-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 1; i <= TOTAL; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

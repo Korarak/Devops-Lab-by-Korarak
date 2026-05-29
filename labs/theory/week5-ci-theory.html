@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ที่ 5 — CI Principles & Testing | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #059669; --green-light: #d1fae5;
+      --sky: #0ea5e9; --sky-light: #e0f2fe;
+      --amber: #f59e0b; --amber-light: #fffbeb;
+      --purple: #7c3aed; --purple-light: #ede9fe;
+      --red: #dc2626; --red-light: #fee2e2;
+      --blue: #2563eb; --blue-light: #dbeafe;
+      --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f0fdf4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.8; }
+
+    .top-bar { background: #052e16; color: #fff; padding: .75rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .top-bar a { color: #86efac; text-decoration: none; font-size: .85rem; }
+    .top-bar a:hover { color: #fff; }
+    .top-bar .sep { color: #166534; }
+    .top-bar .current { color: #4ade80; font-weight: 600; font-size: .85rem; }
+
+    .hero { background: linear-gradient(135deg, #052e16, #059669, #f59e0b); color: #fff; padding: 3rem 2rem; text-align: center; }
+    .hero .sheet-label { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .3rem 1rem; font-size: .8rem; margin-bottom: 1rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: .4rem; }
+    .hero .subtitle { opacity: .85; font-size: .95rem; }
+    .hero .meta { display: flex; gap: 2rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+    .hero .meta-item { text-align: center; }
+    .hero .meta-item .val { font-size: 1.1rem; font-weight: 700; }
+    .hero .meta-item .lbl { font-size: .72rem; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .section { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .concept-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid; }
+    .concept-card .cc-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
+    .concept-card .cc-body { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+    .concept-card.green  { background: var(--green-light); border-color: #6ee7b7; }
+    .concept-card.sky    { background: var(--sky-light); border-color: #7dd3fc; }
+    .concept-card.amber  { background: var(--amber-light); border-color: #fcd34d; }
+    .concept-card.purple { background: var(--purple-light); border-color: #c4b5fd; }
+    .concept-card.red    { background: var(--red-light); border-color: #fca5a5; }
+    .concept-card.blue   { background: var(--blue-light); border-color: #93c5fd; }
+
+    .diagram { background: #1e293b; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; overflow-x: auto; }
+    .diagram .c-green  { color: #86efac; }
+    .diagram .c-yellow { color: #fde68a; }
+    .diagram .c-blue   { color: #93c5fd; }
+    .diagram .c-purple { color: #c4b5fd; }
+    .diagram .c-orange { color: #fdba74; }
+    .diagram .c-red    { color: #fca5a5; }
+    .diagram .c-gray   { color: #64748b; }
+    .diagram .c-sky    { color: #67e8f9; }
+
+    .info-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin: 1rem 0; }
+    .info-table th { background: #052e16; color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+    .info-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8fafc; }
+    .info-table code { background: #f1f5f9; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+    .alert { border-radius: 8px; padding: .9rem 1rem; display: flex; gap: .7rem; font-size: .9rem; margin: 1rem 0; }
+    .alert.info   { background: var(--sky-light); border-left: 4px solid var(--sky); }
+    .alert.tip    { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.note   { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.purple { background: var(--purple-light); border-left: 4px solid var(--purple); }
+    .alert .ai    { font-size: 1.1rem; flex-shrink: 0; }
+    .alert strong { display: block; margin-bottom: .2rem; }
+
+    /* Testing Pyramid */
+    .pyramid-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 1.5rem 0; }
+    .pyramid-level { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .88rem; color: #fff; padding: .6rem 1rem; text-align: center; transition: transform .2s; }
+    .pyramid-level:hover { transform: scale(1.02); }
+    .pyr-e2e   { width: 180px; background: linear-gradient(90deg, #7c3aed, #8b5cf6); }
+    .pyr-int   { width: 300px; background: linear-gradient(90deg, #0284c7, #0ea5e9); }
+    .pyr-unit  { width: 420px; background: linear-gradient(90deg, #059669, #10b981); }
+    .pyramid-label { font-size: .75rem; color: var(--muted); text-align: center; margin-top: .25rem; }
+
+    /* CI Principles */
+    .principle-list { display: grid; gap: 1rem; }
+    .principle-item { display: flex; gap: 1rem; padding: 1rem; border-radius: 10px; border: 1px solid var(--border); background: #f8fafc; }
+    .principle-num { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 800; font-size: .9rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .principle-body .pt { font-weight: 700; font-size: .92rem; margin-bottom: .25rem; }
+    .principle-body .pb { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+    /* GitHub Actions Architecture */
+    .arch-diagram { background: #0f172a; border-radius: 12px; padding: 1.5rem; margin: 1rem 0; font-family: 'JetBrains Mono', monospace; font-size: .78rem; line-height: 2; overflow-x: auto; }
+
+    /* Test Anatomy */
+    .test-anatomy { background: #1e293b; border-radius: 10px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 1.9; margin: 1rem 0; }
+
+    /* Comparison table */
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: .86rem; margin: 1rem 0; }
+    .cmp-table th { padding: .6rem .8rem; font-weight: 700; text-align: left; }
+    .cmp-table td { padding: .55rem .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .cmp-table .hdr-unit { background: #d1fae5; color: #065f46; }
+    .cmp-table .hdr-int  { background: var(--sky-light); color: #0c4a6e; }
+    .cmp-table .hdr-e2e  { background: var(--purple-light); color: #4c1d95; }
+
+    .footer { background: #052e16; color: #6ee7b7; text-align: center; padding: 1.5rem; font-size: .84rem; margin-top: 1rem; }
+    .footer a { color: #4ade80; text-decoration: none; }
+
+    @media (max-width: 600px) { .pyramid-level { width: auto !important; min-width: 80%; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">← DevOps Labs</a>
+  <span class="sep">›</span>
+  <a href="index.html">ใบความรู้</a>
+  <span class="sep">›</span>
+  <span class="current">ใบความรู้ที่ 5 — CI Principles & Testing</span>
+</div>
+
+<div class="hero">
+  <div class="sheet-label">ใบความรู้ที่ 5 · วิชา DevOps (30901-2008)</div>
+  <h1>CI Principles & Testing Fundamentals</h1>
+  <p class="subtitle">หลักการ Continuous Integration · GitHub Actions Architecture · Testing Pyramid</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">3</div><div class="lbl">หัวข้อหลัก</div></div>
+    <div class="meta-item"><div class="val">Martin Fowler</div><div class="lbl">ต้นกำเนิด CI</div></div>
+    <div class="meta-item"><div class="val">Jest + Supertest</div><div class="lbl">Tools ที่ใช้</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SECTION 1: CI PRINCIPLES -->
+  <div class="section">
+    <div class="section-title"><span>🔄</span> 1. หลักการ Continuous Integration (CI)</div>
+
+    <p>Continuous Integration ถูกเสนอโดย <strong>Martin Fowler และ Kent Beck</strong> ในปี 1990s เป็น engineering practice ที่ให้ developer <strong>integrate code เข้า shared branch บ่อย ๆ</strong> (อย่างน้อยวันละครั้ง) และตรวจสอบอัตโนมัติทุกครั้ง</p>
+
+    <div class="alert info">
+      <span class="ai">📖</span>
+      <div><strong>คำนิยาม (Martin Fowler)</strong> "Continuous Integration is a software development practice where members of a team integrate their work frequently... Each integration is verified by an automated build (including test) to detect integration errors as quickly as possible."</div>
+    </div>
+
+    <h3 style="margin:1.5rem 0 1rem;font-size:1rem">8 หลักการของ CI (Fowler's CI Practices)</h3>
+    <div class="principle-list">
+      <div class="principle-item">
+        <div class="principle-num">1</div>
+        <div class="principle-body">
+          <div class="pt">Maintain a Single Source Repository</div>
+          <div class="pb">code ทั้งทีมอยู่บน shared repository เดียว (Git) มีแค่ branch เดียวเป็น "source of truth" (main/trunk)</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">2</div>
+        <div class="principle-body">
+          <div class="pt">Automate the Build</div>
+          <div class="pb">build ต้องรันได้ด้วย single command — ไม่มี manual steps ซ่อนอยู่</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">3</div>
+        <div class="principle-body">
+          <div class="pt">Make Your Build Self-Testing</div>
+          <div class="pb">build ต้องรัน automated tests — ถ้า test fail = build fail</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">4</div>
+        <div class="principle-body">
+          <div class="pt">Everyone Commits to Mainline Every Day</div>
+          <div class="pb">push บ่อย ๆ → integration conflict น้อยลง → merge ง่ายขึ้น</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">5</div>
+        <div class="principle-body">
+          <div class="pt">Every Commit Should Build Mainline</div>
+          <div class="pb">ทุก commit ที่เข้า main branch จะถูก build อัตโนมัติทันที</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">6</div>
+        <div class="principle-body">
+          <div class="pt">Keep the Build Fast</div>
+          <div class="pb">build ควรเสร็จภายใน 10 นาที — ถ้านานกว่านั้น developer จะหลีกเลี่ยงการ push บ่อย ๆ</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">7</div>
+        <div class="principle-body">
+          <div class="pt">Test in a Clone of the Production Environment</div>
+          <div class="pb">CI environment ควรใกล้เคียง production มากที่สุด — ใช้ Docker ช่วยได้</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <div class="principle-num">8</div>
+        <div class="principle-body">
+          <div class="pt">Make It Easy to Get the Latest Deliverable</div>
+          <div class="pb">ทุกคนควร build ล่าสุดได้เสมอ — ผ่าน artifact หรือ package registry</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: GITHUB ACTIONS ARCHITECTURE -->
+  <div class="section">
+    <div class="section-title"><span>⚙️</span> 2. GitHub Actions Architecture</div>
+
+    <p>GitHub Actions เป็น CI/CD platform ที่ built-in อยู่ใน GitHub ทำงานโดยรับ <strong>Events</strong> จาก repository แล้วรัน <strong>Workflows</strong> ที่กำหนดไว้</p>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Component ทั้งหมด</h3>
+    <div class="arch-diagram">
+<span style="color:#f59e0b">Event</span> <span style="color:#64748b">(push, PR, schedule, ...)</span><br>
+  &nbsp;&nbsp;↓<br>
+<span style="color:#34d399">Workflow</span> <span style="color:#64748b">(.github/workflows/*.yml)</span><br>
+  &nbsp;&nbsp;↓<br>
+<span style="color:#60a5fa">Job</span> <span style="color:#64748b">(กลุ่มงาน — รันบน Runner แยกกัน)</span><br>
+  &nbsp;&nbsp;├── <span style="color:#c084fc">Step 1</span>: uses: actions/checkout@v4<br>
+  &nbsp;&nbsp;├── <span style="color:#c084fc">Step 2</span>: uses: actions/setup-node@v4<br>
+  &nbsp;&nbsp;└── <span style="color:#c084fc">Step 3</span>: run: npm test<br>
+<br>
+<span style="color:#fb7185">Runner</span> <span style="color:#64748b">(VM ที่ GitHub จัดให้ หรือ self-hosted)</span><br>
+  &nbsp;&nbsp;└── ubuntu-latest, windows-latest, macos-latest<br>
+<br>
+<span style="color:#fde68a">Action</span> <span style="color:#64748b">(reusable code unit — published บน GitHub Marketplace)</span><br>
+  &nbsp;&nbsp;└── actions/checkout, actions/setup-node, docker/build-push-action
+    </div>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Contexts และ Expressions</h3>
+    <table class="info-table">
+      <thead><tr><th>Context</th><th>ตัวแปรที่ใช้บ่อย</th><th>ตัวอย่างค่า</th></tr></thead>
+      <tbody>
+        <tr><td><code>github</code></td><td><code>github.sha</code>, <code>github.ref_name</code>, <code>github.actor</code>, <code>github.event_name</code></td><td><code>a3f2c1d...</code>, <code>main</code>, <code>username</code>, <code>push</code></td></tr>
+        <tr><td><code>env</code></td><td>Variables ที่ตั้งใน <code>env:</code> block</td><td><code>$&#123;&#123; env.NODE_ENV &#125;&#125;</code> → <code>test</code></td></tr>
+        <tr><td><code>secrets</code></td><td>Secrets จาก repo/org settings</td><td><code>$&#123;&#123; secrets.REGISTRY_PASS &#125;&#125;</code> → ****</td></tr>
+        <tr><td><code>matrix</code></td><td>ค่าจาก strategy.matrix</td><td><code>$&#123;&#123; matrix.node-version &#125;&#125;</code> → <code>20</code></td></tr>
+        <tr><td><code>steps</code></td><td>Output จาก step ก่อนหน้า</td><td><code>$&#123;&#123; steps.myid.outputs.result &#125;&#125;</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Job Dependencies</h3>
+    <div class="diagram">
+<span class="c-gray"># Parallel (default) — ทั้ง lint และ test รันพร้อมกัน</span><br>
+jobs:<br>
+&nbsp;&nbsp;<span class="c-green">lint</span>: ...<br>
+&nbsp;&nbsp;<span class="c-yellow">test</span>: ...      <span class="c-gray">← รันพร้อม lint ไม่รอ</span><br>
+<br>
+<span class="c-gray"># Sequential — test รอให้ lint ผ่านก่อน</span><br>
+jobs:<br>
+&nbsp;&nbsp;<span class="c-green">lint</span>: ...<br>
+&nbsp;&nbsp;<span class="c-yellow">test</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="c-blue">needs</span>: lint    <span class="c-gray">← เพิ่ม needs: เพื่อสร้าง dependency</span><br>
+<br>
+<span class="c-gray"># Fan-out — หลาย jobs รอ job เดียว</span><br>
+jobs:<br>
+&nbsp;&nbsp;<span class="c-green">build</span>: ...<br>
+&nbsp;&nbsp;<span class="c-yellow">deploy-staging</span>: { needs: build }<br>
+&nbsp;&nbsp;<span class="c-purple">deploy-prod</span>:    { needs: build }
+    </div>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Actions ที่ใช้บ่อยใน Node.js CI</h3>
+    <table class="info-table">
+      <thead><tr><th>Action</th><th>ทำอะไร</th><th>ตัวอย่าง</th></tr></thead>
+      <tbody>
+        <tr><td><code>actions/checkout@v4</code></td><td>Clone repo ลงบน runner</td><td>ใช้ใน step แรกเสมอ</td></tr>
+        <tr><td><code>actions/setup-node@v4</code></td><td>ติดตั้ง Node.js version ที่ระบุ + cache</td><td><code>node-version: '20'</code></td></tr>
+        <tr><td><code>actions/upload-artifact@v4</code></td><td>Upload ไฟล์/โฟลเดอร์เป็น artifact</td><td>coverage report, build output</td></tr>
+        <tr><td><code>actions/download-artifact@v4</code></td><td>Download artifact จาก job ก่อนหน้า</td><td>ใช้ใน deploy job</td></tr>
+        <tr><td><code>docker/build-push-action@v5</code></td><td>Build + push Docker image</td><td>CD pipeline</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 3: TESTING PYRAMID -->
+  <div class="section">
+    <div class="section-title"><span>🧪</span> 3. Testing Pyramid</div>
+
+    <p>Testing Pyramid เสนอโดย <strong>Mike Cohn</strong> (2009) อธิบายว่า test ควรมีสัดส่วนอย่างไร — ฐานกว้าง (unit test เยอะ) ยอดแหลม (E2E test น้อย)</p>
+
+    <div class="pyramid-wrap">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">น้อย / ช้า / แพง</div>
+      <div class="pyramid-level pyr-e2e">E2E Tests<br><small style="font-weight:400;font-size:.75rem">Cypress, Playwright</small></div>
+      <div class="pyramid-label">ทดสอบ user flow ทั้งหมด บน real browser</div>
+      <div class="pyramid-level pyr-int" style="margin-top:.5rem">Integration Tests<br><small style="font-weight:400;font-size:.75rem">Supertest + real DB</small></div>
+      <div class="pyramid-label">ทดสอบ component หลายตัวทำงานร่วมกัน</div>
+      <div class="pyramid-level pyr-unit" style="margin-top:.5rem">Unit Tests<br><small style="font-weight:400;font-size:.75rem">Jest + mock</small></div>
+      <div class="pyramid-label">ทดสอบ function/module เดียว ๆ แยกกัน</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.5rem">เยอะ / เร็ว / ถูก</div>
+    </div>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">เปรียบเทียบ Test ทั้ง 3 ชั้น</h3>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="hdr-unit">Unit Test</th>
+          <th class="hdr-int">Integration Test</th>
+          <th class="hdr-e2e">E2E Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>ทดสอบ</strong></td><td>function/module เดียว</td><td>หลาย modules + DB</td><td>ทั้ง app ผ่าน browser</td></tr>
+        <tr><td><strong>ความเร็ว</strong></td><td>เร็วมาก (ms)</td><td>ช้ากว่า (s)</td><td>ช้า (s-min)</td></tr>
+        <tr><td><strong>ต้องการ</strong></td><td>Mock/Stub</td><td>Test database</td><td>Deployed app</td></tr>
+        <tr><td><strong>เขียนง่าย</strong></td><td>ง่าย</td><td>ปานกลาง</td><td>ยาก</td></tr>
+        <tr><td><strong>รัน CI</strong></td><td>ทุก commit</td><td>ทุก commit/PR</td><td>Deploy staging</td></tr>
+        <tr><td><strong>Tools</strong></td><td>Jest, Mocha, Vitest</td><td>Supertest + Jest</td><td>Cypress, Playwright</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">โครงสร้าง Unit Test ที่ดี (AAA Pattern)</h3>
+    <div class="test-anatomy">
+<span style="color:#86efac">describe</span>(<span style="color:#fde68a">'GET /api/stocks'</span>, () => {<br>
+&nbsp;&nbsp;<span style="color:#86efac">test</span>(<span style="color:#fde68a">'returns 200 with array'</span>, <span style="color:#c084fc">async</span> () => {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#64748b">// ARRANGE — เตรียม data ที่ต้องการ</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;db.query.<span style="color:#60a5fa">mockResolvedValueOnce</span>({ rows: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ id: 1, name: <span style="color:#fde68a">'Rice'</span>, quantity: 100 }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]});<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#64748b">// ACT — เรียก function/endpoint ที่ต้องการทดสอบ</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c084fc">const</span> res = <span style="color:#c084fc">await</span> request(app).<span style="color:#60a5fa">get</span>(<span style="color:#fde68a">'/api/stocks'</span>);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#64748b">// ASSERT — ตรวจสอบว่าผลลัพธ์ถูกต้อง</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac">expect</span>(res.statusCode).<span style="color:#60a5fa">toBe</span>(200);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac">expect</span>(<span style="color:#60a5fa">Array.isArray</span>(res.body)).<span style="color:#60a5fa">toBe</span>(<span style="color:#c084fc">true</span>);<br>
+&nbsp;&nbsp;});<br>
+});
+    </div>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Jest Matchers ที่ใช้บ่อย</h3>
+    <table class="info-table">
+      <thead><tr><th>Matcher</th><th>ใช้เมื่อ</th><th>ตัวอย่าง</th></tr></thead>
+      <tbody>
+        <tr><td><code>toBe(value)</code></td><td>เปรียบเทียบแบบ strict (===)</td><td><code>expect(2+2).toBe(4)</code></td></tr>
+        <tr><td><code>toEqual(value)</code></td><td>เปรียบเทียบ object/array ทุก property</td><td><code>expect(obj).toEqual(&#123; a: 1 &#125;)</code></td></tr>
+        <tr><td><code>toHaveProperty(key, val?)</code></td><td>ตรวจ property ใน object</td><td><code>expect(res.body).toHaveProperty('id')</code></td></tr>
+        <tr><td><code>toHaveLength(n)</code></td><td>ตรวจความยาว array/string</td><td><code>expect(arr).toHaveLength(3)</code></td></tr>
+        <tr><td><code>toBeGreaterThan(n)</code></td><td>ตรวจว่า > n</td><td><code>expect(uptime).toBeGreaterThan(0)</code></td></tr>
+        <tr><td><code>toBeNull() / toBeTruthy()</code></td><td>ตรวจ null/truthy value</td><td><code>expect(user).not.toBeNull()</code></td></tr>
+        <tr><td><code>toThrow()</code></td><td>ตรวจว่า function throw error</td><td><code>expect(() => fn()).toThrow('Error')</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">Code Coverage Metrics</h3>
+    <div class="concept-grid">
+      <div class="concept-card green">
+        <div class="cc-title">Statement Coverage</div>
+        <div class="cc-body">% ของ statement ที่รันผ่านระหว่าง test — metric ทั่วไปที่สุด</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">Branch Coverage</div>
+        <div class="cc-body">% ของ if/else/switch ที่ครอบคลุมทั้ง true และ false — เข้มกว่า statement</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">Function Coverage</div>
+        <div class="cc-body">% ของ function ที่ถูกเรียก — ถ้าน้อย แสดงว่ามี dead code</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">Line Coverage</div>
+        <div class="cc-body">% ของบรรทัดที่ execute — คล้าย statement แต่นับทีละ line</div>
+      </div>
+    </div>
+
+    <div class="alert note">
+      <span class="ai">⚠️</span>
+      <div><strong>100% Coverage ≠ Bug-free</strong>
+        Coverage วัดแค่ว่า code "ถูกรัน" ไม่ใช่ว่าถูก test อย่างครบถ้วน test ที่ดีต้องมี meaningful assertions ไม่ใช่แค่ให้ coverage ผ่าน</div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: ESLint -->
+  <div class="section">
+    <div class="section-title"><span>🔍</span> 4. Static Analysis กับ ESLint</div>
+
+    <p>Static Analysis คือการวิเคราะห์ code <strong>โดยไม่ต้องรัน</strong> — หา bug, style inconsistency, และ potential issues ก่อนที่ code จะ execute</p>
+
+    <div class="concept-grid">
+      <div class="concept-card green">
+        <div class="cc-title">Linting (ESLint)</div>
+        <div class="cc-body">ตรวจ syntax, style, และ potential bugs — ตัวอย่าง: no-unused-vars, eqeqeq, semi</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">Formatting (Prettier)</div>
+        <div class="cc-body">จัด code ให้สวยงามสม่ำเสมอ — indent, quotes, line length (ทำงานร่วมกับ ESLint ได้)</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">SAST (Semgrep)</div>
+        <div class="cc-body">Security static analysis — ตรวจหา XSS, SQL injection, hardcoded secrets (เนื้อหา Week 15)</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">Type Check (TypeScript)</div>
+        <div class="cc-body">ตรวจ type ณ compile time — จับ type mismatch ก่อนรัน (ใช้แทน ESLint บางส่วนได้)</div>
+      </div>
+    </div>
+
+    <h3 style="margin:1.5rem 0 .75rem;font-size:1rem">ESLint Rules ที่ควรรู้</h3>
+    <table class="info-table">
+      <thead><tr><th>Rule</th><th>ความหมาย</th><th>ระดับ</th></tr></thead>
+      <tbody>
+        <tr><td><code>no-unused-vars</code></td><td>ประกาศ variable แต่ไม่ใช้</td><td>warn</td></tr>
+        <tr><td><code>eqeqeq</code></td><td>ต้องใช้ === แทน ==</td><td>error</td></tr>
+        <tr><td><code>no-var</code></td><td>ห้ามใช้ var (ใช้ let/const แทน)</td><td>error</td></tr>
+        <tr><td><code>prefer-const</code></td><td>ใช้ const เมื่อไม่ได้ reassign</td><td>warn</td></tr>
+        <tr><td><code>semi</code></td><td>ต้องมี ; ท้ายทุก statement</td><td>error</td></tr>
+        <tr><td><code>no-console</code></td><td>ห้ามใช้ console.log ใน production code</td><td>warn/off</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 5: CI Best Practices -->
+  <div class="section">
+    <div class="section-title"><span>✅</span> 5. CI Best Practices</div>
+    <div class="concept-grid">
+      <div class="concept-card green">
+        <div class="cc-title">🚀 Fast Feedback</div>
+        <div class="cc-body">CI ควรเสร็จภายใน 10 นาที ใช้ cache (node_modules), parallel jobs, และ skip unnecessary jobs</div>
+      </div>
+      <div class="concept-card sky">
+        <div class="cc-title">🔒 Fail Fast</div>
+        <div class="cc-body">Lint ก่อน Test ก่อน Build — ถ้า lint fail ไม่ต้องรัน test เสียเวลา ใช้ <code>needs:</code></div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">🌿 Branch Strategy</div>
+        <div class="cc-body">รัน CI บน feature/* ทุกครั้ง · Branch Protection บน main/develop ต้องการ CI pass</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">🗄️ Artifact Retention</div>
+        <div class="cc-body">เก็บ coverage report, build log ไว้ 7-14 วัน เพื่อ debug ภายหลัง ไม่ต้องเก็บนานเกิน</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">🔑 Secrets Management</div>
+        <div class="cc-body">ห้าม hardcode credentials ใน workflow ใช้ <code>secrets.*</code> เสมอ ตรวจ audit log เป็นประจำ</div>
+      </div>
+      <div class="concept-card red">
+        <div class="cc-title">🚫 No Flaky Tests</div>
+        <div class="cc-body">Test ที่ผ่านบางครั้ง fail บางครั้ง (flaky) ทำลายความเชื่อถือ CI ต้องแก้ก่อนเสมอ</div>
+      </div>
+    </div>
+
+    <div class="alert tip">
+      <span class="ai">💡</span>
+      <div><strong>npm ci vs npm install</strong>
+        ใน CI ให้ใช้ <code>npm ci</code> เสมอ — มันอ่านจาก <code>package-lock.json</code> ทำให้ environment reproducible และเร็วกว่า npm install ด้วย</div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  ใบความรู้ที่ 5 · วิชา DevOps (30901-2008) ·
+  <a href="../week5-ci-pipeline/tutorial.html">→ ไปที่ Tutorial Week 5</a> ·
+  <a href="index.html">← ใบความรู้ทั้งหมด</a>
+</footer>
+
+</body>
+</html>

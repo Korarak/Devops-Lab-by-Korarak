@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Labs — 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0891b2 100%);
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,.3) 0%, transparent 70%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero .course-code {
+      display: inline-block; background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2); border-radius: 20px;
+      padding: .35rem 1.1rem; font-size: .82rem; margin-bottom: 1.25rem;
+      letter-spacing: .05em;
+    }
+    .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: .5rem; line-height: 1.2; }
+    .hero h1 span { color: #38bdf8; }
+    .hero p { font-size: 1.05rem; opacity: .78; max-width: 520px; margin: 0 auto 2.5rem; }
+    .hero .stats { display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap; }
+    .hero .stat { text-align: center; }
+    .hero .stat .num { font-size: 2rem; font-weight: 800; color: #38bdf8; }
+    .hero .stat .lbl { font-size: .78rem; opacity: .65; text-transform: uppercase; letter-spacing: .06em; }
+
+    .labs-section { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .labs-section h2 { font-size: 1.15rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.5rem; letter-spacing: .04em; text-transform: uppercase; }
+
+    .lab-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; }
+
+    .lab-card {
+      background: #1e293b; border-radius: 16px; border: 1px solid #334155;
+      overflow: hidden; transition: transform .25s, box-shadow .25s;
+      text-decoration: none; color: inherit; display: block;
+    }
+    .lab-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,.4); border-color: var(--accent); }
+
+    .lab-card-banner {
+      height: 8px;
+      background: var(--gradient);
+    }
+    .lab-card-body { padding: 1.5rem; }
+    .lab-number { font-size: .73rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .35rem; }
+    .lab-title { font-size: 1.25rem; font-weight: 700; margin-bottom: .4rem; line-height: 1.3; }
+    .lab-desc { font-size: .88rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.65; }
+
+    .lab-chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .chip {
+      background: #0f172a; border: 1px solid #334155; border-radius: 5px;
+      padding: .22rem .6rem; font-size: .73rem; color: #94a3b8; font-weight: 500;
+    }
+
+    .lab-outcomes { list-style: none; display: grid; gap: .35rem; margin-bottom: 1.5rem; }
+    .lab-outcomes li { font-size: .84rem; color: #cbd5e1; display: flex; align-items: flex-start; gap: .5rem; }
+    .lab-outcomes li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+    .lab-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #334155; padding-top: 1rem; }
+    .lab-time { font-size: .8rem; color: #64748b; }
+    .lab-btn {
+      background: var(--gradient); color: #fff; border: none; border-radius: 8px;
+      padding: .55rem 1.25rem; font-size: .88rem; font-weight: 600; cursor: pointer;
+      font-family: 'Sarabun', sans-serif; text-decoration: none; display: inline-block;
+      transition: opacity .2s;
+    }
+    .lab-btn:hover { opacity: .9; }
+
+    .lab-card.week1 { --accent: #60a5fa; --gradient: linear-gradient(90deg,#2563eb,#7c3aed); }
+    .lab-card.week2 { --accent: #34d399; --gradient: linear-gradient(90deg,#0891b2,#059669); }
+    .lab-card.week3 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#42b883); }
+    .lab-card.week4 { --accent: #fbbf24; --gradient: linear-gradient(90deg,#0ea5e9,#f59e0b); }
+    .lab-card.week5 { --accent: #34d399; --gradient: linear-gradient(90deg,#059669,#10b981); }
+
+    .theory-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+    .theory-section h2 { font-size: 1.15rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
+    .theory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .theory-card {
+      background: #1e293b; border-radius: 12px; border: 1px solid #334155;
+      padding: 1.2rem; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: .5rem;
+      transition: transform .2s, border-color .2s;
+    }
+    .theory-card:hover { transform: translateY(-3px); border-color: var(--tc-accent); }
+    .theory-num { font-size: .72rem; font-weight: 700; color: var(--tc-accent); text-transform: uppercase; letter-spacing: .07em; }
+    .theory-title { font-size: .95rem; font-weight: 700; line-height: 1.35; }
+    .theory-topics { font-size: .78rem; color: #64748b; margin-top: auto; }
+    .theory-card.t1 { --tc-accent: #60a5fa; }
+    .theory-card.t2 { --tc-accent: #34d399; }
+    .theory-card.t3 { --tc-accent: #60a5fa; }
+    .theory-card.t4 { --tc-accent: #fbbf24; }
+    .theory-card.t5 { --tc-accent: #34d399; }
+    .theory-all-btn { display: inline-block; margin-top: 1rem; background: linear-gradient(90deg,#0ea5e9,#7c3aed); color: #fff; border-radius: 8px; padding: .6rem 1.4rem; font-size: .9rem; font-weight: 600; text-decoration: none; font-family: 'Sarabun',sans-serif; transition: opacity .2s; }
+    .theory-all-btn:hover { opacity: .9; }
+
+    /* ── Roadmap ── */
+    .roadmap-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+    .roadmap-section h2 { font-size: 1.15rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
+    .roadmap-phase {
+      font-size: .72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .09em;
+      padding: .4rem 0; margin-top: 1.5rem; margin-bottom: .5rem;
+      border-bottom: 1px solid #1e293b;
+    }
+    .roadmap-phase:first-of-type { margin-top: 0; }
+    .rm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: .6rem; }
+    .rm-card {
+      background: #1e293b; border: 1px solid #334155; border-left: 3px solid #334155;
+      border-radius: 10px; padding: .8rem 1rem; display: flex; gap: .75rem; align-items: flex-start;
+      text-decoration: none; color: inherit; transition: border-color .2s;
+    }
+    .rm-card.done { border-left-color: #10b981; }
+    .rm-card.exam { border-left-color: #f59e0b; background: rgba(245,158,11,.04); }
+    .rm-card.capstone { border-left-color: #a855f7; background: rgba(168,85,247,.04); }
+    .rm-card.upcoming { opacity: .55; }
+    .rm-card.done:hover { border-color: #10b981; opacity: 1; }
+    .rm-num {
+      min-width: 28px; height: 28px; border-radius: 7px; background: #0f172a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 800; color: #64748b; flex-shrink: 0;
+    }
+    .rm-card.done .rm-num { color: #10b981; }
+    .rm-card.exam .rm-num { color: #f59e0b; }
+    .rm-card.capstone .rm-num { color: #a855f7; }
+    .rm-body { flex: 1; min-width: 0; }
+    .rm-title { font-size: .88rem; font-weight: 700; line-height: 1.3; margin-bottom: .25rem; }
+    .rm-deliver { font-size: .74rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rm-badge {
+      font-size: .68rem; font-weight: 700; border-radius: 5px; padding: .2rem .5rem;
+      flex-shrink: 0; align-self: center;
+    }
+    .rm-badge.done { background: rgba(16,185,129,.15); color: #10b981; }
+    .rm-badge.soon { background: rgba(100,116,139,.12); color: #64748b; }
+    .rm-badge.exam-badge { background: rgba(245,158,11,.12); color: #f59e0b; }
+    .rm-badge.cap-badge { background: rgba(168,85,247,.12); color: #a855f7; }
+
+    .info-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .info-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 1.25rem; }
+    .info-card h3 { font-size: .92rem; font-weight: 700; color: #94a3b8; margin-bottom: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+    .info-card ul { list-style: none; display: grid; gap: .3rem; }
+    .info-card ul li { font-size: .84rem; color: #cbd5e1; display: flex; align-items: center; gap: .5rem; }
+    .info-card ul li::before { content: '→'; color: #38bdf8; font-weight: 700; }
+
+    .footer { background: #0f172a; border-top: 1px solid #1e293b; text-align: center; padding: 2rem; color: #475569; font-size: .84rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      .lab-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="course-code">30901-2008</div>
+    <h1>📘 <span>DevOps</span> Labs</h1>
+    <p>การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ — ใบงานปฏิบัติ พร้อม Tutorial ครบทุกขั้นตอน</p>
+    <div class="stats">
+      <div class="stat"><div class="num">5<span style="font-size:1.1rem;opacity:.45">/17</span></div><div class="lbl">Labs ที่พร้อมแล้ว</div></div>
+      <div class="stat"><div class="num">69</div><div class="lbl">ขั้นตอนรวม</div></div>
+      <div class="stat"><div class="num">85</div><div class="lbl">ชั่วโมงตลอดเทอม</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="labs-section">
+  <h2>📂 ใบงานทั้งหมด</h2>
+  <div class="lab-grid">
+
+    <!-- WEEK 1 -->
+    <a class="lab-card week1" href="week1-git-github/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 1</div>
+        <div class="lab-title">Git &amp; GitHub Onboarding</div>
+        <div class="lab-desc">เรียนรู้พื้นฐาน Version Control, ตั้งค่า GitHub, และสร้าง Profile Repository ที่แสดงตัวตนของคุณ</div>
+        <div class="lab-chips">
+          <span class="chip">Git</span>
+          <span class="chip">GitHub</span>
+          <span class="chip">SSH Key</span>
+          <span class="chip">Branch &amp; Merge</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>ติดตั้ง Git, Node.js, VS Code, Docker Desktop</li>
+          <li>ตั้งค่า SSH Key และเชื่อมต่อ GitHub</li>
+          <li>เรียนรู้คำสั่ง Git พื้นฐาน (init, add, commit, push)</li>
+          <li>สร้าง GitHub Profile Repository + commit ≥ 5 ครั้ง</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 13 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- WEEK 2 -->
+    <a class="lab-card week2" href="week2-fullstack-nodejs/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 2</div>
+        <div class="lab-title">Fullstack App: Node.js + PostgreSQL</div>
+        <div class="lab-desc">สร้าง Todo App แบบ Fullstack ที่ทำงานได้จริง ตั้งแต่ Backend API จนถึง Frontend และ Database ใน Docker</div>
+        <div class="lab-chips">
+          <span class="chip">Node.js</span>
+          <span class="chip">Express</span>
+          <span class="chip">PostgreSQL</span>
+          <span class="chip">Docker</span>
+          <span class="chip">REST API</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>รัน PostgreSQL ด้วย Docker Container</li>
+          <li>เขียน Express API ครบ CRUD (GET/POST/PATCH/DELETE)</li>
+          <li>สร้าง Frontend แบบ Vanilla JS</li>
+          <li>Push ขึ้น GitHub พร้อม README ที่รันตามได้จริง</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 12 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- WEEK 3 -->
+    <a class="lab-card week3" href="week3-containerize/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 3</div>
+        <div class="lab-title">Containerize + Vue 3 + Private Registry</div>
+        <div class="lab-desc">อัปเกรด Frontend เป็น Vue 3, Containerize ทั้ง Stack ด้วย Docker Compose และ Push Images สู่ Private Registry บน Proxmox</div>
+        <div class="lab-chips">
+          <span class="chip">Vue 3</span>
+          <span class="chip">Vite</span>
+          <span class="chip">Dockerfile</span>
+          <span class="chip">Docker Compose</span>
+          <span class="chip">Nginx</span>
+          <span class="chip">Private Registry</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>เขียน Vue 3 Component (ref, v-for, v-model, @click)</li>
+          <li>เขียน Dockerfile แบบ Multi-stage สำหรับ Frontend</li>
+          <li>รัน 3 Services ด้วย docker compose up คำสั่งเดียว</li>
+          <li>Push/Pull Images กับ Private Registry ของโรงเรียน</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 15 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- WEEK 4 -->
+    <a class="lab-card week4" href="week4-cicd-github-actions/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 4</div>
+        <div class="lab-title">GitFlow &amp; CI/CD GitHub Actions</div>
+        <div class="lab-desc">ตั้งค่า GitFlow branching strategy, Branch Protection, Pull Request workflow และสร้าง CI/CD pipeline อัตโนมัติด้วย GitHub Actions</div>
+        <div class="lab-chips">
+          <span class="chip">GitFlow</span>
+          <span class="chip">GitHub Actions</span>
+          <span class="chip">CI/CD</span>
+          <span class="chip">Branch Protection</span>
+          <span class="chip">Docker Push</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>ตั้งค่า GitFlow (main, develop, feature/*) พร้อม Branch Protection</li>
+          <li>เปิด Pull Request และทำ Code Review แบบ professional</li>
+          <li>เขียน CI workflow ที่ build และ test อัตโนมัติ</li>
+          <li>เขียน CD workflow ที่ push Docker image สู่ Registry เมื่อ release</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 14 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- WEEK 5 -->
+    <a class="lab-card week5" href="week5-ci-pipeline/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 5</div>
+        <div class="lab-title">Continuous Integration: First Pipeline</div>
+        <div class="lab-desc">ต่อยอด StockPro ด้วย Unit Tests จริง, Code Coverage, ESLint และ CI Pipeline 3 jobs แบบสมบูรณ์</div>
+        <div class="lab-chips">
+          <span class="chip">Jest</span>
+          <span class="chip">Supertest</span>
+          <span class="chip">ESLint</span>
+          <span class="chip">Coverage</span>
+          <span class="chip">GitHub Actions</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>เขียน Unit Test ≥8 cases ครอบคลุม API endpoints</li>
+          <li>ตั้งค่า Code Coverage threshold ≥60%</li>
+          <li>สร้าง CI workflow 3 jobs (lint → test → build)</li>
+          <li>Branch Protection ที่ต้องการให้ CI ผ่านก่อน merge</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 15 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- THEORY SECTION -->
+<div class="theory-section">
+  <h2>📖 ใบความรู้ (ทฤษฎีเสริม)</h2>
+  <div class="theory-grid">
+    <a class="theory-card t1" href="theory/week1-git-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 1</div>
+      <div class="theory-title">Git & Version Control</div>
+      <div class="theory-topics">VCS · Git Architecture · Branching · SHA-1</div>
+    </a>
+    <a class="theory-card t2" href="theory/week2-api-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 2</div>
+      <div class="theory-title">REST API & Backend</div>
+      <div class="theory-topics">REST Principles · HTTP · Node.js · PostgreSQL</div>
+    </a>
+    <a class="theory-card t3" href="theory/week3-docker-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 3</div>
+      <div class="theory-title">Docker & Containerization</div>
+      <div class="theory-topics">VM vs Container · Image Layers · Networking · Volumes</div>
+    </a>
+    <a class="theory-card t4" href="theory/week4-cicd-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 4</div>
+      <div class="theory-title">CI/CD & DevOps Culture</div>
+      <div class="theory-topics">DevOps · Pipeline · GitHub Actions · Deployment</div>
+    </a>
+    <a class="theory-card t5" href="theory/week5-ci-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 5</div>
+      <div class="theory-title">CI Principles & Testing</div>
+      <div class="theory-topics">CI Principles · GitHub Actions Arch · Testing Pyramid</div>
+    </a>
+  </div>
+  <a class="theory-all-btn" href="theory/index.html">ดูใบความรู้ทั้งหมด →</a>
+</div>
+
+<!-- ROADMAP SECTION -->
+<div class="roadmap-section">
+  <h2>🗺️ Roadmap ทั้งหลักสูตร (17 สัปดาห์)</h2>
+
+  <div class="roadmap-phase">Phase 1 — Foundation: Git · App · Container · CI/CD (สัปดาห์ 1–4)</div>
+  <div class="rm-grid">
+    <a class="rm-card done" href="week1-git-github/tutorial.html">
+      <div class="rm-num">1</div>
+      <div class="rm-body">
+        <div class="rm-title">Git &amp; GitHub Onboarding</div>
+        <div class="rm-deliver">Deliverable: GitHub Profile Repo + commit ≥5</div>
+      </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
+    <a class="rm-card done" href="week2-fullstack-nodejs/tutorial.html">
+      <div class="rm-num">2</div>
+      <div class="rm-body">
+        <div class="rm-title">Fullstack App: Node.js + PostgreSQL</div>
+        <div class="rm-deliver">Deliverable: Fullstack App รันบนเครื่อง</div>
+      </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
+    <a class="rm-card done" href="week3-containerize/tutorial.html">
+      <div class="rm-num">3</div>
+      <div class="rm-body">
+        <div class="rm-title">Containerize + Vue 3 + Private Registry</div>
+        <div class="rm-deliver">Deliverable: Docker Image บน Private Registry</div>
+      </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
+    <a class="rm-card done" href="week4-cicd-github-actions/tutorial.html">
+      <div class="rm-num">4</div>
+      <div class="rm-body">
+        <div class="rm-title">GitFlow &amp; CI/CD GitHub Actions</div>
+        <div class="rm-deliver">Deliverable: Team Repo + GitFlow + CI/CD Pipeline</div>
+      </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
+  </div>
+
+  <div class="roadmap-phase">Phase 2 — Automate: CI Pipeline · Quality Gate · CD to VM (สัปดาห์ 5–7)</div>
+  <div class="rm-grid">
+    <a class="rm-card done" href="week5-ci-pipeline/tutorial.html">
+      <div class="rm-num">5</div>
+      <div class="rm-body">
+        <div class="rm-title">Continuous Integration: First Pipeline</div>
+        <div class="rm-deliver">Deliverable: CI Pipeline + Unit Tests + Coverage ≥60%</div>
+      </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
+    <div class="rm-card upcoming">
+      <div class="rm-num">6</div>
+      <div class="rm-body">
+        <div class="rm-title">CI Advanced: Quality Gate + Build Image</div>
+        <div class="rm-deliver">Tools: SonarQube · Coverage≥60% · Docker Build Push</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+    <div class="rm-card upcoming">
+      <div class="rm-num">7</div>
+      <div class="rm-body">
+        <div class="rm-title">Continuous Deployment to VM (CD)</div>
+        <div class="rm-deliver">Tools: SSH Action · Staging+Prod VM · Approval Gate</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">สอบกลางภาค (สัปดาห์ 8)</div>
+  <div class="rm-grid">
+    <div class="rm-card exam">
+      <div class="rm-num">8</div>
+      <div class="rm-body">
+        <div class="rm-title">Practical Midterm Exam</div>
+        <div class="rm-deliver">โจทย์: เพิ่ม /health endpoint + pipeline ถึง prod ใน 90 นาที</div>
+      </div>
+      <div class="rm-badge exam-badge">สอบปฏิบัติ</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">Phase 3 — Orchestrate: Kubernetes Operations (สัปดาห์ 9–11)</div>
+  <div class="rm-grid">
+    <div class="rm-card upcoming">
+      <div class="rm-num">9</div>
+      <div class="rm-body">
+        <div class="rm-title">Kubernetes Fundamentals</div>
+        <div class="rm-deliver">Tools: k3s · kubectl · Deployment · Service · ConfigMap</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+    <div class="rm-card upcoming">
+      <div class="rm-num">10</div>
+      <div class="rm-body">
+        <div class="rm-title">K8s Operations: HPA + Rolling Update</div>
+        <div class="rm-deliver">Tools: HPA · k6 Load Test · Rollback · CD to k3s</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+    <div class="rm-card upcoming">
+      <div class="rm-num">11</div>
+      <div class="rm-body">
+        <div class="rm-title">Deployment Strategies + Rollback Drill</div>
+        <div class="rm-deliver">Tools: Canary · Blue-Green · Argo Rollouts · Feature Flags</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">Phase 4 — Observe: Monitoring · Logging · Alerting (สัปดาห์ 12–13)</div>
+  <div class="rm-grid">
+    <div class="rm-card upcoming">
+      <div class="rm-num">12</div>
+      <div class="rm-body">
+        <div class="rm-title">Monitoring &amp; Observability</div>
+        <div class="rm-deliver">Tools: Prometheus · Grafana · SLI/SLO · PromQL</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+    <div class="rm-card upcoming">
+      <div class="rm-num">13</div>
+      <div class="rm-body">
+        <div class="rm-title">Logging &amp; Alerting</div>
+        <div class="rm-deliver">Tools: Loki · Promtail · Alertmanager · LINE/Discord</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">Phase 5 — IaC &amp; Security (สัปดาห์ 14–15)</div>
+  <div class="rm-grid">
+    <div class="rm-card upcoming">
+      <div class="rm-num">14</div>
+      <div class="rm-body">
+        <div class="rm-title">Infrastructure as Code: Terraform</div>
+        <div class="rm-deliver">Tools: Terraform HCL · telmate/proxmox · Remote State</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+    <div class="rm-card upcoming">
+      <div class="rm-num">15</div>
+      <div class="rm-body">
+        <div class="rm-title">DevSecOps: Security ใน CI/CD</div>
+        <div class="rm-deliver">Tools: Semgrep · Trivy · Dependabot · Sealed Secrets</div>
+      </div>
+      <div class="rm-badge soon">เร็วๆ นี้</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">Capstone (สัปดาห์ 16–17)</div>
+  <div class="rm-grid">
+    <div class="rm-card capstone">
+      <div class="rm-num">16</div>
+      <div class="rm-body">
+        <div class="rm-title">Capstone Polish &amp; Documentation</div>
+        <div class="rm-deliver">Architecture Doc · Demo Script · Pipeline Gap Analysis</div>
+      </div>
+      <div class="rm-badge cap-badge">Capstone</div>
+    </div>
+    <div class="rm-card capstone">
+      <div class="rm-num">17</div>
+      <div class="rm-body">
+        <div class="rm-title">Capstone Presentation &amp; สอบปลายภาค</div>
+        <div class="rm-deliver">Live Demo · Q&amp;A · Peer Evaluation · Retrospective</div>
+      </div>
+      <div class="rm-badge cap-badge">Final</div>
+    </div>
+  </div>
+</div>
+
+<div class="info-section">
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>🛠️ เครื่องมือที่ต้องใช้</h3>
+      <ul>
+        <li>Git for Windows (git-scm.com)</li>
+        <li>Node.js LTS (nodejs.org)</li>
+        <li>VS Code (code.visualstudio.com)</li>
+        <li>Docker Desktop (docker.com)</li>
+        <li>GitHub Account (github.com)</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>📚 Stack ที่ใช้ตลอดวิชา</h3>
+      <ul>
+        <li>Version Control: Git + GitHub + GitFlow</li>
+        <li>App: Node.js + Express + Vue 3 + PostgreSQL</li>
+        <li>Container: Docker + Compose + Private Registry</li>
+        <li>CI/CD: GitHub Actions + SonarQube</li>
+        <li>Orchestration: Kubernetes (k3s) + Helm</li>
+        <li>Monitoring: Prometheus + Grafana + Loki</li>
+        <li>IaC: Terraform (Proxmox Provider)</li>
+        <li>Security: Semgrep + Trivy + Sealed Secrets</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>📁 ไฟล์ตัวอย่างโปรเจกต์</h3>
+      <ul>
+        <li>week1-git-github/profile-template/</li>
+        <li>week2-fullstack-nodejs/backend/</li>
+        <li>week2-fullstack-nodejs/frontend/</li>
+        <li>week2-fullstack-nodejs/README.md</li>
+        <li>week2-fullstack-nodejs/.env.example</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>📘 วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)</p>
+</div>
+
+</body>
+</html>

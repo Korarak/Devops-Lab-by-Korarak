@@ -1,0 +1,50 @@
+name: CI — StockPro
+
+# ทริกเกอร์เมื่อ push ไปยัง develop หรือ feature/* หรือเปิด PR เข้า develop/main
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) ดึง source code มาที่ Runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2) ติดตั้ง Node.js 20
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ── Backend ────────────────────────────────────────────────
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Lint backend code
+        working-directory: backend
+        run: npm run lint
+
+      # ── Frontend ───────────────────────────────────────────────
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (production mode)
+        working-directory: frontend
+        run: npm run build
+
+      # ── Docker ─────────────────────────────────────────────────
+      - name: Build Docker images (smoke test)
+        run: docker compose build

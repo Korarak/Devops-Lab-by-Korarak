@@ -1,0 +1,42 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       tododb
+      POSTGRES_USER:     todouser
+      POSTGRES_PASSWORD: todopass123
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todouser -d tododb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    # เปลี่ยน YOUR-USERNAME เป็น username ของตัวเอง
+    image: registry.lab.local:5000/YOUR-USERNAME/todo-backend:v1.0
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     tododb
+      DB_USER:     todouser
+      DB_PASSWORD: todopass123
+      PORT:        3001
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: registry.lab.local:5000/YOUR-USERNAME/todo-frontend:v1.0
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:

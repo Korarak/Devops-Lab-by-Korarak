@@ -1,0 +1,325 @@
+﻿ใบขั้นตอนปฏิบัติงาน
+สัปดาห์ที่ 1  —  Git & GitHub Onboarding
+รหัสวิชา 30901-2008  การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+
+เวลา
+5 ชั่วโมง (300 นาที)
+
+Stack
+Node.js + Express  |  Vanilla JS  |  PostgreSQL  |  Docker Desktop
+
+ผลลัพธ์
+ติดตั้งเครื่องมือครบ • สร้าง GitHub Profile Repository • commit ≥5 ครั้ง • push ขึ้น GitHub ได้
+
+ภาพรวมของวันนี้
+ในสัปดาห์นี้คุณจะทำสิ่งต่อไปนี้ให้สำเร็จภายใน 1 วัน:
+☐  ติดตั้ง Git, Node.js, VS Code, Docker Desktop บน Windows
+☐  สมัคร GitHub Account และตั้งค่า SSH Key
+☐  เรียนรู้คำสั่ง Git พื้นฐาน (init, add, commit, push, pull, branch)
+☐  สร้าง GitHub Profile Repository พร้อม README แนะนำตัว
+☐  ทำ commit ≥ 5 ครั้ง พร้อม message ที่สื่อความหมาย
+
+ℹ หมายเหตุ: ใบงานนี้เขียนแบบ step-by-step — อ่านทีละขั้นตอน ทำตามแล้วค่อยอ่านต่อ อย่าข้ามขั้น
+
+ส่วนที่ 1  ติดตั้งเครื่องมือ (60 นาที)
+
+ขั้นตอนที่ 1  ติดตั้ง Git for Windows
+
+เปิด Browser → ไปที่  https://git-scm.com/download/win
+คลิก "64-bit Git for Windows Setup" → รอดาวน์โหลด → รัน installer
+ตั้งค่าระหว่าง install (เลือกค่าเหล่านี้ ค่าอื่นปล่อย default):
+Default editor → เลือก "Use Visual Studio Code"
+Adjusting PATH → เลือก "Git from the command line and also 3rd-party software"
+Line ending → เลือก "Checkout Windows-style, commit Unix-style"
+
+เมื่อ install เสร็จ → เปิด PowerShell ใหม่ → พิมพ์คำสั่งนี้:
+git --version
+
+✅ ตรวจสอบ: ผลที่ควรเห็น:  git version 2.4x.x  (ตัวเลขอาจต่างกันเล็กน้อย)
+
+ขั้นตอนที่ 2  ติดตั้ง Node.js (LTS)
+
+ไปที่  https://nodejs.org  → คลิกปุ่ม "LTS" สีเขียว → ดาวน์โหลดไฟล์ .msi
+รัน installer → คลิก Next ทุกขั้น (ไม่ต้องเปลี่ยนอะไร) → Finish
+เปิด PowerShell ใหม่ → ทดสอบ:
+node --version
+npm --version
+
+✅ ตรวจสอบ: ผลที่ควรเห็น: v20.x.x (หรือสูงกว่า) และ 10.x.x
+
+ขั้นตอนที่ 3  ติดตั้ง Visual Studio Code
+
+ไปที่  https://code.visualstudio.com  → คลิก "Download for Windows"
+รัน installer → ติ๊ก "Add to PATH" และ "Open with Code" (ทั้งสองอัน) → Install
+เปิด VS Code → กด Ctrl+` (backtick) เพื่อเปิด Terminal ใน VS Code
+✅ ตรวจสอบ: VS Code เปิดได้และมี Terminal ด้านล่าง
+
+ขั้นตอนที่ 4  ติดตั้ง Docker Desktop
+
+ไปที่  https://www.docker.com/products/docker-desktop  → คลิก "Download for Windows"
+รัน installer → เมื่อถามเรื่อง WSL 2 ให้ติ๊ก "Use WSL 2 instead of Hyper-V" → OK
+⚠ ระวัง: ถ้าเครื่องขอ Restart → บันทึกงานก่อน แล้ว Restart
+
+หลัง Restart → เปิด Docker Desktop → รอจนไอคอน Docker ล่างขวาเป็น สีเขียว (Running)
+ทดสอบใน PowerShell:
+docker --version
+docker run hello-world
+
+✅ ตรวจสอบ: ควรเห็น "Hello from Docker!" ในผลลัพธ์
+
+ส่วนที่ 2  ตั้งค่า GitHub Account (30 นาที)
+
+ขั้นตอนที่ 5  สมัคร GitHub (ถ้ายังไม่มี)
+
+ไปที่  https://github.com  → คลิก "Sign up"
+กรอก email, password, username (ใช้ภาษาอังกฤษ ไม่มีเว้นวรรค เช่น  somchai-devops)
+ℹ หมายเหตุ: Username นี้จะใช้ตลอดเทอม — ตั้งให้จำง่ายและดูเป็นมืออาชีพ
+
+ขั้นตอนที่ 6  ตั้งค่า Git บนเครื่อง
+
+เปิด PowerShell → พิมพ์คำสั่งต่อไปนี้ (แทนที่ด้วยชื่อและ email จริงของคุณ):
+git config --global user.name "ชื่อของคุณเป็นภาษาอังกฤษ"
+git config --global user.email "email@ที่ใช้สมัคร-github.com"
+git config --global core.autocrlf true
+
+# ตรวจสอบว่าบันทึกแล้ว
+git config --global --list
+
+✅ ตรวจสอบ: เห็น user.name และ user.email ในผลลัพธ์
+
+ขั้นตอนที่ 7  สร้าง SSH Key และผูกกับ GitHub
+
+เปิด PowerShell → พิมพ์ (กด Enter ทุกครั้งที่ถาม — ไม่ต้องใส่ passphrase):
+ssh-keygen -t ed25519 -C "email@ที่ใช้สมัคร-github.com"
+
+คัดลอก Public Key:
+cat $HOME\.ssh\id_ed25519.pub
+
+ผลที่ได้จะเป็นข้อความยาว ๆ ขึ้นต้นด้วย  ssh-ed25519 ...  คัดลอกทั้งหมด
+ไปที่ GitHub → คลิกรูปโปรไฟล์มุมบนขวา → Settings → SSH and GPG keys → New SSH key
+ตั้งชื่อ: "School PC" → วางข้อความที่คัดลอกมา → คลิก "Add SSH key"
+ทดสอบการเชื่อมต่อ:
+ssh -T git@github.com
+
+✅ ตรวจสอบ: ควรเห็น:  Hi username! You&apos;ve successfully authenticated...
+
+ส่วนที่ 3  เรียนรู้ Git พื้นฐาน (60 นาที)
+ทำตามขั้นตอนนี้ทุกข้อ — นี่คือ Git Lab ที่จะทำให้เข้าใจว่าแต่ละคำสั่งทำอะไร
+
+ขั้นตอนที่ 8  สร้าง Local Repository แรก
+
+สร้างโฟลเดอร์ทดลอง → เข้าไปใน VS Code Terminal:
+# สร้างโฟลเดอร์
+mkdir C:\devops-labs\git-practice
+cd C:\devops-labs\git-practice
+
+# เริ่มต้น Git repository
+git init
+
+# ดูสถานะ (ยังว่างอยู่)
+git status
+
+✅ ตรวจสอบ: เห็นข้อความ: Initialized empty Git repository
+
+ขั้นตอนที่ 9  สร้างไฟล์และทำ commit แรก
+
+สร้างไฟล์ใหม่ใน VS Code Terminal:
+# สร้างไฟล์
+echo "# Git Practice" > README.md
+
+# ดู status — ไฟล์ยัง untracked
+git status
+
+# เพิ่มไฟล์เข้า staging area
+git add README.md
+
+# ดู status อีกครั้ง — ไฟล์เป็นสีเขียว
+git status
+
+# บันทึก commit แรก
+git commit -m "docs: add README"
+
+# ดูประวัติ
+git log --oneline
+
+ℹ หมายเหตุ: รูปแบบ commit message ที่ดี: "ประเภท: คำอธิบายสั้น"  เช่น  feat: add login, fix: correct query
+
+ขั้นตอนที่ 10  ฝึก Branch และ Merge
+
+# ดู branch ปัจจุบัน
+git branch
+
+# สร้าง branch ใหม่และเปลี่ยนไปใช้
+git checkout -b feature/add-description
+
+# แก้ไข README.md ใน VS Code — เพิ่มบรรทัดนี้ต่อท้าย:
+# "นักเรียน: ชื่อของคุณ"
+
+# บันทึก
+git add README.md
+git commit -m "docs: add student name to README"
+
+# กลับไป main
+git checkout main
+
+# รวม feature branch เข้า main
+git merge feature/add-description
+
+# ดูประวัติ
+git log --oneline --graph
+
+✅ ตรวจสอบ: เห็น commit history มี 2 commits และ merge เรียบร้อย
+
+ส่วนที่ 4  Deliverable — GitHub Profile Repository (120 นาที)
+นี่คือชิ้นงานหลักของสัปดาห์นี้ — Profile Repository คือ repository พิเศษที่ชื่อ  username/username  จะแสดงบนหน้า GitHub ของคุณ
+
+ขั้นตอนที่ 11  สร้าง Profile Repository บน GitHub
+
+ไปที่  github.com  → คลิก "+" มุมบนขวา → "New repository"
+ตั้งชื่อ Repository ให้ตรงกับ Username ของคุณพอดี (เช่น  somchai-devops)
+ติ๊ก "Public" และ "Add a README file" → คลิก "Create repository"
+Clone ลงมาที่เครื่อง:
+cd C:\devops-labs
+# แทนที่ YOUR-USERNAME ด้วย username จริงของคุณ
+git clone git@github.com:YOUR-USERNAME/YOUR-USERNAME.git
+cd YOUR-USERNAME
+code .
+
+✅ ตรวจสอบ: VS Code เปิดโฟลเดอร์ profile repository ได้
+
+ขั้นตอนที่ 12  เขียน README แนะนำตัว
+
+เปิดไฟล์ README.md ใน VS Code → แก้ไขเนื้อหา ตาม template ด้านล่าง:
+# สวัสดี! ฉันชื่อ [ชื่อ-นามสกุลภาษาไทย] 👋
+
+## เกี่ยวกับฉัน
+- 🎓 กำลังศึกษา ปวส. เทคโนโลยีสารสนเทศ
+- 💻 กำลังเรียนวิชา DevOps (30901-2008)
+- 🔧 Stack ที่กำลังเรียน: Git, Node.js, Docker, Kubernetes
+
+## สิ่งที่ฉันจะสร้างในเทอมนี้
+- [ ] Fullstack App (Node.js + PostgreSQL)
+- [ ] CI/CD Pipeline ด้วย GitHub Actions
+- [ ] Deploy บน Docker + Kubernetes
+
+## สถิติ GitHub
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=YOUR-USERNAME&show_icons=true)
+
+ℹ หมายเหตุ: แทนที่ YOUR-USERNAME ในบรรทัดสุดท้ายด้วย username จริงของคุณ
+
+ขั้นตอนที่ 13  Commit และ Push ≥ 5 ครั้ง
+
+ต้องทำ commit อย่างน้อย 5 ครั้ง — ทำทีละนิดแล้ว commit ห้ามทำทีเดียวครั้งเดียว:
+# commit ครั้งที่ 1: โครงสร้าง README
+git add README.md
+git commit -m "docs: add profile README structure"
+
+# แก้ส่วน เกี่ยวกับฉัน → commit ครั้งที่ 2
+git add README.md
+git commit -m "docs: add about section"
+
+# เพิ่มไฟล์ .gitignore → commit ครั้งที่ 3
+echo "node_modules/" > .gitignore
+echo ".env" >> .gitignore
+git add .gitignore
+git commit -m "chore: add gitignore"
+
+# แก้ checklist สิ่งที่จะสร้าง → commit ครั้งที่ 4
+git add README.md
+git commit -m "docs: update learning goals checklist"
+
+# เพิ่มรูปสถิติ → commit ครั้งที่ 5
+git add README.md
+git commit -m "docs: add github stats badge"
+
+# Push ทั้งหมดขึ้น GitHub
+git push origin main
+
+✅ ตรวจสอบ: ไปที่ github.com/YOUR-USERNAME และเห็น README แสดงบนหน้าโปรไฟล์
+
+✅ ตรวจสอบ: กด Commits บน Repository และเห็น ≥ 5 commits
+
+ส่วนที่ 5  Pair Swap ตรวจสอบ (15 นาที)
+หาเพื่อนข้างๆ 1 คน → แลก GitHub URL กัน → ตรวจสอบตามรายการนี้:
+☐  README แสดงบนหน้าโปรไฟล์ github.com/username
+☐  มี commit ≥ 5 ครั้ง
+☐  ทุก commit message สื่อความหมาย (ไม่ใช่ "update" หรือ "fix" อย่างเดียว)
+☐  มีไฟล์ .gitignore
+☐  ไม่มีข้อมูลส่วนตัวที่ไม่ควร commit (รหัสผ่าน, API key)
+
+เกณฑ์การประเมิน
+รายการ
+คะแนน
+ได้รับ
+
+Profile Repository สร้างและเข้าถึงได้จาก github.com/username
+20
+...........
+
+README อ่านเข้าใจ มีข้อมูลครบตาม template
+20
+...........
+
+Commit ≥ 5 ครั้ง ทุก message สื่อความหมาย
+30
+...........
+
+มีไฟล์ .gitignore และไม่มีข้อมูลลับใน repository
+20
+...........
+
+ผ่านการตรวจจาก Pair Swap (เพื่อน sign-off)
+10
+...........
+
+รวม
+100
+...........
+
+ส่งงาน: แชร์ลิงก์  github.com/YOUR-USERNAME  ให้ครู
+
+Git Command Cheat Sheet (เก็บไว้ใช้งาน)
+
+คำสั่ง
+ทำอะไร
+
+git init
+เริ่ม repository ใหม่ในโฟลเดอร์ปัจจุบัน
+
+git status
+ดูสถานะไฟล์ (modified / staged / untracked)
+
+git add <file>
+เพิ่มไฟล์เข้า staging area
+
+git add .
+เพิ่มทุกไฟล์ที่เปลี่ยนแปลงเข้า staging
+
+git commit -m "msg"
+บันทึก snapshot พร้อม message
+
+git log --oneline
+ดูประวัติ commit แบบย่อ
+
+git push origin main
+ส่งขึ้น GitHub
+
+git pull origin main
+ดึงการเปลี่ยนแปลงจาก GitHub
+
+git clone <url>
+ดาวน์โหลด repository จาก GitHub
+
+git checkout -b <name>
+สร้าง branch ใหม่และเปลี่ยนไปใช้
+
+git checkout main
+กลับไป branch main
+
+git merge <branch>
+รวม branch เข้า branch ปัจจุบัน
+
+git diff
+ดูการเปลี่ยนแปลงที่ยังไม่ได้ stage
+
+

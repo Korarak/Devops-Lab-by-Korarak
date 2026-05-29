@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Week 4 — CI/CD ด้วย GitHub Actions | StockPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#0ea5e9;--primary-dark:#0284c7;--primary-light:#e0f2fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --green:#10b981;--green-light:#d1fae5;
+  --red:#ef4444;--red-light:#fee2e2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;transition:width .3s}
+.back-link{position:absolute;top:1rem;left:1.25rem;color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s;z-index:10}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.site-header{background:linear-gradient(135deg,#0c4a6e,#075985,#0369a1);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.week-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:1.5rem;height:fit-content;max-height:calc(100vh - 3rem);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.progress-info{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--muted)}
+.progress-track{height:6px;background:#f1f5f9;border-radius:3px;margin-top:.4rem;overflow:hidden}
+.progress-track-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;border-radius:3px;transition:width .3s}
+.content{min-width:0}
+.new-in-week4{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid var(--green);border-radius:14px;padding:1.5rem;margin-bottom:2rem}
+.new-in-week4 h3{color:#065f46;font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.new-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.new-item{background:#fff;border:1px solid #a7f3d0;border-radius:10px;padding:.75rem 1rem;display:flex;gap:.6rem;align-items:flex-start}
+.new-item .ni-icon{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
+.new-item .ni-title{font-size:.85rem;font-weight:700;color:#065f46}
+.new-item .ni-desc{font-size:.78rem;color:#059669;margin-top:.1rem}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.15rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:1rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:#e0f2fe;border-left:4px solid var(--primary)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
+.alert.new{background:#d1fae5;border-left:4px solid var(--green)}
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:10px;padding:1rem 1.15rem;margin-top:1.25rem}
+.verify-title{font-weight:700;color:#065f46;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.25rem}
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1rem 0;padding:1.25rem;background:#f8fafc;border-radius:12px;border:1px solid var(--border)}
+.pipe-node{background:#fff;border:2px solid var(--border);border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;text-align:center;min-width:110px}
+.pipe-node.trigger{border-color:var(--accent);background:var(--accent-light);color:#92400e}
+.pipe-node.ci{border-color:var(--primary);background:var(--primary-light);color:#0c4a6e}
+.pipe-node.cd{border-color:var(--green);background:var(--green-light);color:#065f46}
+.pipe-node.deploy{border-color:var(--purple);background:var(--purple-light);color:#4c1d95}
+.pipe-arrow{color:var(--muted);font-weight:700;font-size:1.1rem}
+.gitflow-wrap{background:#0f172a;border-radius:12px;padding:1.5rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:2.2;overflow-x:auto}
+.gf-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}
+.gf-label{color:#94a3b8;width:130px;flex-shrink:0}
+.gf-dot{width:12px;height:12px;border-radius:50%;border:2px solid;background:#0f172a;flex-shrink:0}
+.gf-line{height:3px;border-radius:2px;flex:1}
+.gf-tag-chip{background:#f59e0b;color:#0f172a;border-radius:4px;padding:.1rem .45rem;font-size:.65rem;font-weight:800}
+.col-main{color:#f59e0b}
+.col-dev{color:#38bdf8}
+.col-feat{color:#34d399}
+.col-hot{color:#f87171}
+.secrets-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.secrets-table th{background:var(--primary-light);color:var(--primary-dark);padding:.6rem .9rem;text-align:left;font-weight:700;border:1px solid #bae6fd}
+.secrets-table td{padding:.6rem .9rem;border:1px solid var(--border)}
+.secrets-table tr:nth-child(even) td{background:#f8fafc}
+.secret-key{font-family:'JetBrains Mono',monospace;background:#f1f5f9;padding:.15rem .4rem;border-radius:4px;font-size:.82em}
+.file-tree{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.9;margin:1rem 0}
+.ft-new{color:#34d399;font-weight:700}
+.ft-chg{color:#fbbf24}
+.ft-dim{color:#475569}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;max-height:none}
+  .new-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+
+<header class="site-header">
+  <a href="../index.html" class="back-link">← DevOps Labs</a>
+  <div class="week-badge">สัปดาห์ที่ 4 · วิชา DevOps (30901-2008)</div>
+  <h1>CI/CD ด้วย GitHub Actions</h1>
+  <p class="subtitle">ต่อยอด StockPro — จาก Docker สู่ Pipeline อัตโนมัติ</p>
+  <div class="header-meta">
+    <span class="meta-chip">⏱ 300 นาที</span>
+    <span class="meta-chip">15 ขั้นตอน</span>
+    <span class="meta-chip">GitFlow · GitHub Actions · Secrets · Release</span>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="sidebar-card">
+    <div class="sidebar-title">เนื้อหา</div>
+    <ul class="toc-list" id="toc">
+      <li class="toc-item"><a href="#step1"><span class="toc-num">1</span>Week 4 Overview</a></li>
+      <li class="toc-item"><a href="#step2"><span class="toc-num">2</span>GitFlow คืออะไร</a></li>
+      <li class="toc-item"><a href="#step3"><span class="toc-num">3</span>สร้าง GitHub Repo</a></li>
+      <li class="toc-item"><a href="#step4"><span class="toc-num">4</span>develop + Branch Protection</a></li>
+      <li class="toc-item"><a href="#step5"><span class="toc-num">5</span>Feature Branch ใหม่</a></li>
+      <li class="toc-item"><a href="#step6"><span class="toc-num">6</span>เพิ่ม /api/stats Endpoint</a></li>
+      <li class="toc-item"><a href="#step7"><span class="toc-num">7</span>Conventional Commits</a></li>
+      <li class="toc-item"><a href="#step8"><span class="toc-num">8</span>CI Workflow — ci.yml</a></li>
+      <li class="toc-item"><a href="#step9"><span class="toc-num">9</span>Push → ดู CI ทำงาน</a></li>
+      <li class="toc-item"><a href="#step10"><span class="toc-num">10</span>Pull Request + Merge</a></li>
+      <li class="toc-item"><a href="#step11"><span class="toc-num">11</span>CD Workflow — cd.yml</a></li>
+      <li class="toc-item"><a href="#step12"><span class="toc-num">12</span>GitHub Secrets</a></li>
+      <li class="toc-item"><a href="#step13"><span class="toc-num">13</span>Merge to main → CD</a></li>
+      <li class="toc-item"><a href="#step14"><span class="toc-num">14</span>Release Tag v1.0.0</a></li>
+      <li class="toc-item"><a href="#step15"><span class="toc-num">15</span>Status Badge + ส่งงาน</a></li>
+    </ul>
+    <div class="progress-info">
+      ความคืบหน้า: <span id="prog-text">0 / 15</span>
+      <div class="progress-track"><div class="progress-track-fill" id="prog-fill"></div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="content">
+
+<!-- NEW IN WEEK 4 OVERVIEW -->
+<div class="new-in-week4">
+  <h3>🆕 สิ่งที่เพิ่มมาใน Week 4 (ต่อยอดจาก Week 3 — StockPro)</h3>
+  <div class="new-grid">
+    <div class="new-item"><span class="ni-icon">🔀</span><div><div class="ni-title">GitFlow Branching Strategy</div><div class="ni-desc">main, develop, feature/*, release/*, hotfix/*</div></div></div>
+    <div class="new-item"><span class="ni-icon">🛡️</span><div><div class="ni-title">Branch Protection Rules</div><div class="ni-desc">บังคับ PR + review ก่อน merge เข้า main/develop</div></div></div>
+    <div class="new-item"><span class="ni-icon">🤖</span><div><div class="ni-title">.github/workflows/ci.yml</div><div class="ni-desc">lint + build + docker build อัตโนมัติทุก push</div></div></div>
+    <div class="new-item"><span class="ni-icon">🚀</span><div><div class="ni-title">.github/workflows/cd.yml</div><div class="ni-desc">build image → push registry → deploy SSH อัตโนมัติ</div></div></div>
+    <div class="new-item"><span class="ni-icon">🔐</span><div><div class="ni-title">GitHub Secrets</div><div class="ni-desc">เก็บ credentials ปลอดภัย — ไม่โชว์ใน logs</div></div></div>
+    <div class="new-item"><span class="ni-icon">📊</span><div><div class="ni-title">GET /api/stats (endpoint ใหม่)</div><div class="ni-desc">สรุปข้อมูลสินค้าจาก DB สำหรับ dashboard</div></div></div>
+    <div class="new-item"><span class="ni-icon">🏷️</span><div><div class="ni-title">Release Tag v1.0.0</div><div class="ni-desc">Semantic Versioning + GitHub Release</div></div></div>
+    <div class="new-item"><span class="ni-icon">🟢</span><div><div class="ni-title">Status Badges ใน README</div><div class="ni-desc">แสดงสถานะ CI/CD แบบ real-time</div></div></div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div class="step-card" id="step1">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">Week 4 Overview — Big Picture</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>ใน Week 3 เราสร้าง StockPro และ containerize ด้วย Docker สำเร็จ แต่ทุกครั้งที่แก้ code ยังต้อง build และ push image ด้วยมือ Week 4 นี้เราจะสร้าง <strong>Pipeline อัตโนมัติ</strong> ด้วย GitHub Actions — code ขึ้น GitHub ปุ๊บ, deploy อัตโนมัติเลย</p>
+
+    <div class="pipeline">
+      <div class="pipe-node trigger">📝 Push Code</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node ci">🔍 CI<br><small>lint+build</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node trigger">🔀 PR<br><small>+review</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node cd">📦 Build<br><small>Docker</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node cd">🏪 Push<br><small>Registry</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node deploy">🚀 Deploy<br><small>SSH</small></div>
+    </div>
+
+    <h4>โครงสร้างไฟล์ที่เพิ่มมาใน Week 4</h4>
+    <div class="file-tree">
+stockpro/  <span class="ft-dim">(โปรเจกต์จาก Week 3)</span><br>
+├── <span class="ft-new">.github/</span>                  <span class="ft-dim">← ใหม่ทั้งหมด</span><br>
+│   └── <span class="ft-new">workflows/</span><br>
+│       ├── <span class="ft-new">ci.yml</span>             <span class="ft-dim">← CI Pipeline (step 8)</span><br>
+│       └── <span class="ft-new">cd.yml</span>             <span class="ft-dim">← CD Pipeline (step 11)</span><br>
+├── backend/<br>
+│   ├── <span class="ft-chg">index.js</span>               <span class="ft-dim">← เพิ่ม /api/stats + ปรับ /health</span><br>
+│   └── <span class="ft-chg">package.json</span>           <span class="ft-dim">← เพิ่ม eslint script</span><br>
+├── <span class="ft-new">README.md</span>                  <span class="ft-dim">← ใหม่ (มี Status Badges)</span><br>
+└── <span class="ft-dim">... ไฟล์เดิม Week 3 ไม่เปลี่ยน</span>
+    </div>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body"><strong>สิ่งที่ต้องมีก่อนเริ่ม</strong>
+        GitHub account (ฟรี) · Git ติดตั้งแล้ว · StockPro Week 3 รันได้ด้วย docker compose up
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ เช็ค prerequisite</div>
+      <ul>
+        <li>มี GitHub account และ login แล้ว</li>
+        <li><code class="inline-code">git --version</code> แสดงเลข version ได้</li>
+        <li><code class="inline-code">docker compose up</code> ใน โฟลเดอร์ Week 3 ทำงานได้</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-card" id="step2">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">GitFlow คืออะไร — Branching Strategy</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>GitFlow เป็น branching model ที่กำหนดว่า <strong>branch ไหนทำหน้าที่อะไร</strong> ทำให้ทีมทำงานพร้อมกันโดยไม่ conflict กัน</p>
+
+    <div class="gitflow-wrap">
+      <div style="color:#94a3b8;margin-bottom:1rem">── GitFlow Diagram ──────────────────────────────────</div>
+      <div class="gf-row">
+        <span class="gf-label col-main">main</span>
+        <div class="gf-dot col-main" style="border-color:#f59e0b"></div>
+        <div class="gf-line" style="background:#f59e0b;flex:2"></div>
+        <div class="gf-dot col-main" style="border-color:#f59e0b"></div>
+        <div class="gf-line" style="background:#f59e0b;flex:3"></div>
+        <div class="gf-dot col-main" style="border-color:#f59e0b"></div>
+        <span class="gf-tag-chip">v1.0.0</span>
+        <div class="gf-line" style="background:#f59e0b;flex:1"></div>
+      </div>
+      <div class="gf-row">
+        <span class="gf-label col-dev">develop</span>
+        <div class="gf-dot col-dev" style="border-color:#38bdf8"></div>
+        <div class="gf-line" style="background:#38bdf8;flex:1"></div>
+        <div class="gf-dot col-dev" style="border-color:#38bdf8"></div>
+        <div class="gf-line" style="background:#38bdf8;flex:1"></div>
+        <div class="gf-dot col-dev" style="border-color:#38bdf8"></div>
+        <div class="gf-line" style="background:#38bdf8;flex:1"></div>
+        <div class="gf-dot col-dev" style="border-color:#38bdf8"></div>
+        <div class="gf-line" style="background:#38bdf8;flex:2"></div>
+      </div>
+      <div class="gf-row" style="margin-left:140px">
+        <span class="gf-label col-feat">feature/stats</span>
+        <div class="gf-dot col-feat" style="border-color:#34d399"></div>
+        <div class="gf-line" style="background:#34d399;flex:1"></div>
+        <div class="gf-dot col-feat" style="border-color:#34d399"></div>
+        <div class="gf-line" style="background:#34d399;flex:1"></div>
+        <div class="gf-dot col-feat" style="border-color:#34d399"></div>
+        <span style="color:#34d399;white-space:nowrap;font-size:.72rem">→ PR → develop</span>
+      </div>
+    </div>
+
+    <h4>หน้าที่ของแต่ละ Branch</h4>
+    <table class="secrets-table">
+      <thead><tr><th>Branch</th><th>หน้าที่</th><th>Merge ไปที่</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline-code">main</code></td><td>โค้ด production เท่านั้น — ห้าม push ตรง</td><td>—</td></tr>
+        <tr><td><code class="inline-code">develop</code></td><td>รวม features ที่เสร็จแล้ว รอ release</td><td><code class="inline-code">main</code></td></tr>
+        <tr><td><code class="inline-code">feature/*</code></td><td>พัฒนา feature ใหม่ แยกจาก develop</td><td><code class="inline-code">develop</code></td></tr>
+        <tr><td><code class="inline-code">release/*</code></td><td>เตรียม release (แก้ minor bug)</td><td><code class="inline-code">main</code> + <code class="inline-code">develop</code></td></tr>
+        <tr><td><code class="inline-code">hotfix/*</code></td><td>แก้ bug ด่วนใน production</td><td><code class="inline-code">main</code> + <code class="inline-code">develop</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>กฎทอง: ห้าม push ตรงเข้า main และ develop</strong>
+        ทุก change ต้องผ่าน Pull Request เสมอ ให้เพื่อนร่วมทีม review ก่อน merge
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-card" id="step3">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">สร้าง GitHub Repository และ Push Code</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>เราจะ push โค้ด StockPro (จาก week4 folder นี้) ขึ้น GitHub เพื่อใช้งานกับ GitHub Actions</p>
+
+    <h4>1. สร้าง repo บน GitHub</h4>
+    <ol>
+      <li>ไปที่ <strong>github.com</strong> → คลิก <strong>+ New repository</strong></li>
+      <li>ตั้งชื่อ: <code class="inline-code">stockpro</code></li>
+      <li>เลือก <strong>Private</strong></li>
+      <li>ไม่เลือก "Initialize this repository" (จะ push จาก local)</li>
+      <li>คลิก <strong>Create repository</strong></li>
+    </ol>
+
+    <h4>2. Push code ขึ้น GitHub</h4>
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># เปิด Terminal ที่โฟลเดอร์ week4-cicd-github-actions (หรือ stockpro)
+cd week4-cicd-github-actions
+
+# เริ่มต้น git
+git init
+git add .
+git commit -m "feat: initial StockPro inventory system with Docker"
+
+# เชื่อมกับ GitHub (แทน YOUR-USERNAME ด้วย username จริง)
+git remote add origin https://github.com/YOUR-USERNAME/stockpro.git
+git branch -M main
+git push -u origin main</code></pre>
+    </div>
+
+    <div class="alert warning">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>ตรวจสอบ .gitignore ก่อน push</strong>
+        ไฟล์ .gitignore ต้องมี <code class="inline-code">node_modules/</code> และ <code class="inline-code">.env</code> เพื่อป้องกัน credentials หลุด
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>เปิด github.com/YOUR-USERNAME/stockpro → เห็นไฟล์ทั้งหมด</li>
+        <li>ไม่มี <code class="inline-code">node_modules/</code> หรือ <code class="inline-code">.env</code> ใน repo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step-card" id="step4">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div class="step-title">สร้าง develop Branch + Branch Protection Rules</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <h4>สร้าง develop branch</h4>
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git checkout -b develop
+git push -u origin develop</code></pre>
+    </div>
+
+    <h4>ตั้งค่า Branch Protection — บน GitHub</h4>
+    <p>Protection ป้องกันไม่ให้ push ตรงเข้า <code class="inline-code">main</code> ได้ โดยไม่ผ่าน PR</p>
+    <ol>
+      <li>repo → <strong>Settings</strong> → <strong>Branches</strong></li>
+      <li><strong>Add branch protection rule</strong></li>
+      <li>Branch name pattern: <code class="inline-code">main</code></li>
+      <li>เปิดใช้:
+        <ul>
+          <li>☑ <strong>Require a pull request before merging</strong></li>
+          <li>☑ <strong>Require approvals</strong> → 1</li>
+          <li>☑ <strong>Require status checks to pass before merging</strong></li>
+          <li>☑ <strong>Do not allow bypassing the above settings</strong></li>
+        </ul>
+      </li>
+      <li>คลิก <strong>Create</strong></li>
+      <li>ทำซ้ำสำหรับ <code class="inline-code">develop</code> (ผ่อนคลายกว่า ไม่ต้องใส่ require approval)</li>
+    </ol>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body"><strong>ทำไมต้อง Branch Protection?</strong>
+        ถ้าไม่มี protection ใครก็ push เข้า main ตรงๆ ได้ ซึ่งอาจทำให้ production พัง Protection บังคับให้ทุก change ผ่าน review เสมอ
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>ลอง <code class="inline-code">git push origin main</code> ตรงๆ → ต้องถูก block โดย GitHub</li>
+        <li>Settings → Branches → เห็น rule สำหรับ main แสดงอยู่</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step-card" id="step5">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div class="step-title">สร้าง Feature Branch — เริ่มพัฒนา Feature ใหม่</div>
+    <div class="step-time">⏱ 10 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>ใน GitFlow ทุก feature ใหม่ต้องแยก branch จาก <code class="inline-code">develop</code> เราจะพัฒนา <code class="inline-code">GET /api/stats</code> endpoint ใหม่</p>
+
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># ต้องอยู่บน develop ก่อน
+git checkout develop
+git pull origin develop    # sync กับ remote
+
+# สร้าง feature branch
+git checkout -b feature/stats-endpoint
+
+# ตรวจสอบว่าอยู่บน branch ถูก
+git branch
+# * feature/stats-endpoint
+#   develop
+#   main</code></pre>
+    </div>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>รูปแบบชื่อ Feature Branch</strong>
+        <code class="inline-code">feature/ชื่อ-feature</code> เช่น
+        <code class="inline-code">feature/user-auth</code>,
+        <code class="inline-code">feature/export-csv</code>,
+        <code class="inline-code">feature/stats-endpoint</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="step-card" id="step6">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div class="step-title">เพิ่ม /api/stats Endpoint ใน Backend</div>
+    <div class="step-time">⏱ 30 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>แก้ไข <code class="inline-code">backend/index.js</code> — เพิ่ม 2 ส่วน: (1) ปรับ <code class="inline-code">/health</code> ให้แสดง version+uptime (2) เพิ่ม <code class="inline-code">/api/stats</code> ใหม่</p>
+
+    <div class="alert new">
+      <span class="alert-icon">🆕</span>
+      <div class="alert-body"><strong>ไฟล์ที่แก้: backend/index.js</strong> — เพิ่มหลัง <code class="inline-code">const PORT = ...</code></div>
+    </div>
+
+    <div class="code-wrap">
+      <span class="code-label">javascript · backend/index.js — เพิ่มส่วน health ใหม่</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-javascript">const START_AT = Date.now();   // เพิ่มบนสุด หลัง const PORT
+
+// ── Health Check (ปรับปรุง: เพิ่ม version + uptime) ──────────
+app.get('/health', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT NOW() AS db_time');
+    res.json({
+      status:    'ok',
+      service:   'StockPro API',
+      version:   process.env.APP_VERSION || '1.0.0',
+      uptime_s:  Math.floor((Date.now() - START_AT) / 1000),
+      db_time:   rows[0].db_time,
+      timestamp: new Date(),
+    });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: err.message });
+  }
+});
+
+// ── GET /api/stats (endpoint ใหม่) ───────────────────────────
+app.get('/api/stats', async (req, res) => {
+  try {
+    // Promise.all = รัน 2 queries พร้อมกัน ไม่ต้องรอทีละอัน
+    const [overview, byCategory] = await Promise.all([
+      pool.query(`
+        SELECT
+          COUNT(*)                                          AS total_products,
+          SUM(stock)                                        AS total_stock,
+          ROUND(SUM(price * stock), 2)                      AS total_value,
+          COUNT(*) FILTER (WHERE stock = 0)                 AS out_of_stock,
+          COUNT(*) FILTER (WHERE stock > 0 AND stock < 10)  AS low_stock
+        FROM products
+      `),
+      pool.query(`
+        SELECT
+          category,
+          COUNT(*)                     AS products,
+          SUM(stock)                   AS total_stock,
+          ROUND(SUM(price * stock), 2) AS total_value
+        FROM products
+        GROUP BY category
+        ORDER BY total_value DESC
+      `),
+    ]);
+    res.json({
+      overview:    overview.rows[0],
+      by_category: byCategory.rows,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});</code></pre>
+    </div>
+
+    <h4>อธิบาย SQL ที่ใช้</h4>
+    <ul>
+      <li><code class="inline-code">COUNT(*) FILTER (WHERE stock = 0)</code> — นับเฉพาะ rows ที่ stock = 0 (PostgreSQL syntax พิเศษ)</li>
+      <li><code class="inline-code">ROUND(SUM(price * stock), 2)</code> — คำนวณมูลค่าสต็อกรวม ปัดทศนิยม 2 ตำแหน่ง</li>
+      <li><code class="inline-code">GROUP BY category ORDER BY total_value DESC</code> — จัดกลุ่มตาม category เรียงตามมูลค่ามากไปน้อย</li>
+    </ul>
+
+    <h4>ทดสอบ</h4>
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">docker compose up -d
+curl http://localhost:3001/api/stats | python -m json.tool
+curl http://localhost:3001/health</code></pre>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li><code class="inline-code">/api/stats</code> ส่ง overview และ by_category กลับมา</li>
+        <li><code class="inline-code">/health</code> แสดง version และ uptime_s (วินาทีที่ server ทำงาน)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="step-card" id="step7">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <div class="step-title">Conventional Commits — มาตรฐานการเขียน Commit Message</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Conventional Commits บอกว่า "เปลี่ยนแปลงประเภทไหน" ทำให้ทีมอ่านประวัติ git log ง่าย และ generate changelog อัตโนมัติได้</p>
+
+    <h4>รูปแบบมาตรฐาน</h4>
+    <div class="code-wrap">
+      <span class="code-label">format</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+
+# ตัวอย่าง:
+feat(backend): add /api/stats endpoint for dashboard
+fix(frontend): correct stock level bar width calculation
+docs(readme): add CI/CD status badge
+ci: add GitHub Actions CI workflow
+chore(deps): upgrade express to 4.21.0</code></pre>
+    </div>
+
+    <table class="secrets-table">
+      <thead><tr><th>Type</th><th>ความหมาย</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline-code">feat</code></td><td>Feature ใหม่</td></tr>
+        <tr><td><code class="inline-code">fix</code></td><td>แก้ Bug</td></tr>
+        <tr><td><code class="inline-code">docs</code></td><td>แก้ documentation อย่างเดียว</td></tr>
+        <tr><td><code class="inline-code">ci</code></td><td>แก้ CI/CD config</td></tr>
+        <tr><td><code class="inline-code">chore</code></td><td>งาน maintenance ทั่วไป</td></tr>
+        <tr><td><code class="inline-code">refactor</code></td><td>ปรับ code โดยไม่เปลี่ยน behavior</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Commit การเปลี่ยนแปลง</h4>
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git add backend/index.js backend/package.json
+git commit -m "feat(backend): add /api/stats endpoint and improve /health with version+uptime"
+
+git push -u origin feature/stats-endpoint</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 8 -->
+<div class="step-card" id="step8">
+  <div class="step-header">
+    <div class="step-num">8</div>
+    <div class="step-title">CI Workflow — อ่าน ci.yml ทีละบรรทัด</div>
+    <div class="step-time">⏱ 35 นาที</div>
+  </div>
+  <div class="step-body">
+    <div class="alert new">
+      <span class="alert-icon">🆕</span>
+      <div class="alert-body"><strong>ไฟล์ใหม่: .github/workflows/ci.yml</strong></div>
+    </div>
+
+    <p>GitHub Actions อ่าน workflow file จากโฟลเดอร์ <code class="inline-code">.github/workflows/</code> อัตโนมัติ ไฟล์ใช้ YAML format — indentation สำคัญมาก</p>
+
+    <div class="code-wrap">
+      <span class="code-label">yaml · .github/workflows/ci.yml (พร้อม comment อธิบาย)</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">name: CI — StockPro    # ชื่อที่โชว์ใน GitHub Actions tab
+
+# ── on: กำหนด "เมื่อไหร่" จะ trigger ─────────────────────────
+on:
+  push:
+    branches:
+      - develop          # ทริกเกอร์เมื่อ push ไป develop
+      - 'feature/**'     # ทริกเกอร์เมื่อ push ไป feature/xxx
+  pull_request:
+    branches:
+      - develop          # ทริกเกอร์เมื่อเปิด PR เข้า develop
+      - main             # ทริกเกอร์เมื่อเปิด PR เข้า main
+
+# ── jobs: งานที่ต้องทำ ─────────────────────────────────────────
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest    # ใช้ Runner Ubuntu ฟรีจาก GitHub
+
+    steps:
+      # ── Step 1: ดึง source code มาที่ Runner ─────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4    # Action สำเร็จรูปจาก marketplace
+
+      # ── Step 2: ติดตั้ง Node.js 20 ───────────────────────────
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ── Step 3-4: Backend ─────────────────────────────────────
+      - name: Install backend dependencies
+        working-directory: backend    # cd เข้าไปใน folder backend/ ก่อนรัน
+        run: npm ci                   # ci = clean install (เร็วกว่า npm install)
+
+      - name: Lint backend code
+        working-directory: backend
+        run: npm run lint             # รัน ESLint ตรวจ code style
+
+      # ── Step 5-6: Frontend ────────────────────────────────────
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (production mode)
+        working-directory: frontend
+        run: npm run build    # Vite build → สร้าง dist/ folder
+
+      # ── Step 7: Docker smoke test ─────────────────────────────
+      - name: Build Docker images (smoke test)
+        run: docker compose build    # ทดสอบว่า Dockerfile ทั้งคู่ build ได้</code></pre>
+    </div>
+
+    <h4>เหตุการณ์ที่ทำให้ CI ทำงาน</h4>
+    <div class="pipeline">
+      <div class="pipe-node trigger">push feature/*</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node ci">CI workflow<br>ทริกเกอร์</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node ci">Runner<br>ubuntu-latest</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node cd">7 Steps<br>รันทีละอัน</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node deploy">✅ Pass<br>หรือ ❌ Fail</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 9 -->
+<div class="step-card" id="step9">
+  <div class="step-header">
+    <div class="step-num">9</div>
+    <div class="step-title">Push CI Workflow และดู Pipeline ทำงานจริง</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># สร้างโฟลเดอร์ (ถ้ายังไม่มี)
+mkdir -p .github/workflows
+
+# สร้างไฟล์ ci.yml (copy content จาก step 8)
+# ใช้ editor ที่ถนัด เช่น VS Code: code .github/workflows/ci.yml
+
+# commit และ push
+git add .github/workflows/ci.yml
+git commit -m "ci: add GitHub Actions CI workflow"
+git push</code></pre>
+    </div>
+
+    <h4>ดู Pipeline บน GitHub</h4>
+    <ol>
+      <li>ไปที่ repo บน GitHub → แท็บ <strong>Actions</strong></li>
+      <li>เห็น "CI — StockPro" กำลังทำงาน (วงกลมสีเหลือง = กำลังรัน)</li>
+      <li>คลิกเข้าไปดู job → ขยาย step ต่างๆ เพื่อดู log</li>
+      <li>รอ 2-4 นาที → เห็น ✅ สีเขียว = ผ่านทุก step</li>
+    </ol>
+
+    <div class="alert warning">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>ถ้า Lint ล้มเหลว (❌ แดง)</strong>
+        เปิด log ดูว่า ESLint แจ้ง error บรรทัดไหน แก้ไขใน local แล้ว commit + push ใหม่ CI จะรันซ้ำอัตโนมัติ
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Actions tab แสดง workflow ทำงานอัตโนมัติหลัง push</li>
+        <li>ทุก step ผ่าน ✅ (Checkout → Node Setup → Install → Lint → Build Frontend → Docker Build)</li>
+        <li>ในหน้า repo เห็น ✅ เล็กๆ หน้า commit hash ล่าสุด</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 10 -->
+<div class="step-card" id="step10">
+  <div class="step-header">
+    <div class="step-num">10</div>
+    <div class="step-title">Pull Request — Code Review ก่อน Merge</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>หลัง CI ผ่านแล้ว สร้าง Pull Request เพื่อ merge feature เข้า develop</p>
+
+    <h4>สร้าง Pull Request</h4>
+    <ol>
+      <li>GitHub repo → <strong>Pull requests</strong> → <strong>New pull request</strong></li>
+      <li><strong>base:</strong> <code class="inline-code">develop</code> | <strong>compare:</strong> <code class="inline-code">feature/stats-endpoint</code></li>
+      <li>คลิก <strong>Create pull request</strong></li>
+      <li>ใส่ description:
+        <ul>
+          <li>✅ สิ่งที่เปลี่ยน (เพิ่ม /api/stats, ปรับ /health)</li>
+          <li>🧪 วิธีทดสอบ (curl commands)</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h4>สิ่งที่ Reviewer ตรวจสอบ</h4>
+    <ul>
+      <li>🔍 Logic ของ SQL query ถูกต้องหรือไม่</li>
+      <li>🛡️ ใช้ parameterized query ป้องกัน SQL Injection</li>
+      <li>📝 Code อ่านง่าย ชื่อตัวแปรชัดเจน</li>
+      <li>✅ CI ผ่านทุก step (เห็น checkmark ใน PR)</li>
+    </ul>
+
+    <h4>Merge PR</h4>
+    <ol>
+      <li>เมื่อ review ผ่าน → คลิก <strong>Squash and merge</strong></li>
+      <li>คลิก <strong>Confirm squash and merge</strong></li>
+      <li>คลิก <strong>Delete branch</strong> (ลบ feature branch ที่ไม่ใช้แล้ว)</li>
+    </ol>
+
+    <div class="code-wrap">
+      <span class="code-label">bash · sync local หลัง merge</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git checkout develop
+git pull origin develop</code></pre>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>PR สถานะ "Merged" (สีม่วง)</li>
+        <li>branch <code class="inline-code">develop</code> มี commit จาก feature</li>
+        <li><code class="inline-code">feature/stats-endpoint</code> ถูกลบแล้ว</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 11 -->
+<div class="step-card" id="step11">
+  <div class="step-header">
+    <div class="step-num">11</div>
+    <div class="step-title">CD Workflow — อ่าน cd.yml ทีละบรรทัด</div>
+    <div class="step-time">⏱ 35 นาที</div>
+  </div>
+  <div class="step-body">
+    <div class="alert new">
+      <span class="alert-icon">🆕</span>
+      <div class="alert-body"><strong>ไฟล์ใหม่: .github/workflows/cd.yml</strong></div>
+    </div>
+
+    <p>CD workflow ทำงานเมื่อ merge เข้า <code class="inline-code">main</code> หรือ push tag <code class="inline-code">v*</code> โดย build Docker image → push Registry → SSH deploy</p>
+
+    <div class="code-wrap">
+      <span class="code-label">yaml · .github/workflows/cd.yml (พร้อม comment อธิบาย)</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">name: CD — Deploy StockPro
+
+on:
+  push:
+    branches:
+      - main       # merge เข้า main → deploy production
+    tags:
+      - 'v*'       # push tag v1.0.0 → build versioned image
+
+jobs:
+  # ── Job 1: Build + Push Docker images ─────────────────────────
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}    # ส่งค่าออกให้ Job 2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # กำหนด image tag: ถ้าเป็น git tag → ใช้ tag นั้น, ไม่งั้น → "latest"
+      - name: Determine image version tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+          # GITHUB_REF ตัวอย่าง: refs/tags/v1.0.0
+          # ${GITHUB_REF#refs/tags/} = ตัด prefix → เหลือ v1.0.0
+
+      # Login เข้า Private Registry ด้วย Secrets
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}
+
+      # Build Backend image → push 2 tags (version + latest)
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+
+      # Build Frontend image → push
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+
+  # ── Job 2: SSH Deploy (รอ Job 1 เสร็จก่อน) ───────────────────
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push    # dependency — รอ Job 1
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1    # Action SSH สำเร็จรูป
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/stockpro
+            docker compose -f docker-compose.prod.yml pull    # ดึง image ใหม่
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f    # ลบ image เก่า
+            echo "Deployed ${{ needs.build-and-push.outputs.version }} at $(date)"</code></pre>
+    </div>
+
+    <h4>เปรียบเทียบ CI vs CD</h4>
+    <table class="secrets-table">
+      <thead><tr><th></th><th>CI (ci.yml)</th><th>CD (cd.yml)</th></tr></thead>
+      <tbody>
+        <tr><td>Trigger</td><td>push ไป feature/develop</td><td>merge เข้า main / git tag</td></tr>
+        <tr><td>จุดประสงค์</td><td>ตรวจสอบ code quality</td><td>deploy ไป production</td></tr>
+        <tr><td>Push Registry</td><td>❌</td><td>✅</td></tr>
+        <tr><td>SSH Deploy</td><td>❌</td><td>✅</td></tr>
+        <tr><td>ใช้ Secrets</td><td>ไม่จำเป็น</td><td>ต้องใช้</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-wrap">
+      <span class="code-label">bash · เพิ่ม cd.yml และ push ไปยัง develop</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git checkout develop
+git add .github/workflows/cd.yml
+git commit -m "ci: add GitHub Actions CD workflow"
+git push origin develop</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 12 -->
+<div class="step-card" id="step12">
+  <div class="step-header">
+    <div class="step-num">12</div>
+    <div class="step-title">GitHub Secrets — เก็บ Credentials อย่างปลอดภัย</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <div class="alert new">
+      <span class="alert-icon">🔐</span>
+      <div class="alert-body"><strong>GitHub Secrets คืออะไร?</strong>
+        เป็นที่เก็บ sensitive data (passwords, tokens, SSH keys) ที่ workflow อ่านได้ด้วย <code class="inline-code">${{ secrets.NAME }}</code> แต่ GitHub ซ่อนค่าใน logs ทั้งหมด ไม่มีทางดูค่าจริงได้หลังจาก save
+      </div>
+    </div>
+
+    <h4>Secrets ที่ต้องตั้งค่า</h4>
+    <table class="secrets-table">
+      <thead><tr><th>Secret Name</th><th>ค่าที่ใส่</th><th>ใช้ใน</th></tr></thead>
+      <tbody>
+        <tr><td><span class="secret-key">REGISTRY_URL</span></td><td><code class="inline-code">registry.lab.local:5000</code></td><td>docker login</td></tr>
+        <tr><td><span class="secret-key">REGISTRY_USER</span></td><td>username ของ registry</td><td>docker login</td></tr>
+        <tr><td><span class="secret-key">REGISTRY_PASS</span></td><td>password ของ registry</td><td>docker login</td></tr>
+        <tr><td><span class="secret-key">SERVER_HOST</span></td><td>IP address ของ server</td><td>SSH connect</td></tr>
+        <tr><td><span class="secret-key">SERVER_USER</span></td><td>SSH username เช่น <code class="inline-code">ubuntu</code></td><td>SSH connect</td></tr>
+        <tr><td><span class="secret-key">SERVER_SSH_KEY</span></td><td>SSH private key ทั้งหมด (รวม header)</td><td>SSH auth</td></tr>
+      </tbody>
+    </table>
+
+    <h4>วิธีเพิ่ม Secret</h4>
+    <ol>
+      <li>repo → <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong></li>
+      <li>คลิก <strong>New repository secret</strong></li>
+      <li>ใส่ Name และ Secret value</li>
+      <li>คลิก <strong>Add secret</strong></li>
+    </ol>
+
+    <h4>สร้าง SSH Key Pair (ถ้ายังไม่มี)</h4>
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># สร้าง key pair ใหม่สำหรับ GitHub Actions
+ssh-keygen -t ed25519 -C "github-actions-stockpro" -f ~/.ssh/stockpro_deploy
+
+# Public key → copy ไปใส่บน server
+cat ~/.ssh/stockpro_deploy.pub
+# ใส่ในไฟล์ ~/.ssh/authorized_keys บน server
+
+# Private key → copy ทั้งหมดใส่ใน Secret: SERVER_SSH_KEY
+cat ~/.ssh/stockpro_deploy</code></pre>
+    </div>
+
+    <div class="alert warning">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body"><strong>ห้าม commit private key ลงใน repo</strong>
+        ถ้า key หลุดขึ้น GitHub ให้ revoke ทันทีและสร้างใหม่ Private key ควรอยู่ใน Secrets เท่านั้น
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Settings → Secrets → Actions → เห็น secrets ทั้ง 6 ตัวในรายการ</li>
+        <li>ค่าของทุก secret ซ่อนอยู่ (•••••) ไม่แสดง plaintext</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 13 -->
+<div class="step-card" id="step13">
+  <div class="step-header">
+    <div class="step-num">13</div>
+    <div class="step-title">Merge ไป main → ดู CD Pipeline ทำงานจริง</div>
+    <div class="step-time">⏱ 25 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>ตอนนี้ CI/CD workflow พร้อมแล้ว เราจะ merge develop เข้า main เพื่อ trigger CD pipeline</p>
+
+    <h4>สร้าง PR: develop → main</h4>
+    <ol>
+      <li>GitHub → <strong>Pull requests</strong> → <strong>New pull request</strong></li>
+      <li><strong>base:</strong> <code class="inline-code">main</code> | <strong>compare:</strong> <code class="inline-code">develop</code></li>
+      <li>Title: <code class="inline-code">release: deploy StockPro v1.0.0</code></li>
+      <li>เปิด PR → รอ CI ผ่าน → Merge → <strong>Create a merge commit</strong></li>
+    </ol>
+
+    <h4>ดู CD Pipeline บน GitHub</h4>
+    <ol>
+      <li>Actions tab → เห็น "CD — Deploy StockPro" กำลังทำงาน</li>
+      <li>ขยาย Job "Build &amp; Push Images" → ดูแต่ละ step</li>
+      <li>Job "Deploy to Server" → ดู SSH script output</li>
+    </ol>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body"><strong>ถ้าไม่มี server จริง</strong>
+        Job "deploy" จะ fail เพราะ SSH connect ไม่ได้ แต่ Job "build-and-push" ยังทำงานได้ถูกต้อง ให้ focus ที่ Job แรกก่อน
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>CD workflow ทริกเกอร์อัตโนมัติหลัง merge เข้า main</li>
+        <li>Job "Build &amp; Push Images" ผ่าน ✅</li>
+        <li>Registry มี image <code class="inline-code">stockpro-backend:latest</code> และ <code class="inline-code">stockpro-frontend:latest</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 14 -->
+<div class="step-card" id="step14">
+  <div class="step-header">
+    <div class="step-num">14</div>
+    <div class="step-title">Release Tag v1.0.0 — Semantic Versioning</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Semantic Versioning (SemVer) คือมาตรฐานเลข version รูปแบบ <strong>MAJOR.MINOR.PATCH</strong></p>
+    <ul>
+      <li><strong>MAJOR</strong> — breaking change (API ไม่ compatible กับเวอร์ชั่นเก่า)</li>
+      <li><strong>MINOR</strong> — feature ใหม่ แต่ยัง backward compatible</li>
+      <li><strong>PATCH</strong> — แก้ bug เล็กน้อย ไม่เพิ่ม feature</li>
+    </ul>
+
+    <div class="code-wrap">
+      <span class="code-label">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># ต้องอยู่บน main และ pull ล่าสุดก่อน
+git checkout main
+git pull origin main
+
+# สร้าง annotated tag (มี message อธิบาย)
+git tag -a v1.0.0 -m "Release v1.0.0: initial production release with /api/stats endpoint"
+
+# Push tag ไป GitHub (CD จะทริกเกอร์อีกครั้ง!)
+git push origin v1.0.0</code></pre>
+    </div>
+
+    <h4>สร้าง GitHub Release</h4>
+    <ol>
+      <li>GitHub → <strong>Releases</strong> → <strong>Draft a new release</strong></li>
+      <li>Choose tag: <code class="inline-code">v1.0.0</code></li>
+      <li>Title: <code class="inline-code">v1.0.0 — StockPro Initial Production Release</code></li>
+      <li>เขียน Release Notes สิ่งที่มีใน version นี้</li>
+      <li>คลิก <strong>Publish release</strong></li>
+    </ol>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>CD ทริกเกอร์ซ้ำ!</strong>
+        เมื่อ push tag <code class="inline-code">v1.0.0</code> CD จะ build image อีกครั้ง และ tag image ด้วย <code class="inline-code">v1.0.0</code> ด้วย ทำให้สามารถ rollback ไปเวอร์ชั่นเก่าได้ง่าย: <code class="inline-code">image: registry/stockpro-backend:v1.0.0</code>
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>GitHub → Releases แสดง v1.0.0 พร้อม release notes</li>
+        <li>CD pipeline ทำงานอีกครั้งหลัง push tag</li>
+        <li>Registry มี image tag <code class="inline-code">v1.0.0</code> แยกจาก <code class="inline-code">latest</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 15 -->
+<div class="step-card" id="step15">
+  <div class="step-header">
+    <div class="step-num">15</div>
+    <div class="step-title">Status Badge ใน README + ส่งงาน</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Status Badge คือรูปภาพที่แสดงสถานะ CI/CD แบบ real-time ใน README ผู้เข้าชม repo เห็นทันทีว่า build ผ่านหรือไม่</p>
+
+    <div class="code-wrap">
+      <span class="code-label">markdown · README.md — เพิ่มบนสุด</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-markdown">![CI](https://github.com/YOUR-USERNAME/stockpro/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/YOUR-USERNAME/stockpro/actions/workflows/cd.yml/badge.svg)
+
+# StockPro — ระบบจัดการสินค้าคงคลัง</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <span class="code-label">bash · push README</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git checkout develop
+git checkout -b feature/add-readme-badges
+# แก้ README.md ใส่ badge URLs (แทน YOUR-USERNAME)
+git add README.md
+git commit -m "docs: add CI/CD status badges to README"
+git push -u origin feature/add-readme-badges
+# สร้าง PR: feature → develop → main</code></pre>
+    </div>
+
+    <h4>Checklist ส่งงาน Week 4</h4>
+    <div class="verify">
+      <div class="verify-title">📋 รายการที่ต้องส่ง</div>
+      <ul>
+        <li>🔗 URL GitHub repo ที่มี main, develop, (feature branches เก่า)</li>
+        <li>🤖 Screenshot: Actions tab แสดง CI ผ่าน ✅</li>
+        <li>🚀 Screenshot: Actions tab แสดง CD ทำงาน (Job build-and-push ผ่าน)</li>
+        <li>🔐 Screenshot: Settings → Secrets แสดง secrets ทั้ง 6 ตัว (ค่าซ่อนอยู่)</li>
+        <li>🏷️ GitHub Releases แสดง v1.0.0</li>
+        <li>🟢 README.md มี Status Badge (เห็น badge ใน GitHub)</li>
+        <li>🛡️ Branch Protection Rules ตั้งค่าสำหรับ main</li>
+      </ul>
+    </div>
+
+    <h4>สรุป 4 สัปดาห์ที่เรียนมา</h4>
+    <table class="secrets-table">
+      <thead><tr><th>Week</th><th>หัวข้อ</th><th>สิ่งที่สร้าง</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Git &amp; GitHub</td><td>Version control, branching, GitHub Profile</td></tr>
+        <tr><td>2</td><td>Full-Stack App</td><td>Express API + PostgreSQL + Vanilla JS Frontend</td></tr>
+        <tr><td>3</td><td>Docker</td><td>Containerize StockPro, Compose, Private Registry</td></tr>
+        <tr><td>4</td><td>CI/CD</td><td>GitFlow, GitHub Actions, Secrets, Release v1.0.0</td></tr>
+      </tbody>
+    </table>
+
+    <div class="alert success">
+      <span class="alert-icon">🎉</span>
+      <div class="alert-body">
+        <strong>ยินดีด้วย!</strong>
+        คุณมี DevOps pipeline ที่สมบูรณ์แล้ว — code ขึ้น GitHub → CI ตรวจสอบอัตโนมัติ → PR + review → merge → CD deploy อัตโนมัติ → tagged release นี่คือ workflow ที่ developer มืออาชีพใช้กันจริงทุกวัน!
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script>
+// Progress bar
+function updatePbar(){
+  const el=document.documentElement;
+  document.getElementById('pbar').style.width=(el.scrollTop/(el.scrollHeight-el.clientHeight)*100)+'%';
+}
+window.addEventListener('scroll',updatePbar);
+
+// TOC active highlight
+const steps=document.querySelectorAll('.step-card');
+const links=document.querySelectorAll('.toc-item a');
+new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const a=document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+      if(a)a.classList.add('active');
+    }
+  });
+},{threshold:.25}).observe || steps.forEach(s=>{ /* fallback */ });
+steps.forEach(s=>new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting){
+    links.forEach(l=>l.classList.remove('active'));
+    const a=document.querySelector(`.toc-item a[href="#${s.id}"]`);
+    if(a)a.classList.add('active');
+  }
+},{threshold:.25}).observe(s));
+
+// Step completion
+const KEY='w4-stockpro-done';
+let done=JSON.parse(localStorage.getItem(KEY)||'[]');
+function saveDone(){localStorage.setItem(KEY,JSON.stringify(done));}
+function renderProg(){
+  document.getElementById('prog-text').textContent=`${done.length} / 15`;
+  document.getElementById('prog-fill').style.width=(done.length/15*100)+'%';
+}
+document.querySelectorAll('.verify').forEach((v,i)=>{
+  const btn=document.createElement('button');
+  const isDone=done.includes(i);
+  btn.textContent=isDone?'✅ เสร็จแล้ว':'ทำเสร็จแล้ว';
+  btn.style.cssText=`margin-top:.75rem;background:${isDone?'#10b981':'#0ea5e9'};color:#fff;border:none;border-radius:8px;padding:.4rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif`;
+  btn.onclick=()=>{
+    if(!done.includes(i)){done.push(i);btn.textContent='✅ เสร็จแล้ว';btn.style.background='#10b981';}
+    else{done=done.filter(x=>x!==i);btn.textContent='ทำเสร็จแล้ว';btn.style.background='#0ea5e9';}
+    saveDone();renderProg();
+  };
+  v.appendChild(btn);
+});
+renderProg();
+
+// Copy buttons
+function copyCode(btn){
+  const code=btn.nextElementSibling.querySelector('code');
+  navigator.clipboard.writeText(code.innerText).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+</script>
+</body>
+</html>

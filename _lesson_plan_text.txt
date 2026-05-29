@@ -1,0 +1,1608 @@
+﻿
+
+แผนการจัดการเรียนรู้
+(ฉบับปรับปรุง: แนวทาง Spiral Curriculum — One Project, Many Iterations)
+หลักสูตร  ประกาศนียบัตรวิชาชีพชั้นสูง (ปวส.) พุทธศักราช 2567
+สาขาวิชา  เทคโนโลยีสารสนเทศ
+กลุ่มอาชีพ  เทคโนโลยีสารสนเทศและการสื่อสาร
+ประเภทวิชา  เทคโนโลยีสารสนเทศและการสื่อสาร
+รหัสวิชา  30901-2008  วิชา  การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+
+วิทยาลัย.........................................................................
+สำนักงานคณะกรรมการการอาชีวศึกษา กระทรวงศึกษาธิการ
+
+คำนำ
+แผนการจัดการเรียนรู้วิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps) รหัสวิชา 30901-2008 ฉบับปรับปรุงนี้ จัดทำขึ้นบนพื้นฐานของหลักสูตรประกาศนียบัตรวิชาชีพชั้นสูง พุทธศักราช 2567 โดยปรับเปลี่ยนแนวทางการจัดกิจกรรมจาก "หน่วยเรื่อง ๆ จบไป" ไปสู่แนวทาง Spiral Curriculum ที่ผู้เรียนพัฒนา Application ชิ้นเดียวกันตลอดภาคเรียน แล้วค่อย ๆ ห่อหุ้มด้วย DevOps Practice ทีละชั้นในแต่ละสัปดาห์ ทำให้ผู้เรียนได้ "ส่งชิ้นงาน" ทุกสัปดาห์
+แผนนี้ออกแบบมาให้สอดคล้องกับธรรมชาติของผู้เรียนระดับ ปวส. สาขาเทคโนโลยีสารสนเทศ ที่ต้องการความถี่ในการฝึกที่บ่อยครั้งและเห็นผลลัพธ์ที่จับต้องได้ นอกจากนี้ยังประยุกต์ใช้ทรัพยากร Proxmox ของวิทยาลัยอย่างเต็มที่ — ทั้ง Private Registry, VM Pool สำหรับ Staging/Production, k3s Cluster และ Monitoring Stack — เพื่อจำลองสภาพแวดล้อมการทำงานจริงในองค์กรไทยที่ส่วนใหญ่ยังเป็น On-premise
+แผนการจัดการเรียนรู้ฉบับนี้ประกอบด้วยหน่วยการเรียนรู้ทั้งหมด 17 หน่วย (ตามจำนวนสัปดาห์เรียน) ครั้งละ 5 ชั่วโมง รวม 85 ชั่วโมง โดยมีสอบกลางภาคเป็นการสอบเชิงปฏิบัติ (Practical Exam) ในสัปดาห์ที่ 8 และการนำเสนอ Capstone Project พร้อมสอบปลายภาคในสัปดาห์ที่ 17 เนื้อหาครอบคลุมตั้งแต่พื้นฐาน DevOps, Git, Fullstack Application, Containerization, CI/CD, Kubernetes, Monitoring, Infrastructure as Code และ DevSecOps
+ผู้จัดทำ
+
+สารบัญ
+คำนำ	ก
+สารบัญ	ข
+หลักสูตรรายวิชา	1
+ตารางวิเคราะห์หน่วยการเรียนรู้	3
+ตารางวิเคราะห์พฤติกรรมการเรียนรู้	6
+หน่วยการเรียนรู้รายสัปดาห์	8
+สัปดาห์ที่ 1 — แนวคิดและหลักการ DevOps (Foundation)	10
+สัปดาห์ที่ 2 — การสร้าง Fullstack Application และจัดการ Source Code (Build the App)	13
+สัปดาห์ที่ 3 — Containerization และ Private Registry (Containerize the App)	16
+สัปดาห์ที่ 4 — GitFlow และการทำงานเป็นทีม (Team Collaboration)	19
+สัปดาห์ที่ 5 — Continuous Integration: First Pipeline	22
+สัปดาห์ที่ 6 — CI ขั้นสูง: Quality Gate และ Build Image (CI Advanced)	25
+สัปดาห์ที่ 7 — Continuous Deployment to VM (CD)	28
+สัปดาห์ที่ 8 — สอบกลางภาค (Practical Midterm Exam)	31
+สัปดาห์ที่ 9 — Container Orchestration: Kubernetes Fundamentals	34
+สัปดาห์ที่ 10 — Kubernetes Operations: Scaling และ Rolling Update	37
+สัปดาห์ที่ 11 — Deployment Strategies และ Rollback Drill	40
+สัปดาห์ที่ 12 — Monitoring และ Observability	43
+สัปดาห์ที่ 13 — Logging และ Alerting	46
+สัปดาห์ที่ 14 — Infrastructure as Code ด้วย Terraform	49
+สัปดาห์ที่ 15 — DevSecOps: Security ใน CI/CD	52
+สัปดาห์ที่ 16 — Capstone Polish, Documentation และเตรียมนำเสนอ	55
+สัปดาห์ที่ 17 — Capstone Presentation และสอบปลายภาค	58
+บรรณานุกรม	70
+
+หลักสูตรรายวิชา
+หลักสูตร ประกาศนียบัตรวิชาชีพชั้นสูง (ปวส.) พุทธศักราช 2567
+ประเภทวิชา เทคโนโลยีสารสนเทศและการสื่อสาร  กลุ่มอาชีพ เทคโนโลยีสารสนเทศ  สาขาวิชา เทคโนโลยีสารสนเทศ
+รหัส 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+ทฤษฎี 1 ชั่วโมง/สัปดาห์  ปฏิบัติ 4 ชั่วโมง/สัปดาห์  จำนวน 3 หน่วยกิต
+ผลลัพธ์การเรียนรู้ระดับรายวิชา
+พัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps) ด้วยความละเอียดรอบคอบ รับผิดชอบ การสื่อสาร การคิดเชิงนวัตกรรมและการทำงานเป็นทีม โดยผู้เรียนพัฒนา Application ของทีมตลอดภาคเรียนแล้วประยุกต์ใช้ DevOps Practice ในการจัดการกระบวนการพัฒนาตั้งแต่ต้นจนถึงการ Deploy บน Kubernetes Cluster พร้อม Monitoring และ Security
+จุดประสงค์รายวิชา เพื่อให้
+เข้าใจเกี่ยวกับการพัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+มีทักษะในการพัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+มีเจตคติและกิจนิสัยที่ดีในการปฏิบัติงานด้วยความละเอียดรอบคอบ รับผิดชอบ การสื่อสาร การคิดเชิงนวัตกรรมและการทำงานเป็นทีม
+มีความสามารถประยุกต์ใช้เครื่องมือในการพัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+สมรรถนะรายวิชา
+ประมวลความรู้เกี่ยวกับการพัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+พัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+ประยุกต์ใช้เครื่องมือในการพัฒนาซอฟต์แวร์ตามกระบวนการเดฟออฟส์ (DevOps)
+คำอธิบายรายวิชา
+ศึกษาและปฏิบัติเกี่ยวกับ วิธีการพัฒนาและวิธีการดำเนินงานตามกระบวนการเดฟออฟส์ (DevOps) การปรับปรุงคุณลักษณะ ความถูกต้องของซอฟต์แวร์และเสถียรภาพของระบบ พัฒนาและดำเนินงานใช้เครื่องมือและเทคนิคต่าง ๆ สหวิทยาการของการพัฒนาซอฟต์แวร์ ดำเนินงานด้านเทคโนโลยีสารสนเทศ และการประกันคุณภาพ ลดอุปสรรคในการดำเนินโครงการ ปรับปรุงผลลัพธ์ทางธุรกิจ พร้อมส่งมอบให้กับผู้ใช้
+หลักการจัดการเรียนรู้ (Spiral Curriculum)
+ผู้เรียนพัฒนา Application หนึ่งตัวร่วมกันเป็นทีม 3-4 คน ตลอดภาคเรียน โดยในแต่ละสัปดาห์จะเพิ่ม DevOps Practice หนึ่งชั้นลงบน Application เดิม (Git → Fullstack → Container → Registry → GitFlow → CI → Quality Gate → CD → K8s → HPA → Strategies → Monitor → Logging → IaC → Security → Capstone) ผู้เรียนจึงมี deliverable ส่งทุกสัปดาห์และเห็นพัฒนาการของระบบตนเองอย่างต่อเนื่อง
+
+ตารางวิเคราะห์หน่วยการเรียนรู้
+สัปดาห์
+หน่วยการเรียนรู้
+Deliverable หลัก
+ทฤษฎี
+ปฏิบัติ
+รวม
+
+1
+แนวคิดและหลักการ DevOps (Foundation)
+GitHub Profile Repo
+1
+4
+5
+
+2
+การสร้าง Fullstack Application และจัดการ Source Code (Build the App)
+Fullstack App รันบนเครื่อง
+1
+4
+5
+
+3
+Containerization และ Private Registry (Containerize the App)
+Docker Image บน Private Registry
+1
+4
+5
+
+4
+GitFlow และการทำงานเป็นทีม (Team Collaboration)
+Team Repo + GitFlow + PRs
+1
+4
+5
+
+5
+Continuous Integration: First Pipeline
+CI Pipeline (Build+Test+Lint)
+1
+4
+5
+
+6
+CI ขั้นสูง: Quality Gate และ Build Image (CI Advanced)
+CI + Sonar Gate + Image Push
+1
+4
+5
+
+7
+Continuous Deployment to VM (CD)
+CD ไป Staging+Prod VM
+1
+4
+5
+
+8
+สอบกลางภาค (Practical Midterm Exam)
+สอบกลางภาคปฏิบัติ
+0
+5
+5
+
+9
+Container Orchestration: Kubernetes Fundamentals
+App รันบน k3s Cluster
+1
+4
+5
+
+10
+Kubernetes Operations: Scaling และ Rolling Update
+HPA + CD ไป k3s
+1
+4
+5
+
+11
+Deployment Strategies และ Rollback Drill
+Canary + Rollback Drill
+1
+4
+5
+
+12
+Monitoring และ Observability
+Grafana Dashboard + SLI
+1
+4
+5
+
+13
+Logging และ Alerting
+Loki + Alert Notification
+1
+4
+5
+
+14
+Infrastructure as Code ด้วย Terraform
+Terraform Provision VM
+1
+4
+5
+
+15
+DevSecOps: Security ใน CI/CD
+Security Stage + Sealed Secret
+1
+4
+5
+
+16
+Capstone Polish, Documentation และเตรียมนำเสนอ
+Capstone Polish + Doc
+0
+5
+5
+
+17
+Capstone Presentation และสอบปลายภาค
+Final Demo + Retrospective
+0
+5
+5
+
+รวม
+
+14
+71
+85
+
+ตารางวิเคราะห์พฤติกรรมการเรียนรู้
+รหัส 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+ทฤษฎี 1 ชม./สัปดาห์  ปฏิบัติ 4 ชม./สัปดาห์  จำนวน 3 หน่วยกิต
+สป.
+หน่วยการเรียนรู้
+K
+S
+A
+Ap
+ท/ป
+รวม
+
+1
+แนวคิดและหลักการ DevOps (Foundation)
+K2,K3
+S2
+A3
+Ap2
+1/4
+5
+
+2
+การสร้าง Fullstack Application และจัดการ Source Code (Build the App)
+K3
+S3
+A3
+Ap3
+1/4
+5
+
+3
+Containerization และ Private Registry (Containerize the App)
+K3,K4
+S3
+A4
+Ap3
+1/4
+5
+
+4
+GitFlow และการทำงานเป็นทีม (Team Collaboration)
+K3
+S3
+A3
+Ap3
+1/4
+5
+
+5
+Continuous Integration: First Pipeline
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+6
+CI ขั้นสูง: Quality Gate และ Build Image (CI Advanced)
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+7
+Continuous Deployment to VM (CD)
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+8
+สอบกลางภาค (Practical Midterm Exam)
+K4
+S3
+A3
+Ap3
+0/5
+5
+
+9
+Container Orchestration: Kubernetes Fundamentals
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+10
+Kubernetes Operations: Scaling และ Rolling Update
+K4
+S4
+A4
+Ap4
+1/4
+5
+
+11
+Deployment Strategies และ Rollback Drill
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+12
+Monitoring และ Observability
+K3,K4
+S3
+A3
+Ap3
+1/4
+5
+
+13
+Logging และ Alerting
+K3,K4
+S3
+A4
+Ap3
+1/4
+5
+
+14
+Infrastructure as Code ด้วย Terraform
+K3,K4
+S3
+A4
+Ap3
+1/4
+5
+
+15
+DevSecOps: Security ใน CI/CD
+K4
+S3
+A4
+Ap4
+1/4
+5
+
+16
+Capstone Polish, Documentation และเตรียมนำเสนอ
+K4
+S4
+A4
+Ap4
+0/5
+5
+
+17
+Capstone Presentation และสอบปลายภาค
+K4
+S4
+A5
+Ap5
+0/5
+5
+
+หน่วยการเรียนรู้รายสัปดาห์
+ในส่วนต่อไปนี้เป็นแผนการจัดการเรียนรู้รายสัปดาห์ทั้ง 17 สัปดาห์ ตามแนวทาง Spiral Curriculum โดยทุกสัปดาห์มี deliverable ที่ผู้เรียนต้องส่ง และ Application ของทีมจะค่อย ๆ ถูกห่อหุ้มด้วย DevOps Practice เพิ่มขึ้นทีละชั้น
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 1
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 1
+
+ชื่อหน่วยการเรียนรู้  แนวคิดและหลักการ DevOps (Foundation)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถอธิบายแนวคิด หลักการ วัฒนธรรม DevOps Lifecycle และใช้ Git/GitHub เพื่อจัดการ Source Code ของตนเองได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ประมวลความรู้เกี่ยวกับแนวคิด CALMS และ DevOps Lifecycle
+3.2  ใช้ Git CLI พื้นฐานในการจัดการ Repository ส่วนตัวบน GitHub
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K2,K3 | ทักษะพิสัย: S2 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap2)
+4.1  [K2,K3] อธิบายหลักการ CALMS และ DevOps Lifecycle พร้อมยกตัวอย่างองค์กรที่ประสบความสำเร็จได้
+4.2  [S2] ใช้คำสั่ง git init, add, commit, push, pull, branch ได้อย่างถูกต้อง
+4.3  [A3] เห็นคุณค่าของการทำงานร่วมกันระหว่าง Dev และ Ops และมีวินัยในการเขียน Commit Message
+4.4  [Ap2] สร้าง GitHub Profile Repository พร้อม README และ commit history ที่อ่านง่ายได้
+
+5. สาระการเรียนรู้
+1.1 ความหมาย ที่มา และวิวัฒนาการของ DevOps
+1.2 หลักการ CALMS (Culture, Automation, Lean, Measurement, Sharing)
+1.3 DevOps Lifecycle และ Infinity Loop
+1.4 เปรียบเทียบ Waterfall, Agile, Scrum และ DevOps
+1.5 Git Architecture (Working Tree, Index, Local Repo, Remote)
+1.6 Git Commands พื้นฐาน: init, clone, add, commit, push, pull, branch
+1.7 GitHub Workflow: Repository, README, .gitignore, Commit Convention
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 1 — DevOps Concept + Git Onboarding (300 นาที)
+• Set the Stage (20 นาที): ครูฉาย Meme "It works on my machine" → ผู้เรียนแชร์ประสบการณ์ปัญหาส่งโค้ดกันในทีม
+• Concept Input (40 นาที): บรรยาย CALMS + DevOps Lifecycle ผ่าน Infographic — เน้นว่าตลอดเทอมจะค่อย ๆ เพิ่ม practice ทีละชั้นบน "app เดียว"
+• Guided Lab — Git First Touch (90 นาที): ผู้เรียนสมัคร GitHub → ตั้งค่า SSH Key → ฝึก init/add/commit/push บนเครื่องตนเอง
+• Deliverable Sprint (120 นาที): สร้าง GitHub Profile Repository (username/username) พร้อม README แนะนำตัว + มี commit ≥ 5 ครั้งที่มี message สื่อความหมาย
+• Exit Ticket + Demo (30 นาที): ผู้เรียนทุกคนแชร์ลิงก์ profile ของตน + เขียน 3 สิ่งที่เรียนรู้/สงสัย
+
+7. สื่อและแหล่งการเรียนรู้
+1. คอมพิวเตอร์พร้อม Git, VS Code, GitHub Account
+2. สไลด์ Infographic CALMS + DevOps Lifecycle
+3. Worksheet Git Step-by-step
+4. Profile Repository Rubric
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Exit Ticket DevOps Concept + Git Cheat Sheet ที่ผู้เรียนเขียนเอง
+8.2 หลักฐานการปฏิบัติงาน:  GitHub Profile Repository (URL) + commit history screenshot
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Profile Repo ต้องมี README ที่อ่านได้ + commit ≥ 5 ครั้ง พร้อม message สื่อความหมาย ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Repository URL, ตรวจ commit history, สังเกตการปฏิบัติ
+9.3 เครื่องมือประเมิน:  Git Onboarding Rubric, แบบสังเกตทักษะปฏิบัติ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 2
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 2
+
+ชื่อหน่วยการเรียนรู้  การสร้าง Fullstack Application และจัดการ Source Code (Build the App)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถสร้าง Application แบบ Fullstack (Frontend + Backend + Database) รันบนเครื่องตนเอง พร้อมจัดการ Source Code ด้วย Git ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ออกแบบและสร้าง Fullstack App ขนาดเล็กที่รันได้บนเครื่องตนเอง
+3.2  จัดการ Source Code ด้วย Git พร้อม .gitignore ที่ถูกต้อง
+3.3  วิเคราะห์ปัญหา "works on my machine" ที่จะนำไปสู่ Containerization
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3] อธิบายโครงสร้าง Fullstack App (Frontend / Backend / Database) และความสัมพันธ์ของ component ได้
+4.2  [S3] สร้าง Backend API (≥ 3 endpoints) + Frontend ที่เรียก API + Database ที่เก็บข้อมูลจริงได้
+4.3  [A3] รับผิดชอบในการจัดการ Source Code ไม่ commit ไฟล์ secret/node_modules
+4.4  [Ap3] วิเคราะห์ปัญหา dependency / environment ที่เกิดขึ้นเมื่อสลับเครื่องกับเพื่อนได้
+
+5. สาระการเรียนรู้
+2.1 สถาปัตยกรรม Fullstack: Frontend, Backend, Database
+2.2 ตัวเลือก Stack: Node/Express + React, FastAPI + Vue หรืออื่น ๆ
+2.3 Environment Variables และ .env Management
+2.4 Database Seeding และ Migration พื้นฐาน
+2.5 .gitignore Strategy และ Secret Management พื้นฐาน
+2.6 README ที่มี Setup Instructions ครบถ้วน
+2.7 ปัญหาที่พบ: Version Mismatch, Missing Dependency, Port Conflict
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 2 — Build & Run Fullstack App (300 นาที)
+• Stack Selection (30 นาที): ครูแนะนำ stack ตัวเลือก 2-3 แบบ → ผู้เรียนเลือก stack ที่ถนัด/อยากเรียน
+• Guided Lab — Backend API (90 นาที): สร้าง API ≥ 3 endpoints (เช่น CRUD todo) + เชื่อม Database (SQLite/Postgres local) + เพิ่ม seed data
+• Guided Lab — Frontend (90 นาที): สร้าง UI หน้าเดียวที่ list/add/delete ผ่าน API → เห็นข้อมูลจริงจาก DB
+• Pair Swap Challenge (60 นาที): จับคู่สลับเครื่องกัน → พยายามรัน app ของเพื่อนให้ได้ → จดปัญหาที่พบ (node version ไม่ตรง, port ชน, ไม่มี .env, db ไม่ seed)
+• Reflection + Setup README (30 นาที): เขียน README ที่ผู้อื่นทำตามแล้วรันได้จริง + commit + push
+
+7. สื่อและแหล่งการเรียนรู้
+1. คอมพิวเตอร์, VS Code, Node.js/Python, PostgreSQL หรือ SQLite
+2. Starter Template Repository (ครูเตรียม)
+3. Fullstack App Rubric
+4. Pair Swap Issue Log Template
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Issue Log จาก Pair Swap (จดปัญหาที่พบ) + Reflection note
+8.2 หลักฐานการปฏิบัติงาน:  Repository ที่มี Fullstack App รันได้จริง + README ที่ผู้อื่นทำตามได้
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  App ต้องมี Frontend + Backend + DB ที่ทำงานร่วมกันได้, .gitignore ถูกต้อง, README ครบถ้วน, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ครูสุ่ม clone repo แล้วลองรันตาม README, ตรวจ commit history
+9.3 เครื่องมือประเมิน:  Fullstack App Rubric, Pair Swap Score Sheet, แบบสังเกตทักษะปฏิบัติ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 3
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 3
+
+ชื่อหน่วยการเรียนรู้  Containerization และ Private Registry (Containerize the App)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถ Containerize Application ของตนเองด้วย Docker, จัดการหลาย Service ด้วย Docker Compose และ Push Image เข้า Private Registry บน Proxmox ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  เขียน Dockerfile ที่ Build Image ของ App ได้
+3.2  ใช้ Docker Compose จัดการ Multi-container Application
+3.3  Push / Pull Image กับ Private Registry บน Proxmox
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย Container vs VM, Docker Architecture และวิเคราะห์การออกแบบ Dockerfile ที่เหมาะสมได้
+4.2  [S3] เขียน Dockerfile (Multi-stage ก็ดี) และ docker-compose.yml สำหรับ App ของตนเอง (≥ 2 services) ได้
+4.3  [A4] จัดระบบค่านิยมด้านความปลอดภัย ไม่รัน Container ด้วย root โดยไม่จำเป็น
+4.4  [Ap3] Push Image ของ App ขึ้น Private Registry บน Proxmox และ Pull กลับมา Run ได้สำเร็จ
+
+5. สาระการเรียนรู้
+3.1 Container vs Virtual Machine
+3.2 Docker Architecture: Daemon, Client, Image, Container, Registry
+3.3 Dockerfile: FROM, COPY, RUN, EXPOSE, CMD, ENTRYPOINT, USER
+3.4 Multi-stage Build และ Image Size Optimization
+3.5 Docker Compose: services, networks, volumes, depends_on, healthcheck
+3.6 Docker Registry: Public (Docker Hub) vs Private (Self-hosted)
+3.7 การติดตั้ง Private Registry บน Proxmox VM
+3.8 docker login, tag, push, pull workflow
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 3 — Containerize Your App + Private Registry (300 นาที)
+• Pain Recap (15 นาที): ทบทวนปัญหาจาก Pair Swap สัปดาห์ที่แล้ว → ผู้เรียนเสนอว่า Container จะแก้ปัญหานี้ได้อย่างไร
+• Concept Input (45 นาที): Docker Architecture + Dockerfile syntax + เปรียบเทียบ Compose vs run คำสั่งตรง ๆ
+• Guided Lab — Containerize App (120 นาที): เขียน Dockerfile สำหรับ Backend + Frontend → docker-compose.yml รวมกับ Database → รันให้ได้ทั้ง stack ด้วย `docker compose up`
+• Registry Lab (90 นาที): ครูเปิด Private Registry บน Proxmox (registry.lab.local:5000) → ผู้เรียน docker tag → docker push → ลบ local image → docker pull → run ใหม่
+• Pair Swap (Round 2) (30 นาที): จับคู่เดิม → เพื่อนเพียง docker compose pull + up → ต้องรันได้ทันที (ไม่ต้องลง Node/Python อีกแล้ว) → เปรียบเทียบกับสัปดาห์ที่แล้ว
+
+7. สื่อและแหล่งการเรียนรู้
+1. คอมพิวเตอร์พร้อม Docker Engine
+2. Private Registry VM บน Proxmox (registry.lab.local:5000)
+3. Dockerfile Best Practice Cheat Sheet
+4. Compose Template สำหรับแต่ละ stack
+5. Registry Push/Pull Worksheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Dockerfile + docker-compose.yml ของ App ตนเอง พร้อมคำอธิบายแต่ละบรรทัด
+8.2 หลักฐานการปฏิบัติงาน:  Image บน Private Registry (URL) + screenshot การ pull/run จากเครื่องเพื่อน
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Image ต้อง build ได้ ไม่มี error, Compose มี ≥ 2 services, Push เข้า registry สำเร็จ, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Dockerfile, รัน compose up จาก registry, สังเกตกระบวนการ push/pull
+9.3 เครื่องมือประเมิน:  Docker Lab Rubric, Registry Checklist, แบบสังเกตทักษะปฏิบัติ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 4
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 4
+
+ชื่อหน่วยการเรียนรู้  GitFlow และการทำงานเป็นทีม (Team Collaboration)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถรวมโปรเจกต์เป็นทีม 3-4 คน และทำงานร่วมกันผ่าน GitFlow, Pull Request และ Code Review ได้อย่างมีประสิทธิภาพ
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  บริหาร Branch ด้วย GitFlow (main, develop, feature, release, hotfix)
+3.2  ทำ Pull Request และ Code Review ที่มีคุณภาพ
+3.3  แก้ Merge Conflict และทำงานเป็นทีมโดยไม่ทับโค้ดกันเอง
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3] อธิบาย GitFlow Branch Strategy และขั้นตอน PR / Code Review ได้
+4.2  [S3] ใช้ branch, merge, rebase, cherry-pick และแก้ Merge Conflict ได้ถูกต้อง
+4.3  [A3] มีวินัยในการเขียน Commit Message + PR Description และรับผิดชอบต่อ Code ที่ Merge
+4.4  [Ap3] บริหาร Team Repository ด้วย GitFlow ตั้งแต่ Feature branch จนถึง Release ได้
+
+5. สาระการเรียนรู้
+4.1 GitFlow Workflow: main, develop, feature, release, hotfix
+4.2 Branching Strategies เปรียบเทียบ: GitFlow, GitHub Flow, Trunk-based
+4.3 Pull Request / Merge Request Process
+4.4 Code Review Best Practices และ Checklist
+4.5 Merge Conflict: เกิดอย่างไร และวิธีแก้
+4.6 Protected Branch และ Branch Rules
+4.7 Conventional Commits
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 4 — Team Repository Sprint (300 นาที)
+• Team Formation (30 นาที): จัดทีม 3-4 คน → เลือก App ที่ทีมจะใช้ตลอดเทอม (เลือกจาก app ที่สมาชิกคนใดคนหนึ่งทำในสัปดาห์ที่ 2)
+• Jigsaw — GitFlow (45 นาที): Expert group ศึกษา feature/release/hotfix → กลับกลุ่มเดิมสอนเพื่อน
+• Team Sprint (150 นาที): ตั้ง team repo บน GitHub → แต่ละคน clone → แบ่ง feature → ทำงานบน feature branch ของตน → เปิด PR → review โดยเพื่อนในทีม ≥ 1 คน → merge เข้า develop
+• Conflict Lab (45 นาที): ครูจัดสถานการณ์ให้ทีมแก้ไฟล์เดียวกันใน 2 branch → ฝึกแก้ Merge Conflict
+• Peer Code Review Workshop (30 นาที): สลับ repo กับทีมอื่น → comment ตาม Code Review Checklist
+
+7. สื่อและแหล่งการเรียนรู้
+1. คอมพิวเตอร์, GitHub Account
+2. Team Repository Template
+3. GitFlow Diagram Poster
+4. Code Review Checklist
+5. Conflict Scenario Worksheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Jigsaw Summary + GitFlow Diagram ของทีม
+8.2 หลักฐานการปฏิบัติงาน:  Team Repository พร้อม GitFlow Branch ครบ + PR History + Code Review Comments
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Repo ต้องมี main + develop + feature branch, ทุก feature ต้อง merge ผ่าน PR + review ≥ 1, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Git log, ตรวจ PR + review comments, สังเกตการทำงานเป็นทีม
+9.3 เครื่องมือประเมิน:  GitFlow Rubric, Code Review Checklist, แบบสังเกตการทำงานกลุ่ม
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 5
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 5
+
+ชื่อหน่วยการเรียนรู้  Continuous Integration: First Pipeline
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถออกแบบและสร้าง CI Pipeline เบื้องต้นด้วย GitHub Actions ที่ Build และ Test Application ของทีมโดยอัตโนมัติเมื่อมี Push หรือ Pull Request
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ออกแบบ CI Workflow Architecture
+3.2  เขียน GitHub Actions YAML ที่ Build, Test, Lint ได้
+3.3  อ่าน Workflow Log และ Debug Pipeline ที่ Fail ได้
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย CI Concepts, Trigger, Runner, Job, Step และวิเคราะห์ Workflow ที่เหมาะสมกับ App ของทีมได้
+4.2  [S3] เขียน .github/workflows/ci.yml ที่ครอบคลุม Build + Unit Test + Lint และทำงานได้จริง
+4.3  [A3] ตระหนักถึงความสำคัญของ Automated Testing เพื่อลด Defect ก่อน Merge
+4.4  [Ap3] ปรับ Workflow ของทีมให้ run อัตโนมัติทุก PR และทำให้ build status เป็นสีเขียว
+
+5. สาระการเรียนรู้
+5.1 หลักการ Continuous Integration
+5.2 GitHub Actions: Workflow, Event Trigger, Job, Step, Runner
+5.3 YAML Syntax และ Workflow Structure
+5.4 Unit Testing และ Test Runner ของแต่ละ stack
+5.5 Linting และ Code Style Check
+5.6 Build Artifact และ Caching
+5.7 Pipeline Status Badge
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 5 — First CI Pipeline (300 นาที)
+• Problem Posing (30 นาที): ครูแสดงสถานการณ์ — "เพื่อน merge โค้ดที่ทำให้ test แตก" → ผู้เรียนเสนอวิธีป้องกัน → นำเข้า CI
+• Concept Mapping (45 นาที): ทีมวาด CI Workflow Map ของ App ตนเอง: Trigger → Setup → Install → Test → Lint
+• Guided Lab — Hello CI (60 นาที): เริ่มจาก workflow ง่าย ๆ ที่ echo "hello" → step-by-step
+• Team Sprint — Real CI (120 นาที): เขียน ci.yml จริงของ App ทีม → run ทุก push + PR → ต้องเขียน unit test อย่างน้อย 3 ตัว
+• Debug Challenge (45 นาที): ครูแอบแก้โค้ดให้ test fail → ทีมต้องอ่าน Action log วิเคราะห์ และส่ง PR แก้
+
+7. สื่อและแหล่งการเรียนรู้
+1. คอมพิวเตอร์, GitHub Account ของทีม
+2. Concept Map Template (A3)
+3. ci.yml Starter Snippets
+4. Debug Log Worksheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  CI Workflow Map + Concept Map
+8.2 หลักฐานการปฏิบัติงาน:  ci.yml ที่ run อัตโนมัติ + Workflow run history ที่มี green build
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Pipeline ต้อง trigger อัตโนมัติทุก push/PR + มี build, test, lint ครบ + ผ่าน 3 รอบติด, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Workflow file, ดู Action run history, สังเกตการ debug
+9.3 เครื่องมือประเมิน:  CI Pipeline Rubric, แบบสังเกตทักษะ debug, Test Coverage Sheet
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 6
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 6
+
+ชื่อหน่วยการเรียนรู้  CI ขั้นสูง: Quality Gate และ Build Image (CI Advanced)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถเพิ่ม Code Quality Gate (SonarQube) ใน Pipeline และให้ Pipeline Build Docker Image แล้ว Push เข้า Private Registry อัตโนมัติได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  บูรณาการ SonarQube เข้ากับ CI Pipeline
+3.2  ตั้ง Quality Gate ตาม Coverage / Code Smell
+3.3  ให้ Pipeline สร้างและ Push Image อัตโนมัติเมื่อ merge to main
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบายแนวคิด Code Quality, SAST, Static Analysis และเหตุผลของ Quality Gate ได้
+4.2  [S3] ตั้ง SonarQube (Self-hosted บน Proxmox) เชื่อมกับ Pipeline และตั้ง Quality Gate ที่ Coverage ≥ 60%
+4.3  [A3] ตระหนักถึงคุณค่าของ Code Quality และเห็นว่า Quality Gate ปกป้องทีมจาก technical debt
+4.4  [Ap3] ปรับ Pipeline ให้ Build + Push Docker Image เข้า Private Registry อัตโนมัติเมื่อ merge to main
+
+5. สาระการเรียนรู้
+6.1 Code Quality Metrics: Coverage, Maintainability, Duplication
+6.2 SonarQube: Server, Scanner, Quality Gate
+6.3 SonarQube Self-hosting บน Proxmox
+6.4 GitHub Actions Matrix Build และ Parallel Job
+6.5 Docker Build Action และ Image Tagging Strategy
+6.6 GitHub Secrets และ Variable Management
+6.7 Workflow Optimization: Cache, Conditional Step
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 6 — Quality Gate + Image Pipeline (300 นาที)
+• Socratic Seminar (30 นาที): ถาม "ทีมจะรู้ได้อย่างไรว่าโค้ดพร้อม deploy?" → นำสู่ Quality Gate
+• SonarQube Setup (60 นาที): ครูสาธิตและให้ผู้เรียน register project บน SonarQube self-hosted → run scan ครั้งแรก → ดู report
+• Quality Gate Sprint (90 นาที): ทีมเขียน unit test เพิ่มจนผ่าน Coverage ≥ 60% + แก้ Code Smell ตามที่ Sonar รายงาน
+• Docker Build Pipeline (90 นาที): เพิ่ม job ใน ci.yml ที่ build image และ push เข้า registry.lab.local (ใช้ docker/build-push-action) → tag ด้วย commit SHA + &apos;latest&apos;
+• Pipeline Competition (30 นาที): แข่งทีมไหน pipeline เร็วสุด + image เล็กสุด + ผ่าน Quality Gate
+
+7. สื่อและแหล่งการเรียนรู้
+1. SonarQube Server บน Proxmox VM
+2. Private Registry บน Proxmox
+3. Docker Build Action Documentation
+4. Quality Gate Template
+5. Image Tagging Strategy Sheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Quality Gate Configuration + รายงาน Code Smell ที่ทีมแก้ไข
+8.2 หลักฐานการปฏิบัติงาน:  Pipeline ที่มี Sonar Scan + Docker Build + Push → Image ปรากฏใน Registry อัตโนมัติ
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Sonar Coverage ≥ 60%, Quality Gate ผ่าน, Image push เข้า registry ได้ทุก merge to main, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Sonar Dashboard, ดู Workflow log, ตรวจ Image tag ใน registry
+9.3 เครื่องมือประเมิน:  CI Advanced Rubric, Sonar Dashboard Screenshot, Image Tag Checklist
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 7
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 7
+
+ชื่อหน่วยการเรียนรู้  Continuous Deployment to VM (CD)
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถสร้าง CD Pipeline ที่ Deploy Application ไปยัง Staging และ Production VM บน Proxmox อัตโนมัติ พร้อม Manual Approval Gate ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ออกแบบ Environment Strategy (Dev, Staging, Production)
+3.2  เขียน CD Workflow ที่ SSH ไป VM เพื่อ docker compose pull + up
+3.3  ตั้ง Manual Approval Gate ก่อน Deploy to Production
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบายความต่าง Continuous Delivery vs Deployment และเลือก Environment Strategy ได้
+4.2  [S3] เขียน CD Workflow ที่ deploy ไป Staging อัตโนมัติ และ deploy ไป Production เมื่อได้ approval
+4.3  [A3] ตระหนักถึงความเสี่ยงของการ Deploy และเห็นคุณค่าของ Staging Environment
+4.4  [Ap3] Deploy Application ของทีมขึ้น VM บน Proxmox โดยอัตโนมัติได้สำเร็จ
+
+5. สาระการเรียนรู้
+7.1 Continuous Delivery vs Continuous Deployment
+7.2 Environment Management: Dev, Staging, Production
+7.3 GitHub Actions Environment และ Protection Rules
+7.4 SSH Action และการจัดการ SSH Key อย่างปลอดภัย
+7.5 docker compose pull + up เป็น Deployment Pattern
+7.6 Manual Approval Gate และ Required Reviewer
+7.7 Release Tag และ Versioning
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 7 — Deploy to VM Pipeline (300 นาที)
+• Case Analysis (30 นาที): วิเคราะห์ Incident Report ของการ Deploy ล้มเหลวจริง (Amazon 2011 หรือ Knight Capital) → ระบุ root cause
+• VM Setup (30 นาที): ครูเตรียม VM 2 ตัวต่อทีม (staging-teamN.lab, prod-teamN.lab) ให้ผู้เรียน SSH เข้าได้ + docker engine พร้อม
+• Guided Lab — CD to Staging (90 นาที): ต่อ workflow เดิม เพิ่ม job &apos;deploy-staging&apos; ที่ trigger เมื่อ merge to main → SSH ไป VM → pull image ใหม่ → docker compose up -d
+• Production Pipeline (90 นาที): เพิ่ม job &apos;deploy-production&apos; ที่ใช้ GitHub Environment + Required Reviewer → ต้องมีคนกด approve ก่อน → deploy เข้า prod VM
+• Live Demo (60 นาที): แต่ละทีม push code change เล็ก ๆ → กด approve → ดูเว็บไซต์ prod เปลี่ยนจริง ๆ → ปลื้มร่วมกัน
+
+7. สื่อและแหล่งการเรียนรู้
+1. VM Pool บน Proxmox (staging + prod ต่อทีม)
+2. SSH Action Documentation
+3. Environment Configuration Template
+4. Incident Report PDF
+5. Approval Workflow Diagram
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Environment Strategy Diagram + Incident Analysis Sheet
+8.2 หลักฐานการปฏิบัติงาน:  CD Pipeline ที่ Deploy ไป Staging อัตโนมัติ + Production ผ่าน Approval → เว็บใช้งานได้จริงบน VM
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Pipeline ต้อง deploy ไป staging อัตโนมัติ + มี approval gate ก่อน prod + URL staging/prod เข้าใช้ได้จริง, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  สาธิต Push-to-Deploy, ตรวจ Approval log, ทดสอบ URL จริง
+9.3 เครื่องมือประเมิน:  CD Pipeline Rubric, Deployment Demo Score Sheet, แบบประเมินการนำเสนอ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 8
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 8
+
+ชื่อหน่วยการเรียนรู้  สอบกลางภาค (Practical Midterm Exam)
+ทฤษฎี 0 ชม. ปฏิบัติ 5 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถประยุกต์ใช้ทักษะ Git, Docker, CI/CD ที่เรียนมาในการแก้โจทย์เชิงปฏิบัติภายในเวลาที่กำหนดได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ประยุกต์ใช้ Git + Docker + CI/CD ครบวงจรในการเพิ่ม feature ใหม่
+3.2  วิเคราะห์และแก้ปัญหา Pipeline ที่ Fail ภายใต้แรงกดดันด้านเวลา
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K4] วิเคราะห์ข้อกำหนดของโจทย์และวางแผนการแก้ไขได้
+4.2  [S3] เขียน code + ทดสอบ + ส่งเข้า pipeline จนถึง production ภายในเวลา 90 นาที
+4.3  [A3] รับผิดชอบงานของตนเองและสื่อสารกับทีม (กรณีสอบเป็นทีม) ภายใต้แรงกดดันได้
+4.4  [Ap3] บูรณาการความรู้ที่เรียนมาเพื่อแก้โจทย์ End-to-End
+
+5. สาระการเรียนรู้
+8.1 ทบทวน Git Workflow และ GitFlow
+8.2 ทบทวน Dockerfile และ Compose
+8.3 ทบทวน CI/CD Pipeline
+8.4 สอบปฏิบัติเชิงประยุกต์
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 8 — Practical Midterm Exam (300 นาที)
+• Briefing (15 นาที): อธิบายโจทย์สอบ + เกณฑ์ + เวลา
+• Quick Review (45 นาที): ครูทบทวนจุดสำคัญ Git/Docker/CI/CD ที่ผู้เรียนถาม
+• สอบภาคปฏิบัติ (180 นาที): โจทย์ตัวอย่าง — "เพิ่ม endpoint /health ที่ตอบ {"status":"ok"} + เขียน test + ทำให้ขึ้น production VM ผ่าน pipeline ภายใน 90 นาที" จากนั้นโจทย์ที่ 2 — "แก้ pipeline ที่ครูแอบทำให้ fail ภายใน 60 นาที"
+• Reflection + Debrief (60 นาที): ทบทวนคำตอบที่ถูก/ผิด, สรุป pain point ของแต่ละคน, เตรียมความพร้อมเข้า Kubernetes
+
+7. สื่อและแหล่งการเรียนรู้
+1. ข้อสอบปฏิบัติ (Repository template)
+2. Rubric สอบกลางภาค
+3. VM สอบส่วนตัวต่อคน
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  คำตอบ + Reflection Note หลังสอบ
+8.2 หลักฐานการปฏิบัติงาน:  Commit + PR + Successful Pipeline Run + Live URL ที่ตอบ /health ได้
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  ผ่านโจทย์ที่ 1 (50%) + โจทย์ที่ 2 (30%) + เกณฑ์คุณภาพ Code/Pipeline (20%), ผ่านเกณฑ์ 60%
+9.2 วิธีการประเมิน:  ตรวจ Repository, ตรวจ Pipeline run, ทดสอบ URL จริง
+9.3 เครื่องมือประเมิน:  Midterm Practical Rubric, Live URL Checklist
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 9
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 9
+
+ชื่อหน่วยการเรียนรู้  Container Orchestration: Kubernetes Fundamentals
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถ Deploy Application ของทีมขึ้น Kubernetes Cluster (k3s บน Proxmox) ด้วย Deployment, Service และ ConfigMap ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  อธิบาย Kubernetes Architecture และ Core Objects
+3.2  เขียน YAML Manifest สำหรับ Deployment, Service, ConfigMap, Secret
+3.3  ใช้ kubectl บริหาร Cluster พื้นฐาน
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย Kubernetes Architecture (Control Plane, Node, Pod, Service) และเลือก Object ที่เหมาะสมกับ use case ได้
+4.2  [S3] เขียน YAML Manifest สำหรับ Deployment + Service + ConfigMap ของ App ทีมและ apply ลง cluster ได้
+4.3  [A3] เห็นคุณค่าของ Declarative Configuration เทียบกับ Imperative
+4.4  [Ap3] นำ App ของทีมที่อยู่บน VM ขึ้น k3s cluster ได้สำเร็จ
+
+5. สาระการเรียนรู้
+9.1 Container Orchestration: ทำไมต้องการ
+9.2 Kubernetes Architecture: Control Plane, Worker Node, etcd, API Server
+9.3 k3s บน Proxmox: Lightweight K8s สำหรับการเรียน
+9.4 Pod, ReplicaSet, Deployment
+9.5 Service: ClusterIP, NodePort, LoadBalancer
+9.6 ConfigMap และ Secret
+9.7 Namespace และการแยกทีม
+9.8 kubectl Essential Commands
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 9 — Kubernetes Hands-on (300 นาที)
+• K8s Architecture Puzzle (45 นาที): จัดบัตรคำ (Pod, Node, Service, Deployment) ลง Layer ที่ถูกต้องบนกระดาน → ครูสรุป
+• Cluster Tour (30 นาที): ครูแนะนำ k3s cluster ที่เตรียมไว้ (1 master + 2 worker บน Proxmox) → ผู้เรียน kubectl get nodes เห็น cluster จริง
+• Guided Lab — First Pod & Service (90 นาที): kubectl run nginx → expose → curl ทดสอบ → ลบ pod → ดู ReplicaSet สร้างใหม่
+• Team Sprint — Migrate App to K8s (120 นาที): แปลง docker-compose.yml ของทีม → เขียน Deployment + Service + ConfigMap YAML → apply เข้า namespace ของตนเอง → ทดสอบใช้งานจริง
+• Chaos Mini Lab (15 นาที): ครู kubectl delete pod กะทันหัน → ผู้เรียนสังเกตว่า ReplicaSet สร้าง pod ใหม่อัตโนมัติ
+
+7. สื่อและแหล่งการเรียนรู้
+1. k3s Cluster บน Proxmox (เตรียมก่อนเปิดเทอม)
+2. kubectl บนเครื่องผู้เรียน
+3. K8s Object Card Set
+4. YAML Manifest Template
+5. Migration Worksheet (Compose → K8s)
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  K8s Architecture Diagram + Compose-to-K8s Mapping Table
+8.2 หลักฐานการปฏิบัติงาน:  YAML Manifest ของทีมที่ apply แล้ว app รันบน k3s ได้ + kubectl get all screenshot
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  App ต้องรันบน k3s, มี Deployment + Service + ConfigMap, ใช้งานผ่าน NodePort/Ingress ได้, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Manifest, รัน kubectl ตรวจสถานะ, ทดสอบ URL
+9.3 เครื่องมือประเมิน:  K8s Deployment Rubric, kubectl Skill Checklist, แบบสังเกตทักษะปฏิบัติ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 10
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 10
+
+ชื่อหน่วยการเรียนรู้  Kubernetes Operations: Scaling และ Rolling Update
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถตั้งค่า Auto-scaling (HPA), ทำ Rolling Update และเปลี่ยน CD Pipeline ให้ deploy ไป k3s แทน VM ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ตั้งค่า Horizontal Pod Autoscaler (HPA) และทดสอบด้วย Load Test
+3.2  ทำ Rolling Update และ Rollback บน Deployment
+3.3  ปรับ CD Pipeline ให้ใช้ kubectl apply แทน docker compose
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K4 | ทักษะพิสัย: S4 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap4)
+4.1  [K4] วิเคราะห์ resource ที่เหมาะสมสำหรับ HPA และคำนวณ replica ตาม load ได้
+4.2  [S4] เขียน HPA YAML ที่ scale ตาม CPU/Memory และทดสอบด้วย k6 load test
+4.3  [A4] จัดระบบค่านิยมด้าน High Availability และวางแผน Rollout อย่างรอบคอบ
+4.4  [Ap4] ปรับ CD Pipeline ให้ deploy ไป k3s + รองรับ Rolling Update โดยไม่มี downtime
+
+5. สาระการเรียนรู้
+10.1 Resource Requests และ Limits
+10.2 Horizontal Pod Autoscaler (HPA)
+10.3 Vertical Pod Autoscaler (VPA) แนวคิด
+10.4 Rolling Update Strategy: maxSurge, maxUnavailable
+10.5 Rollback ด้วย kubectl rollout undo
+10.6 Liveness Probe และ Readiness Probe
+10.7 CD ไป K8s: kubectl apply, kustomize เบื้องต้น
+10.8 Load Testing ด้วย k6
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 10 — K8s Operations + CD to K8s (300 นาที)
+• Demo — Manual Scale (30 นาที): ครูสาธิต kubectl scale --replicas → ดู pod เพิ่ม → ทำไมต้อง auto?
+• HPA Lab (90 นาที): เพิ่ม resource requests + HPA YAML (CPU 70%) → run k6 load → ดู pod scale out อัตโนมัติ → หยุด load ดู scale in
+• Probe Lab (45 นาที): เพิ่ม liveness + readiness probe → ทดสอบ pod ที่ไม่ ready ไม่ได้รับ traffic
+• Rolling Update Drill (45 นาที): แก้ image tag → apply → ดู rolling update step-by-step → กรณี image พัง ก็ kubectl rollout undo
+• CD Migration Sprint (90 นาที): แก้ workflow CD ของสัปดาห์ที่ 7 — เปลี่ยนจาก SSH+compose เป็น kubectl apply → push code → ดู app บน k3s update อัตโนมัติ
+
+7. สื่อและแหล่งการเรียนรู้
+1. k3s Cluster (เดิม)
+2. k6 Load Testing Tool
+3. HPA Configuration Template
+4. kubectl context สำหรับ CD
+5. Rolling Update Worksheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  HPA Analysis Sheet + Rolling Update Sequence Diagram
+8.2 หลักฐานการปฏิบัติงาน:  App บน k3s ที่ scale ได้ + CD Pipeline ใหม่ที่ deploy ไป k3s + Load Test Result
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  HPA ต้อง scale ขึ้นเมื่อ load เพิ่ม, Rolling Update ไม่มี downtime, CD pipeline deploy ไป k3s สำเร็จ, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ HPA event, ดู Load Test Graph, สาธิต Pipeline-to-K8s
+9.3 เครื่องมือประเมิน:  K8s Ops Rubric, Load Test Score Sheet, แบบประเมินกระบวนการ
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 11
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 11
+
+ชื่อหน่วยการเรียนรู้  Deployment Strategies และ Rollback Drill
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถออกแบบและทดลอง Deployment Strategy ขั้นสูง (Blue-Green, Canary), ใช้ Feature Flags และทำ Rollback ภายในเวลาวิกฤตได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  เลือกและตั้งค่า Deployment Strategy ที่เหมาะสม
+3.2  ใช้ Feature Flags ควบคุม feature โดยไม่ต้อง redeploy
+3.3  ทำ Rollback ภายใต้แรงกดดันด้านเวลาได้
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบายและเปรียบเทียบ Rolling, Blue-Green, Canary และเลือกใช้ตามบริบทได้
+4.2  [S3] ตั้งค่า Canary Deployment บน k3s (ผ่าน Argo Rollouts หรือ manual weight) และ Feature Flag ด้วย Flagsmith/OpenFeature
+4.3  [A3] ตระหนักถึงความเสี่ยงของ Deploy และมีแผน Rollback ที่รัดกุม
+4.4  [Ap3] Rollback ภายใน 10 นาทีในสถานการณ์ Fire Drill ที่ครูจัด
+
+5. สาระการเรียนรู้
+11.1 Rolling Update (ทบทวน)
+11.2 Blue-Green Deployment
+11.3 Canary Deployment และ Traffic Splitting
+11.4 Argo Rollouts เบื้องต้น
+11.5 Feature Flags: Flagsmith / OpenFeature
+11.6 Rollback Strategy และ Decision Matrix
+11.7 Incident Response และ Runbook
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 11 — Strategy Workshop + Fire Drill (300 นาที)
+• Strategy Poster Sprint (45 นาที): ทีมเลือก strategy (Blue-Green หรือ Canary) → ออกแบบเป็น diagram บนกระดาษ → ติดผนัง gallery walk
+• Canary Lab (90 นาที): ติดตั้ง Argo Rollouts บน k3s → แปลง Deployment เป็น Rollout resource → ปรับ canary weight 20/40/60/80/100% → ดู metric
+• Feature Flags Lab (60 นาที): ผูก app กับ Flagsmith → เพิ่ม feature flag ที่เปิด/ปิด feature ใหม่ได้โดยไม่ redeploy
+• Rollback Fire Drill (90 นาที): ครูแอบ inject bug ลง main branch ไม่บอก → ทีมต้อง detect (จาก alert/health/user complaint จำลอง) → rollback ภายใน 10 นาที → จับเวลา
+• Debrief + Runbook (15 นาที): แต่ละทีมเขียน Rollback Runbook 1 หน้า
+
+7. สื่อและแหล่งการเรียนรู้
+1. k3s Cluster (เดิม)
+2. Argo Rollouts
+3. Flagsmith Self-hosted
+4. Fire Drill Scenario Cards
+5. Runbook Template
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Strategy Comparison Sheet + Rollback Runbook
+8.2 หลักฐานการปฏิบัติงาน:  Canary Rollout Demo + Feature Flag Live Toggle + Fire Drill Time Log
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Canary deploy ได้ + Feature Flag toggle ได้สำเร็จ + Rollback ได้ภายใน 10 นาที, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  สาธิต Canary, Live Toggle, จับเวลา Fire Drill
+9.3 เครื่องมือประเมิน:  Strategy Rubric, Fire Drill Scoresheet, Runbook Evaluation Form
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 12
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 12
+
+ชื่อหน่วยการเรียนรู้  Monitoring และ Observability
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถติดตั้ง Prometheus + Grafana บน k3s, expose Metrics จาก App และสร้าง Dashboard ที่แสดง SLI ของระบบได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ติดตั้ง Monitoring Stack บน k3s
+3.2  Expose Custom Metrics จาก App
+3.3  เขียน PromQL Query และสร้าง Grafana Dashboard
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A3 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย Observability Pillars (Metrics, Logs, Traces) และวิเคราะห์ SLI/SLO ของระบบได้
+4.2  [S3] ติดตั้ง Prometheus Operator + Grafana บน k3s และเพิ่ม Metric Endpoint ใน App
+4.3  [A3] ตระหนักถึงคุณค่าของ Proactive Monitoring เพื่อลด MTTR
+4.4  [Ap3] สร้าง Dashboard ที่แสดง SLI ของ App ทีม ≥ 3 รายการ
+
+5. สาระการเรียนรู้
+12.1 Observability: Metrics, Logs, Traces (Three Pillars)
+12.2 SLI, SLO, SLA และ Error Budget
+12.3 Prometheus Architecture: Server, Exporter, Scrape
+12.4 PromQL Basics: rate, sum, avg, histogram
+12.5 Grafana: Data Source, Dashboard, Panel
+12.6 Application Instrumentation (prometheus client library)
+12.7 RED Method และ USE Method
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 12 — Monitoring Stack Setup (300 นาที)
+• Incident Mystery (30 นาที): ครูแจก metric graph ที่ซ่อน incident → ทีมหาว่าเกิดอะไรเมื่อไหร่
+• SLO Design Workshop (45 นาที): ทีมกำหนด SLI/SLO สำหรับ App ของตนเอง (availability, latency, error rate) + Error Budget
+• Stack Deployment (60 นาที): ติดตั้ง kube-prometheus-stack (Helm) บน k3s → kubectl port-forward เข้า Grafana
+• Instrumentation Sprint (90 นาที): เพิ่ม /metrics endpoint ใน app ทีม (ใช้ prom-client หรือ prometheus_client) + ServiceMonitor
+• Dashboard Design Challenge (75 นาที): สร้าง Grafana Dashboard ของ App ตนเอง — มี SLI ≥ 3 panel (RPS, error rate, p95 latency) → เพื่อน vote
+
+7. สื่อและแหล่งการเรียนรู้
+1. kube-prometheus-stack Helm Chart
+2. Prometheus Client Library (Node/Python)
+3. Grafana Dashboard Templates
+4. Metric Graph Cards (Incident Mystery)
+5. SLO Design Template
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  SLO Design Sheet + Incident Analysis Report
+8.2 หลักฐานการปฏิบัติงาน:  Grafana Dashboard ของ App ทีม ที่แสดง SLI ≥ 3 panel + ServiceMonitor YAML
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Dashboard ต้องมี SLI ≥ 3 panel, Metric ต้องมาจาก App ทีม (ไม่ใช่ default), ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Dashboard, ตรวจ /metrics endpoint, สังเกตการออกแบบ
+9.3 เครื่องมือประเมิน:  Dashboard Rubric, SLO Design Checklist
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 13
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 13
+
+ชื่อหน่วยการเรียนรู้  Logging และ Alerting
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถติดตั้ง Loki + Promtail สำหรับ Centralized Logging และตั้ง Alertmanager ส่ง Notification ไปยังช่องทางสื่อสารของทีมได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  ติดตั้ง PLG Stack (Promtail, Loki, Grafana)
+3.2  ใช้ Structured Logging ใน Application
+3.3  ออกแบบ Alert Rule และ Routing
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย Centralized Logging Pattern และวิเคราะห์ log เพื่อหา root cause ได้
+4.2  [S3] ตั้ง Loki + Promtail บน k3s และ Query log ผ่าน Grafana ได้
+4.3  [A4] จัดระบบค่านิยมด้าน Proactive Alerting และมี alert ที่ "actionable" ไม่ใช่ noise
+4.4  [Ap3] ส่ง Alert ไปยัง LINE/Discord/Slack ของทีมได้จริง + Runbook
+
+5. สาระการเรียนรู้
+13.1 Logging: Structured vs Unstructured, Log Level
+13.2 Loki Architecture
+13.3 Promtail Configuration
+13.4 LogQL Basics
+13.5 Alertmanager: Route, Receiver, Inhibition
+13.6 Alert Notification Channel: LINE Notify, Discord Webhook
+13.7 Runbook Writing
+13.8 Alert Fatigue และวิธีหลีกเลี่ยง
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 13 — PLG Stack + Alerting (300 นาที)
+• Log Analysis Game (30 นาที): ผู้เรียนได้ log file → หา attacker IP / error pattern (gamified)
+• PLG Setup (75 นาที): ติดตั้ง Loki + Promtail (ผ่าน Helm) → query log ของ app ผ่าน Grafana Explore
+• Structured Logging (60 นาที): แปลง log ของ app เป็น JSON structured → เพิ่ม trace_id → query ด้วย LogQL
+• Alert Design Lab (90 นาที): เขียน Alert Rule (error rate > 5%, p95 latency > 1s) + Alertmanager config → ส่ง notification เข้า Discord/LINE ของทีม → test fire
+• Runbook Writing (45 นาที): ทีมเขียน Runbook 2 รายการ (High Error Rate, High Latency) พร้อม Resolution Steps
+
+7. สื่อและแหล่งการเรียนรู้
+1. Loki + Promtail Helm Chart
+2. Alertmanager Config Template
+3. LINE Notify Token / Discord Webhook URL
+4. Log Analysis Game Cards
+5. Runbook Template
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Log Analysis Game Answer + LogQL Query Cheat Sheet
+8.2 หลักฐานการปฏิบัติงาน:  Loki Dashboard + Alertmanager Config + Notification Screenshot + Runbook ≥ 2 รายการ
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Log ต้องเข้า Loki + Query ได้, Alert ต้อง fire และส่ง notification จริง, Runbook ครบ ≥ 2 รายการ, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ LogQL query, ทดสอบ Fire Alert, ตรวจ Runbook
+9.3 เครื่องมือประเมิน:  Logging Rubric, Alert Test Checklist, Runbook Evaluation Form
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 14
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 14
+
+ชื่อหน่วยการเรียนรู้  Infrastructure as Code ด้วย Terraform
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถเขียน Terraform Code เพื่อ Provision VM และ Network บน Proxmox อัตโนมัติแทนการคลิก UI ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  เขียน Terraform HCL สร้าง Resource บน Proxmox
+3.2  บริหาร Terraform State อย่างปลอดภัย
+3.3  เชื่อม Terraform กับ CI/CD Pipeline
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K3,K4 | ทักษะพิสัย: S3 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap3)
+4.1  [K3,K4] อธิบาย IaC, Declarative vs Imperative, Terraform Workflow ได้
+4.2  [S3] เขียน Terraform .tf สร้าง VM บน Proxmox ด้วย telmate/proxmox provider
+4.3  [A4] จัดระบบค่านิยม "ไม่แก้ผ่าน UI โดยตรง" — Infrastructure ทุกอย่างต้องผ่าน Code
+4.4  [Ap3] เขียน Terraform ที่ provision Staging VM ของทีม (รื้อสิ่งที่เคยทำมือในสัปดาห์ 7 ให้กลายเป็น Code)
+
+5. สาระการเรียนรู้
+14.1 IaC: แนวคิด, Declarative vs Imperative, Idempotency
+14.2 Terraform Architecture: Provider, Resource, Data, State
+14.3 HCL Syntax
+14.4 Terraform Workflow: init, plan, apply, destroy
+14.5 Variable, Output, Module เบื้องต้น
+14.6 Remote State และ State Locking
+14.7 telmate/proxmox Provider
+14.8 Terraform กับ CI/CD
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 14 — Terraform on Proxmox (300 นาที)
+• IaC vs ClickOps Debate (30 นาที): ทีม A เถียงให้ ClickOps, ทีม B เถียงให้ IaC → debrief
+• Terraform Setup (30 นาที): ติดตั้ง Terraform CLI + Proxmox Provider + ตั้ง credential
+• Guided Lab — First Resource (75 นาที): เขียน main.tf สร้าง VM 1 ตัวบน Proxmox → init → plan → apply → ดู VM เกิดขึ้นจริง
+• Variable Refactor (45 นาที): แยก hardcoded value ออกเป็น variable.tf + terraform.tfvars
+• Replicate Staging VM (90 นาที): ทีมเขียน Terraform สร้าง Staging VM ของตนเอง (ที่เคยทำมือสัปดาห์ 7) → apply → ทดสอบ SSH ได้
+• IaC Code Review (30 นาที): สลับ .tf กับทีมอื่น → ตรวจ hardcoded values, missing variable, security issues
+
+7. สื่อและแหล่งการเรียนรู้
+1. Terraform CLI
+2. telmate/proxmox Provider Documentation
+3. Proxmox API Token (ครูเตรียม)
+4. Terraform Module Template
+5. IaC Code Review Checklist
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  IaC vs ClickOps Debate Notes + Terraform Plan Summary
+8.2 หลักฐานการปฏิบัติงาน:  main.tf + variables.tf ที่ provision Staging VM ได้จริง + terraform apply screenshot
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Terraform apply ต้องสร้าง VM ได้จริง, ไม่มี hardcoded credential, variable ครบ, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ .tf files, รัน terraform plan ตรวจสอบ, Code Review
+9.3 เครื่องมือประเมิน:  Terraform Rubric, IaC Code Review Checklist
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 15
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 15
+
+ชื่อหน่วยการเรียนรู้  DevSecOps: Security ใน CI/CD
+ทฤษฎี 1 ชม. ปฏิบัติ 4 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถบูรณาการ Security Scan (SAST, SCA, Container Scan) เข้าสู่ CI Pipeline และจัดการ Secret อย่างปลอดภัยได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  เพิ่ม Security Stage ใน CI Pipeline
+3.2  วิเคราะห์ผล Scan และ Remediate ช่องโหว่
+3.3  จัดการ Secret ด้วย Sealed Secret / GitHub Secret
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K4 | ทักษะพิสัย: S3 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap4)
+4.1  [K4] วิเคราะห์ OWASP Top 10 และประเมินความเสี่ยงของ App ได้
+4.2  [S3] เพิ่ม Semgrep (SAST) + Trivy (Container Scan) + Dependabot (SCA) ใน CI Pipeline
+4.3  [A4] จัดระบบค่านิยมว่า Security คือความรับผิดชอบของทุกคนในทีม
+4.4  [Ap4] ย้าย Secret ออกจาก code ไปอยู่ใน GitHub Secret/Sealed Secret + เขียน Security Policy ของทีม
+
+5. สาระการเรียนรู้
+15.1 DevSecOps และ Shift-Left Security
+15.2 OWASP Top 10
+15.3 SAST (Semgrep / CodeQL)
+15.4 SCA (Dependabot / Snyk)
+15.5 Container Image Scan (Trivy)
+15.6 Secret Management: GitHub Secret, Sealed Secret บน k3s
+15.7 STRIDE Threat Modeling
+15.8 Security Policy Writing
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 15 — Security Pipeline Integration (300 นาที)
+• OWASP Top 10 Jigsaw (60 นาที): 10 กลุ่มเล็ก ๆ ในชั้น แต่ละกลุ่มศึกษา OWASP 1 หัวข้อ → กลับทีมเดิมสอนเพื่อน
+• Vulnerable App Scan (45 นาที): ใช้ DVWA บน Docker ทดสอบ SQLi/XSS → ดูว่า scanner จับได้แค่ไหน
+• Security Pipeline Sprint (105 นาที): เพิ่ม Semgrep + Trivy + Dependabot ลงใน CI ของทีม → ตรวจสอบผล → remediate critical findings
+• Secret Migration (45 นาที): ตรวจ repo หา secret ที่ commit ไป → ย้ายเข้า GitHub Secret / Sealed Secret
+• Security Policy Writing (30 นาที): ทีมเขียน Security Policy 1 หน้า (accepted risk, remediation priority, owner)
+• STRIDE Quick Workshop (15 นาที): ใช้ STRIDE วิเคราะห์ภัยคุกคามของ App ทีม
+
+7. สื่อและแหล่งการเรียนรู้
+1. DVWA บน Docker
+2. Semgrep, Trivy CLI
+3. Dependabot (GitHub)
+4. Sealed Secrets Controller บน k3s
+5. OWASP Top 10 Card Set
+6. Security Policy Template
+7. STRIDE Worksheet
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  OWASP Summary Sheet + STRIDE Analysis
+8.2 หลักฐานการปฏิบัติงาน:  CI Pipeline ที่มี Security Stage + Scan Report + Sealed Secret + Security Policy
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Pipeline ต้องมี Security Stage ≥ 2 ขั้น (SAST + Container Scan), Critical Finding ต้องถูก remediate หรือ document, ไม่มี secret ใน code, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Pipeline, ดู Scan Report, ตรวจ repo ว่าไม่มี secret, ตรวจ Policy
+9.3 เครื่องมือประเมิน:  DevSecOps Pipeline Rubric, Scan Report Checklist, Security Policy Evaluation Form
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 16
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 16
+
+ชื่อหน่วยการเรียนรู้  Capstone Polish, Documentation และเตรียมนำเสนอ
+ทฤษฎี 0 ชม. ปฏิบัติ 5 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถขัดเกลา DevOps Pipeline ของทีมให้สมบูรณ์, เขียน Architecture Document และซ้อมการนำเสนอ Capstone Project ได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  บูรณาการทุก practice ที่เรียนมา (Git + Docker + CI/CD + K8s + Monitor + Security) เข้าใน Pipeline เดียว
+3.2  เขียน Architecture Document และ Demo Script
+3.3  ซ้อม Live Demo และเตรียมตอบ Q&A
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K4 | ทักษะพิสัย: S4 | จิตพิสัย: A4 | ประยุกต์ใช้: Ap4)
+4.1  [K4] วิเคราะห์ gap ใน Pipeline ของทีมและวางแผนปรับปรุง
+4.2  [S4] ขัดเกลา Pipeline ให้ครอบคลุม Git → CI → Quality → Container → CD → K8s → Monitor → Security
+4.3  [A4] รับผิดชอบในการ document ระบบที่ทีมสร้างให้ผู้อื่นเข้าใจได้
+4.4  [Ap4] เตรียม Live Demo ที่สาธิต Push-to-Production ได้ภายใน 5 นาที
+
+5. สาระการเรียนรู้
+16.1 Pipeline Gap Analysis
+16.2 Architecture Document Structure
+16.3 Demo Script และ Live Demo Risk Management
+16.4 Presentation Skills
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 16 — Capstone Sprint (300 นาที)
+• Gap Analysis (30 นาที): ทีมทำ checklist ว่า Pipeline ของตนครอบคลุมหัวข้อในเทอมครบหรือยัง
+• Polish Sprint (180 นาที): แก้ gap ที่เจอ — เพิ่ม monitor panel ที่ขาด, จัดระเบียบ YAML, แก้ security finding ที่ยังเหลือ
+• Architecture Document (60 นาที): เขียนเอกสาร 3-5 หน้า: System Overview Diagram + Pipeline Stage + SLI/SLO + Security Posture
+• Demo Rehearsal (30 นาที): ซ้อม Demo Script ในทีม + เตรียม backup plan กรณี live demo พัง
+
+7. สื่อและแหล่งการเรียนรู้
+1. Capstone Pipeline Checklist
+2. Architecture Document Template
+3. Demo Script Template
+4. Presentation Slide Template
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Architecture Document + Demo Script
+8.2 หลักฐานการปฏิบัติงาน:  Pipeline ที่ครบทุก stage + Demo Rehearsal Video
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Pipeline ต้องครอบคลุมทุกหน่วยที่เรียน, Document อ่านเข้าใจ, Demo ซ้อมแล้ว, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ตรวจ Document, ดู Pipeline ครบถ้วน, สังเกตการซ้อม
+9.3 เครื่องมือประเมิน:  Capstone Readiness Rubric, Architecture Document Evaluation Form
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+แผนการจัดการเรียนรู้
+หน่วยที่ 17
+
+รหัสวิชา 30901-2008  ชื่อวิชา การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+สอนครั้งที่ 17
+
+ชื่อหน่วยการเรียนรู้  Capstone Presentation และสอบปลายภาค
+ทฤษฎี 0 ชม. ปฏิบัติ 5 ชม.
+
+1. ผลลัพธ์การเรียนรู้ระดับหน่วยการเรียน
+ผู้เรียนสามารถนำเสนอ DevOps Pipeline สมบูรณ์ ของทีมพร้อม Live Demo และตอบคำถามจากผู้เชี่ยวชาญได้
+2. อ้างอิงมาตรฐาน/เชื่อมโยงกลุ่มอาชีพ
+2.1 มาตรฐานอาชีพ undefined
+2.2 บูรณาการกลุ่มอาชีพ เทคโนโลยีสารสนเทศและการสื่อสาร
+3. สมรรถนะประจำหน่วย
+3.1  นำเสนอ DevOps Pipeline ครบวงจรอย่างชัดเจน
+3.2  Live Demo Push-to-Production ได้สำเร็จ
+3.3  ตอบ Q&A จากผู้เชี่ยวชาญและให้ Peer Feedback ที่สร้างสรรค์
+
+4. จุดประสงค์เชิงพฤติกรรม
+(พุทธิพิสัย: K4 | ทักษะพิสัย: S4 | จิตพิสัย: A5 | ประยุกต์ใช้: Ap5)
+4.1  [K4] วิเคราะห์และสังเคราะห์ DevOps Pipeline ของทีม
+4.2  [S4] Live Demo Push-to-Production สำเร็จในเวลาที่กำหนด
+4.3  [A5] แสดงลักษณะ DevOps Engineer ที่ดี: รับผิดชอบ ทำงานเป็นทีม ใฝ่เรียนรู้
+4.4  [Ap5] ประยุกต์ใช้ความรู้ทั้งภาคเรียนสาธิตเป็นระบบจริงได้
+
+5. สาระการเรียนรู้
+17.1 Capstone Presentation
+17.2 Live Demo และ Q&A
+17.3 Peer Evaluation
+17.4 Course Retrospective
+
+6. กิจกรรมการเรียนรู้ (Active Learning)
+ครั้งที่ 17 — Capstone Final + Retrospective (300 นาที)
+• Final Presentation (180 นาที): แต่ละทีม (เฉลี่ย 6 ทีม) Presentation 15 นาที + Live Demo 10 นาที + Q&A จากผู้เชี่ยวชาญ 5 นาที
+• Peer Evaluation (60 นาที): ผู้เรียนประเมิน Pipeline ของทีมอื่นตาม Rubric
+• Course Retrospective (45 นาที): ทบทวนสิ่งที่เรียนรู้ตลอดเทอม → Start / Stop / Continue ของตนเอง
+• Certificate / Wrap-up (15 นาที): มอบ certificate ทีมที่โดดเด่น + Closing
+
+7. สื่อและแหล่งการเรียนรู้
+1. โปรเจกเตอร์
+2. Capstone Presentation Template
+3. Peer Evaluation Rubric
+4. Retrospective Canvas (Start/Stop/Continue)
+
+8. หลักฐานการเรียนรู้
+8.1 หลักฐานความรู้:  Capstone Architecture Document (ส่งล่วงหน้า)
+8.2 หลักฐานการปฏิบัติงาน:  Live Demo Recording + Peer Evaluation Results + Retrospective Notes
+
+9. การวัดและประเมินผล
+9.1 เกณฑ์การปฏิบัติงาน:  Pipeline ครบทุก Stage, Live Demo ทำได้จริง, นำเสนอชัดเจน, ผ่านเกณฑ์ 70%
+9.2 วิธีการประเมิน:  ประเมิน Live Demo, ฟัง Q&A, ดู Peer Evaluation, ตรวจ Document
+9.3 เครื่องมือประเมิน:  Capstone Rubric (40%) + Peer Evaluation (20%) + Instructor Q&A (40%)
+
+10. บันทึกผลหลังการจัดการเรียนรู้
+10.1 ผลการจัดการเรียนรู้ที่เกิดขึ้นกับผู้เรียน
+...........................................................................................
+...........................................................................................
+10.2 ปัญหา อุปสรรคที่พบ
+...........................................................................................
+10.3 การแก้ไขปัญหา
+1) ผลการแก้ไขปัญหาที่ส่งผลลัพธ์ที่ดีต่อผู้เรียน
+...........................................................................................
+2) แนวทางแก้ปัญหาในครั้งต่อไป
+...........................................................................................
+
+ลงชื่อ........................................ ครูผู้สอน    วันที่ ......./......./......
+
+บรรณานุกรม
+Bass, L., Weber, I., & Zhu, L. (2015). DevOps: A Software Architect’s Perspective. Addison-Wesley.
+Forsgren, N., Humble, J., & Kim, G. (2018). Accelerate: The Science of Lean Software and DevOps. IT Revolution Press.
+Kim, G., Humble, J., Debois, P., & Willis, J. (2016). The DevOps Handbook. IT Revolution Press.
+Morris, K. (2016). Infrastructure as Code: Managing Servers in the Cloud. O’Reilly Media.
+Beyer, B., Jones, C., Petoff, J., & Murphy, R.N. (2016). Site Reliability Engineering. O’Reilly Media.
+Brikman, Y. (2022). Terraform: Up & Running (3rd ed.). O’Reilly Media.
+Burns, B., Beda, J., & Hightower, K. (2022). Kubernetes: Up & Running (3rd ed.). O’Reilly Media.
+Turnbull, J. (2018). The Docker Book (Updated). Self-published.
+Sridharan, C. (2018). Distributed Systems Observability. O’Reilly Media.
+

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ — DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    .top-bar { background: #1e293b; border-bottom: 1px solid #334155; padding: .75rem 2rem; }
+    .top-bar a { color: #38bdf8; text-decoration: none; font-size: .88rem; }
+    .top-bar a:hover { text-decoration: underline; }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0891b2 100%);
+      padding: 4rem 2rem 3rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,.25) 0%, transparent 70%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: .35rem 1.1rem; font-size: .82rem; margin-bottom: 1.25rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: .5rem; }
+    .hero h1 span { color: #38bdf8; }
+    .hero p { font-size: 1rem; opacity: .78; max-width: 520px; margin: 0 auto 2rem; }
+
+    .section { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .section-label { font-size: 1rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.25rem; letter-spacing: .05em; text-transform: uppercase; }
+
+    .theory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.25rem; }
+
+    .theory-card {
+      background: #1e293b; border-radius: 14px; border: 1px solid #334155;
+      overflow: hidden; text-decoration: none; color: inherit; display: block;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .theory-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.4); border-color: var(--accent); }
+    .theory-card-banner { height: 7px; background: var(--gradient); }
+    .theory-card-body { padding: 1.4rem; }
+    .card-week { font-size: .72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .35rem; }
+    .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: .4rem; }
+    .card-desc { font-size: .86rem; color: #94a3b8; line-height: 1.6; margin-bottom: 1rem; }
+    .card-topics { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .topic-chip { background: #0f172a; border: 1px solid #334155; border-radius: 5px; padding: .2rem .55rem; font-size: .72rem; color: #94a3b8; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #334155; padding-top: .9rem; }
+    .card-time { font-size: .78rem; color: #475569; }
+    .card-btn { background: var(--gradient); color: #fff; border-radius: 7px; padding: .45rem 1.1rem; font-size: .85rem; font-weight: 600; font-family: 'Sarabun', sans-serif; }
+
+    .theory-card.w1 { --accent: #60a5fa; --gradient: linear-gradient(90deg,#2563eb,#7c3aed); }
+    .theory-card.w2 { --accent: #34d399; --gradient: linear-gradient(90deg,#0891b2,#059669); }
+    .theory-card.w3 { --accent: #60a5fa; --gradient: linear-gradient(90deg,#2496ed,#0891b2); }
+    .theory-card.w4 { --accent: #fbbf24; --gradient: linear-gradient(90deg,#0ea5e9,#f59e0b); }
+    .theory-card.w5 { --accent: #34d399; --gradient: linear-gradient(90deg,#059669,#10b981); }
+
+    .note-box { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 1.4rem; margin-top: 2rem; }
+    .note-box h3 { font-size: .95rem; font-weight: 700; color: #94a3b8; margin-bottom: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+    .note-box ul { list-style: none; display: grid; gap: .4rem; }
+    .note-box ul li { font-size: .88rem; color: #cbd5e1; display: flex; gap: .5rem; }
+    .note-box ul li::before { content: '→'; color: #38bdf8; font-weight: 700; flex-shrink: 0; }
+
+    footer { background: #0f172a; border-top: 1px solid #1e293b; text-align: center; padding: 2rem; color: #475569; font-size: .84rem; }
+    @media (max-width:600px) { .hero h1 { font-size: 1.8rem; } .theory-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">← กลับหน้าหลัก DevOps Labs</a>
+</div>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="badge">30901-2008 · การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์</div>
+    <h1>📖 <span>ใบความรู้</span></h1>
+    <p>เนื้อหาทฤษฎีเสริม สำหรับอ่านก่อน/หลัง Lab — อธิบายแนวคิดเบื้องหลังเครื่องมือที่ใช้ตลอดวิชา</p>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">📚 ใบความรู้ทั้งหมด</div>
+  <div class="theory-grid">
+
+    <a class="theory-card w1" href="week1-git-theory.html">
+      <div class="theory-card-banner"></div>
+      <div class="theory-card-body">
+        <div class="card-week">ใบความรู้ที่ 1 — สัปดาห์ที่ 1</div>
+        <div class="card-title">Git & Version Control</div>
+        <div class="card-desc">แนวคิด VCS, Git Architecture (4 พื้นที่), SHA-1 Hash, Branching model, Merge vs Rebase</div>
+        <div class="card-topics">
+          <span class="topic-chip">Version Control</span>
+          <span class="topic-chip">Git Architecture</span>
+          <span class="topic-chip">SHA-1 Hash</span>
+          <span class="topic-chip">Branching</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-time">⏱ 30 นาที</span>
+          <span class="card-btn">อ่านใบความรู้ →</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="theory-card w2" href="week2-api-theory.html">
+      <div class="theory-card-banner"></div>
+      <div class="theory-card-body">
+        <div class="card-week">ใบความรู้ที่ 2 — สัปดาห์ที่ 2</div>
+        <div class="card-title">REST API & Backend Development</div>
+        <div class="card-desc">REST 6 หลักการ, HTTP Methods & Status Codes, Node.js Event Loop, Express Middleware, PostgreSQL ACID</div>
+        <div class="card-topics">
+          <span class="topic-chip">REST API</span>
+          <span class="topic-chip">HTTP Methods</span>
+          <span class="topic-chip">Node.js</span>
+          <span class="topic-chip">ACID</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-time">⏱ 35 นาที</span>
+          <span class="card-btn">อ่านใบความรู้ →</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="theory-card w3" href="week3-docker-theory.html">
+      <div class="theory-card-banner"></div>
+      <div class="theory-card-body">
+        <div class="card-week">ใบความรู้ที่ 3 — สัปดาห์ที่ 3</div>
+        <div class="card-title">Docker & Containerization</div>
+        <div class="card-desc">VM vs Container, Docker Architecture, Image Layers, Multi-stage Build, Networking, Volumes, Docker Compose</div>
+        <div class="card-topics">
+          <span class="topic-chip">VM vs Container</span>
+          <span class="topic-chip">Image Layers</span>
+          <span class="topic-chip">Networking</span>
+          <span class="topic-chip">Volumes</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-time">⏱ 40 นาที</span>
+          <span class="card-btn">อ่านใบความรู้ →</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="theory-card w4" href="week4-cicd-theory.html">
+      <div class="theory-card-banner"></div>
+      <div class="theory-card-body">
+        <div class="card-week">ใบความรู้ที่ 4 — สัปดาห์ที่ 4</div>
+        <div class="card-title">CI/CD & DevOps Culture</div>
+        <div class="card-desc">DevOps Philosophy, CI vs CD, Pipeline Stages, GitHub Actions Architecture, Deployment Strategies, Code Review</div>
+        <div class="card-topics">
+          <span class="topic-chip">DevOps Culture</span>
+          <span class="topic-chip">CI/CD</span>
+          <span class="topic-chip">GitHub Actions</span>
+          <span class="topic-chip">Deployment</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-time">⏱ 40 นาที</span>
+          <span class="card-btn">อ่านใบความรู้ →</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="theory-card w5" href="week5-ci-theory.html">
+      <div class="theory-card-banner"></div>
+      <div class="theory-card-body">
+        <div class="card-week">ใบความรู้ที่ 5 — สัปดาห์ที่ 5</div>
+        <div class="card-title">CI Principles & Testing Fundamentals</div>
+        <div class="card-desc">หลักการ CI ของ Martin Fowler, GitHub Actions Architecture, Testing Pyramid, Jest Matchers, Code Coverage, ESLint</div>
+        <div class="card-topics">
+          <span class="topic-chip">CI Principles</span>
+          <span class="topic-chip">GitHub Actions</span>
+          <span class="topic-chip">Testing Pyramid</span>
+          <span class="topic-chip">Jest</span>
+          <span class="topic-chip">Coverage</span>
+          <span class="topic-chip">ESLint</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-time">⏱ 40 นาที</span>
+          <span class="card-btn">อ่านใบความรู้ →</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="note-box">
+    <h3>💡 แนะนำการใช้ใบความรู้</h3>
+    <ul>
+      <li>อ่านใบความรู้ก่อน Lab เพื่อทำความเข้าใจแนวคิดพื้นฐาน</li>
+      <li>ย้อนกลับมาอ่านระหว่าง Lab เมื่อไม่เข้าใจว่าทำไมต้องทำสิ่งนั้น</li>
+      <li>ใช้เป็น reference สำหรับการสอบหรือทบทวนหลังเรียน</li>
+      <li>ส่วน "คำศัพท์ที่ควรรู้" ในแต่ละใบเหมาะสำหรับทบทวนก่อนสอบ</li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  📘 วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+</footer>
+
+</body>
+</html>

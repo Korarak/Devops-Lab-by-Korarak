@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ที่ 3 — Docker & Containerization | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --docker: #2496ed; --docker-light: #eff6ff;
+      --green: #059669; --green-light: #d1fae5;
+      --purple: #7c3aed; --purple-light: #ede9fe;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --red: #dc2626; --red-light: #fee2e2;
+      --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #eff6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.8; }
+
+    .top-bar { background: #1e3a5f; color: #fff; padding: .75rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    .top-bar a { color: #93c5fd; text-decoration: none; font-size: .85rem; }
+    .top-bar a:hover { color: #fff; }
+    .top-bar .sep { color: #1e40af; }
+    .top-bar .current { color: #60a5fa; font-weight: 600; font-size: .85rem; }
+
+    .hero { background: linear-gradient(135deg, #1e3a5f, #2496ed, #0f766e); color: #fff; padding: 3rem 2rem; text-align: center; }
+    .hero .sheet-label { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .3rem 1rem; font-size: .8rem; margin-bottom: 1rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: .4rem; }
+    .hero .subtitle { opacity: .85; font-size: .95rem; }
+    .hero .meta { display: flex; gap: 2rem; justify-content: center; margin-top: 1.5rem; }
+    .hero .meta-item { text-align: center; }
+    .hero .meta-item .val { font-size: 1.1rem; font-weight: 700; }
+    .hero .meta-item .lbl { font-size: .72rem; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .section { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+    .section-title .icon { font-size: 1.4rem; }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .concept-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid; }
+    .concept-card .cc-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
+    .concept-card .cc-body { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+    .concept-card.docker  { background: var(--docker-light); border-color: #93c5fd; }
+    .concept-card.green   { background: var(--green-light); border-color: #6ee7b7; }
+    .concept-card.purple  { background: var(--purple-light); border-color: #c4b5fd; }
+    .concept-card.amber   { background: var(--amber-light); border-color: #fcd34d; }
+    .concept-card.red     { background: var(--red-light); border-color: #fca5a5; }
+
+    .diagram { background: #1e293b; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; overflow-x: auto; }
+    .diagram .c-blue   { color: #7dd3fc; }
+    .diagram .c-green  { color: #86efac; }
+    .diagram .c-yellow { color: #fde68a; }
+    .diagram .c-purple { color: #c4b5fd; }
+    .diagram .c-teal   { color: #67e8f9; }
+    .diagram .c-gray   { color: #64748b; }
+    .diagram .c-red    { color: #fca5a5; }
+    .diagram .c-orange { color: #fdba74; }
+
+    .info-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .info-table th { background: #1e3a5f; color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+    .info-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8fafc; }
+    .info-table code { background: #f1f5f9; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+    .alert { border-radius: 8px; padding: .9rem 1rem; display: flex; gap: .7rem; font-size: .9rem; margin: 1rem 0; }
+    .alert.info   { background: var(--docker-light); border-left: 4px solid var(--docker); }
+    .alert.tip    { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.note   { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.danger { background: var(--red-light); border-left: 4px solid var(--red); }
+    .alert .ai    { font-size: 1.1rem; flex-shrink: 0; }
+    .alert strong { display: block; margin-bottom: .2rem; }
+
+    /* LAYER VISUALIZATION */
+    .layer-stack { display: flex; flex-direction: column; gap: 2px; max-width: 420px; }
+    .layer { border-radius: 6px; padding: .6rem 1rem; font-size: .85rem; font-weight: 600; text-align: center; }
+    .layer.l-app    { background: #7c3aed; color: #fff; }
+    .layer.l-deps   { background: #0ea5e9; color: #fff; }
+    .layer.l-os     { background: #059669; color: #fff; }
+    .layer.l-base   { background: #374151; color: #fff; }
+    .layer.l-kernel { background: #1e293b; color: #94a3b8; font-weight: 400; }
+    .layer-label    { font-size: .72rem; color: var(--muted); margin-top: .15rem; text-align: center; max-width: 420px; }
+
+    /* COMPARE */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .compare-col { border-radius: 10px; padding: 1.25rem; border: 2px solid; }
+    .compare-col.vm { border-color: #d97706; background: var(--amber-light); }
+    .compare-col.ct { border-color: var(--docker); background: var(--docker-light); }
+    .compare-col .cc-h { font-weight: 700; font-size: 1rem; margin-bottom: .75rem; }
+    .compare-col ul { list-style: none; display: grid; gap: .35rem; }
+    .compare-col ul li { font-size: .86rem; color: var(--muted); display: flex; gap: .5rem; }
+    .compare-col ul li::before { content: '•'; color: inherit; flex-shrink: 0; font-weight: 700; }
+    .compare-col.vm ul li::before { color: var(--amber); }
+    .compare-col.ct ul li::before { color: var(--docker); }
+
+    .term-list { display: grid; gap: .5rem; }
+    .term-item { display: grid; grid-template-columns: 180px 1fr; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+    .term-item:last-child { border-bottom: none; }
+    .term-name { font-weight: 700; color: var(--docker); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+    .term-def { color: var(--muted); }
+
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--border); background: #fff; }
+    @media (max-width:600px) { .hero h1 { font-size: 1.5rem; } .compare-grid { grid-template-columns: 1fr; } .term-item { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">DevOps Labs</a>
+  <span class="sep">›</span>
+  <a href="index.html">ใบความรู้</a>
+  <span class="sep">›</span>
+  <span class="current">Docker & Containerization</span>
+</div>
+
+<div class="hero">
+  <div class="sheet-label">ใบความรู้ที่ 3 · DevOps 30901-2008</div>
+  <h1>🐳 Docker & Containerization</h1>
+  <p class="subtitle">VM vs Container, Docker Architecture, Image Layers, Networking และ Docker Compose</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">สัปดาห์ 3</div><div class="lbl">ประกอบกับ Lab</div></div>
+    <div class="meta-item"><div class="val">ทฤษฎี</div><div class="lbl">ประเภท</div></div>
+    <div class="meta-item"><div class="val">40 นาที</div><div class="lbl">เวลาอ่าน</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1. VM vs Container -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚖️</span>1. VM vs Container — ความแตกต่างหลัก</div>
+    <p>ทั้งสองเป็น isolation technology แต่ระดับที่ต่างกัน — VM จำลอง hardware ทั้งหมด ส่วน Container แชร์ OS kernel ของ host</p>
+
+    <div class="compare-grid" style="margin-top:1rem;">
+      <div class="compare-col vm">
+        <div class="cc-h">🖥️ Virtual Machine (VM)</div>
+        <ul>
+          <li>มี OS เต็มๆ ของตัวเอง (Guest OS)</li>
+          <li>ขนาดใหญ่ — หลาย GB ต่อ VM</li>
+          <li>Boot ช้า — หลายนาที</li>
+          <li>Strong isolation — แยกขาดจากกัน</li>
+          <li>ใช้ Hypervisor (VMware, VirtualBox, KVM)</li>
+        </ul>
+      </div>
+      <div class="compare-col ct">
+        <div class="cc-h">📦 Container (Docker)</div>
+        <ul>
+          <li>แชร์ Linux kernel ของ host</li>
+          <li>ขนาดเล็ก — ไม่กี่ร้อย MB</li>
+          <li>Start ได้ใน milliseconds</li>
+          <li>Process-level isolation ด้วย namespaces + cgroups</li>
+          <li>ใช้ Docker Engine หรือ containerd</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <span class="ai">🤝</span>
+      <div>
+        <strong>ใช้ร่วมกันได้!</strong>
+        ในชีวิตจริง container มักรันอยู่ใน VM — เช่น Proxmox VM ที่รัน Docker containers อยู่ด้านใน ได้ประโยชน์ทั้ง isolation ของ VM และความเร็วของ containers
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Docker Architecture -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🏗️</span>2. Docker Architecture — Client-Server</div>
+    <p>Docker ทำงานแบบ client-server — เราพิมพ์คำสั่งผ่าน Docker CLI (client) ซึ่งส่งไปให้ Docker Daemon (server) ทำงาน</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-blue">Docker CLI</span>                    <span class="c-yellow">Docker Daemon (dockerd)</span>
+<span class="c-gray">(docker build, run, push)     ┌───────────────────────────────┐</span>
+         <span class="c-gray">│                             │                               │</span>
+         <span class="c-gray">│   REST API over Unix socket  │   ┌─────────┐  ┌──────────┐  │</span>
+         <span class="c-gray">└────────────────────────────► │   │ Images  │  │Containers│  │</span>
+                                      <span class="c-gray">│   └─────────┘  └──────────┘  │</span>
+                                      <span class="c-gray">│   ┌─────────┐  ┌──────────┐  │</span>
+                                      <span class="c-gray">│   │Volumes  │  │ Networks │  │</span>
+                                      <span class="c-gray">│   └─────────┘  └──────────┘  │</span>
+                                      <span class="c-gray">└───────────┬───────────────────┘</span>
+                                                  <span class="c-gray">│ pull/push</span>
+                                                  <span class="c-gray">▼</span>
+                                      <span class="c-green">Registry (Docker Hub / Private)</span>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card docker">
+        <div class="cc-title">Docker Daemon (dockerd)</div>
+        <div class="cc-body">Service ที่รันอยู่เบื้องหลัง จัดการ images, containers, networks, volumes — ฟัง Unix socket หรือ TCP</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">Docker CLI</div>
+        <div class="cc-body">Command-line tool ที่เราใช้พิมพ์คำสั่ง — แค่ client ส่ง command ไปให้ daemon ทำงาน</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">Registry</div>
+        <div class="cc-body">ที่เก็บ Docker images — Docker Hub เป็น public registry ส่วน Private Registry อยู่บน server ของเรา</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Image vs Container -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📸</span>3. Image vs Container — Class กับ Instance</div>
+
+    <div class="concept-grid">
+      <div class="concept-card docker">
+        <div class="cc-title">🖼️ Docker Image (แม่พิมพ์)</div>
+        <div class="cc-body">Read-only template ที่มี OS, dependencies, app code — เหมือน "class" ใน OOP ไม่สามารถแก้ไขได้หลัง build</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">📦 Docker Container (ของจริง)</div>
+        <div class="cc-body">Instance ของ Image ที่กำลังรันอยู่ — เหมือน "object" ที่ new มาจาก class มี state ของตัวเอง สร้างได้หลาย containers จาก image เดียว</div>
+      </div>
+    </div>
+
+    <div class="alert tip">
+      <span class="ai">🎯</span>
+      <div>
+        <strong>ตัวอย่างง่ายๆ</strong>
+        <code>postgres:15</code> คือ Image — สามารถ run เป็น Container db1, db2, db3 ได้พร้อมกัน โดยแต่ละอันมีข้อมูลต่างกัน<br>
+        เหมือน recipe ที่ทำอาหารได้หลายจาน recipe เดียวกัน แต่ละจานต่างกัน
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Image Layers -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🥞</span>4. Dockerfile & Image Layers</div>
+    <p>Docker Image ประกอบด้วย layers — แต่ละ instruction ใน Dockerfile สร้าง layer ใหม่ layers ที่ไม่เปลี่ยนจะถูก cache ไว้ทำให้ build ครั้งต่อไปเร็วขึ้น</p>
+
+    <div style="display:flex;gap:1.5rem;align-items:flex-start;margin-top:1rem;flex-wrap:wrap;">
+      <div>
+        <div class="layer-stack">
+          <div class="layer l-app">Layer 5: COPY app files (เปลี่ยนบ่อย)</div>
+          <div class="layer l-deps">Layer 4: npm ci (เปลี่ยนเมื่อ package.json เปลี่ยน)</div>
+          <div class="layer l-deps">Layer 3: COPY package*.json</div>
+          <div class="layer l-os">Layer 2: RUN apt-get install curl</div>
+          <div class="layer l-base">Layer 1: FROM node:20-alpine</div>
+          <div class="layer l-kernel">Shared: Linux Kernel (Host)</div>
+        </div>
+        <div class="layer-label">↑ layers ล่างเปลี่ยนน้อย → cache นานกว่า</div>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <div class="alert info" style="margin-top:0;">
+          <span class="ai">⚡</span>
+          <div>
+            <strong>Layer Caching Strategy</strong>
+            วาง instructions ที่ "เปลี่ยนน้อย" ไว้ด้านล่าง และ "เปลี่ยนบ่อย" ไว้ด้านบน<br><br>
+            ✓ COPY package.json ก่อน → npm ci → COPY source code<br>
+            ถ้าแค่แก้ source code → Docker cache layer ของ npm ci ไว้ ไม่ต้อง install ซ้ำ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.25rem;"><strong>Multi-stage Build — ลดขนาด Image:</strong></p>
+    <div class="diagram">
+<span class="c-gray"># Stage 1: Build (ใช้ image เต็ม)</span>
+<span class="c-yellow">FROM</span> <span class="c-green">node:20</span> <span class="c-blue">AS builder</span>
+<span class="c-yellow">WORKDIR</span> /app
+<span class="c-yellow">COPY</span> . .
+<span class="c-yellow">RUN</span> npm ci && npm run build
+<span class="c-gray">
+# Stage 2: Production (ใช้ image เล็ก — ไม่มี dev tools)</span>
+<span class="c-yellow">FROM</span> <span class="c-green">nginx:alpine</span>
+<span class="c-yellow">COPY</span> <span class="c-purple">--from=builder</span> /app/dist /usr/share/nginx/html
+<span class="c-gray"># ผลลัพธ์: image เล็กลงจาก ~1.2GB → ~25MB!</span>
+    </div>
+  </div>
+
+  <!-- 5. Networking -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🌐</span>5. Docker Networking</div>
+    <p>Docker มี network drivers ต่างๆ สำหรับ use cases ต่างกัน — การเชื่อมต่อระหว่าง containers ใช้ชื่อ service แทน IP address</p>
+
+    <table class="info-table" style="margin-top:1rem;">
+      <tr><th>Network Type</th><th>ลักษณะ</th><th>ใช้เมื่อ</th></tr>
+      <tr>
+        <td><strong>bridge</strong> (default)</td>
+        <td>Virtual network สำหรับ containers บน host เดียวกัน — containers คุยกันได้ผ่านชื่อ</td>
+        <td>ใช้บ่อยที่สุด เช่น frontend คุยกับ backend</td>
+      </tr>
+      <tr>
+        <td><strong>host</strong></td>
+        <td>Container ใช้ network stack ของ host โดยตรง — ไม่มี isolation แต่เร็วกว่า</td>
+        <td>ต้องการ performance สูงสุด</td>
+      </tr>
+      <tr>
+        <td><strong>none</strong></td>
+        <td>Container ไม่มี network เลย</td>
+        <td>Security สูงสุด ไม่ต้องการ network</td>
+      </tr>
+      <tr>
+        <td><strong>overlay</strong></td>
+        <td>เชื่อม containers ข้าม hosts หลายเครื่อง</td>
+        <td>Docker Swarm / Kubernetes</td>
+      </tr>
+    </table>
+
+    <div class="alert tip">
+      <span class="ai">💡</span>
+      <div>
+        <strong>Container DNS ใน Docker Compose</strong>
+        ใน docker-compose.yml ถ้า service ชื่อ <code>backend</code> — container อื่นเรียกได้ด้วย URL <code>http://backend:3000</code> โดยไม่ต้องรู้ IP address<br>
+        Docker จัดการ DNS resolution อัตโนมัติภายใน network เดียวกัน
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Volumes -->
+  <div class="section">
+    <div class="section-title"><span class="icon">💾</span>6. Volumes — ข้อมูลถาวรใน Container</div>
+    <p>Container เป็น ephemeral — ถ้า container ถูกลบ ข้อมูลภายในหายทั้งหมด Volume คือทางออกในการ persist ข้อมูล</p>
+
+    <div class="concept-grid">
+      <div class="concept-card docker">
+        <div class="cc-title">🗂️ Named Volume</div>
+        <div class="cc-body">Docker จัดการเอง เก็บใน <code>/var/lib/docker/volumes/</code> — เหมาะสำหรับ database data, persistent state</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">📁 Bind Mount</div>
+        <div class="cc-body">Map folder ของ host เข้า container โดยตรง — เหมาะสำหรับ development (hot reload) เพราะแก้ไขได้ทันที</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">🧠 tmpfs Mount</div>
+        <div class="cc-body">เก็บข้อมูลใน RAM เท่านั้น — ข้อมูลหายเมื่อ container หยุด เหมาะสำหรับ sensitive data ชั่วคราว</div>
+      </div>
+    </div>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-gray"># Named Volume — ข้อมูล DB ไม่หายแม้ลบ container</span>
+volumes:
+  postgres_data:         <span class="c-gray"># Docker สร้าง volume ชื่อนี้</span>
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  <span class="c-gray"># mount volume</span>
+
+<span class="c-gray"># Bind Mount — sync code แบบ real-time ตอน dev</span>
+  backend:
+    volumes:
+      - ./backend:/app   <span class="c-gray"># folder host : folder ใน container</span>
+    </div>
+  </div>
+
+  <!-- 7. Docker Compose -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🎼</span>7. Docker Compose — Multi-Container Orchestration</div>
+    <p>Docker Compose จัดการหลาย containers พร้อมกัน — กำหนด services, networks, volumes ใน YAML ไฟล์เดียว แล้วรันด้วยคำสั่งเดียว</p>
+
+    <div class="diagram">
+<span class="c-gray"># docker-compose.yml structure</span>
+services:
+  frontend:             <span class="c-gray"># ชื่อ service = ชื่อ DNS ใน network</span>
+    build: ./frontend
+    ports: ["5173:80"]  <span class="c-gray"># host:container</span>
+    depends_on: [backend]
+
+  backend:
+    build: ./backend
+    ports: ["3000:3000"]
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+    depends_on: [db]
+
+  db:
+    image: postgres:15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: secret
+
+volumes:
+  pgdata:
+    </div>
+
+    <table class="info-table" style="margin-top:1rem;">
+      <tr><th>คำสั่ง</th><th>ทำอะไร</th></tr>
+      <tr><td><code>docker compose up -d</code></td><td>Build + Start ทุก service ใน background</td></tr>
+      <tr><td><code>docker compose down</code></td><td>Stop + Remove containers (volume ยังอยู่)</td></tr>
+      <tr><td><code>docker compose down -v</code></td><td>Stop + Remove containers + volumes</td></tr>
+      <tr><td><code>docker compose logs -f</code></td><td>ดู logs realtime ของทุก service</td></tr>
+      <tr><td><code>docker compose ps</code></td><td>ดูสถานะทุก service</td></tr>
+      <tr><td><code>docker compose exec backend sh</code></td><td>เปิด shell เข้าไปใน container</td></tr>
+    </table>
+  </div>
+
+  <!-- 8. Key Terms -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📖</span>8. คำศัพท์ที่ควรรู้</div>
+    <div class="term-list">
+      <div class="term-item"><div class="term-name">image</div><div class="term-def">Read-only template สำหรับสร้าง container — build จาก Dockerfile หรือ pull จาก Registry</div></div>
+      <div class="term-item"><div class="term-name">container</div><div class="term-def">Instance ที่รันจาก image — มี filesystem, network, process isolation ของตัวเอง</div></div>
+      <div class="term-item"><div class="term-name">Dockerfile</div><div class="term-def">ไฟล์ instructions สำหรับ build image — แต่ละ instruction สร้าง layer</div></div>
+      <div class="term-item"><div class="term-name">registry</div><div class="term-def">ที่เก็บและแจกจ่าย images เช่น Docker Hub, Private Registry</div></div>
+      <div class="term-item"><div class="term-name">tag</div><div class="term-def">version label ของ image เช่น node:20, postgres:15, myapp:v1.0.0</div></div>
+      <div class="term-item"><div class="term-name">port mapping</div><div class="term-def">เชื่อม port ของ host กับ port ของ container เช่น -p 8080:80 (host:container)</div></div>
+      <div class="term-item"><div class="term-name">environment variable</div><div class="term-def">ตัวแปร config ที่ส่งเข้า container เช่น DATABASE_URL — ใช้แทนการ hardcode</div></div>
+      <div class="term-item"><div class="term-name">health check</div><div class="term-def">คำสั่งที่ Docker รันซ้ำๆ เพื่อตรวจว่า container ทำงานปกติ — บอก orchestrator ว่า restart หรือไม่</div></div>
+      <div class="term-item"><div class="term-name">namespace</div><div class="term-def">Linux kernel feature ที่ isolate containers จากกัน — PID, Network, Mount, UTS namespaces</div></div>
+      <div class="term-item"><div class="term-name">cgroups</div><div class="term-def">Linux kernel feature ที่จำกัด CPU, Memory ที่ container ใช้ได้</div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  📘 ใบความรู้ที่ 3 · วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)<br>
+  <a href="../week3-containerize/tutorial.html" style="color:#2496ed;text-decoration:none;display:inline-block;margin-top:.5rem;">→ ไปที่ Lab Tutorial สัปดาห์ที่ 3</a>
+</footer>
+
+</body>
+</html>

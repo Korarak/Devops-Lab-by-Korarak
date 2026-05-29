@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ที่ 2 — REST API & Backend | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal: #0891b2; --teal-light: #cffafe;
+      --green: #059669; --green-light: #d1fae5;
+      --blue: #2563eb; --blue-light: #dbeafe;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --red: #dc2626; --red-light: #fee2e2;
+      --purple: #7c3aed; --purple-light: #ede9fe;
+      --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f0fdfa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.8; }
+
+    .top-bar { background: #0c4a6e; color: #fff; padding: .75rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    .top-bar a { color: #7dd3fc; text-decoration: none; font-size: .85rem; }
+    .top-bar a:hover { color: #fff; }
+    .top-bar .sep { color: #0369a1; }
+    .top-bar .current { color: #38bdf8; font-weight: 600; font-size: .85rem; }
+
+    .hero { background: linear-gradient(135deg, #0c4a6e, #0891b2, #059669); color: #fff; padding: 3rem 2rem; text-align: center; }
+    .hero .sheet-label { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .3rem 1rem; font-size: .8rem; margin-bottom: 1rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: .4rem; }
+    .hero .subtitle { opacity: .85; font-size: .95rem; }
+    .hero .meta { display: flex; gap: 2rem; justify-content: center; margin-top: 1.5rem; }
+    .hero .meta-item { text-align: center; }
+    .hero .meta-item .val { font-size: 1.1rem; font-weight: 700; }
+    .hero .meta-item .lbl { font-size: .72rem; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .section { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+    .section-title .icon { font-size: 1.4rem; }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .concept-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid; }
+    .concept-card .cc-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
+    .concept-card .cc-body { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+    .concept-card.teal   { background: var(--teal-light); border-color: #67e8f9; }
+    .concept-card.green  { background: var(--green-light); border-color: #6ee7b7; }
+    .concept-card.blue   { background: var(--blue-light); border-color: #93c5fd; }
+    .concept-card.amber  { background: var(--amber-light); border-color: #fcd34d; }
+    .concept-card.purple { background: var(--purple-light); border-color: #c4b5fd; }
+    .concept-card.red    { background: var(--red-light); border-color: #fca5a5; }
+
+    .diagram { background: #1e293b; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; overflow-x: auto; }
+    .diagram .c-green  { color: #86efac; }
+    .diagram .c-blue   { color: #7dd3fc; }
+    .diagram .c-yellow { color: #fde68a; }
+    .diagram .c-purple { color: #c4b5fd; }
+    .diagram .c-teal   { color: #67e8f9; }
+    .diagram .c-gray   { color: #64748b; }
+    .diagram .c-red    { color: #fca5a5; }
+
+    .info-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .info-table th { background: #0c4a6e; color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+    .info-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8fafc; }
+    .info-table code { background: #f1f5f9; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+    .method-tag { display: inline-block; padding: .2rem .55rem; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: .78rem; font-weight: 700; }
+    .method-tag.get    { background: #d1fae5; color: #065f46; }
+    .method-tag.post   { background: #dbeafe; color: #1e40af; }
+    .method-tag.put    { background: #fef3c7; color: #92400e; }
+    .method-tag.patch  { background: #ede9fe; color: #5b21b6; }
+    .method-tag.delete { background: #fee2e2; color: #991b1b; }
+
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; }
+    .status-item { border-radius: 8px; padding: .85rem; border: 1.5px solid; }
+    .status-item .s-code { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+    .status-item .s-name { font-size: .78rem; font-weight: 600; margin: .2rem 0; }
+    .status-item .s-desc { font-size: .78rem; color: var(--muted); }
+    .status-item.s2 { background: #d1fae5; border-color: #6ee7b7; }
+    .status-item.s3 { background: #dbeafe; border-color: #93c5fd; }
+    .status-item.s4 { background: #fef3c7; border-color: #fcd34d; }
+    .status-item.s5 { background: #fee2e2; border-color: #fca5a5; }
+
+    .alert { border-radius: 8px; padding: .9rem 1rem; display: flex; gap: .7rem; font-size: .9rem; margin: 1rem 0; }
+    .alert.info   { background: var(--blue-light); border-left: 4px solid var(--blue); }
+    .alert.tip    { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.note   { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert .ai    { font-size: 1.1rem; flex-shrink: 0; }
+    .alert strong { display: block; margin-bottom: .2rem; }
+
+    .term-list { display: grid; gap: .5rem; }
+    .term-item { display: grid; grid-template-columns: 180px 1fr; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+    .term-item:last-child { border-bottom: none; }
+    .term-name { font-weight: 700; color: var(--teal); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+    .term-def { color: var(--muted); }
+
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--border); background: #fff; }
+    @media (max-width:600px) { .hero h1 { font-size: 1.5rem; } .term-item { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">DevOps Labs</a>
+  <span class="sep">›</span>
+  <a href="index.html">ใบความรู้</a>
+  <span class="sep">›</span>
+  <span class="current">REST API & Backend</span>
+</div>
+
+<div class="hero">
+  <div class="sheet-label">ใบความรู้ที่ 2 · DevOps 30901-2008</div>
+  <h1>🌐 REST API & Backend Development</h1>
+  <p class="subtitle">REST Principles, HTTP Methods, Node.js Event Loop และ PostgreSQL</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">สัปดาห์ 2</div><div class="lbl">ประกอบกับ Lab</div></div>
+    <div class="meta-item"><div class="val">ทฤษฎี</div><div class="lbl">ประเภท</div></div>
+    <div class="meta-item"><div class="val">35 นาที</div><div class="lbl">เวลาอ่าน</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1. API คืออะไร -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔌</span>1. API คืออะไร?</div>
+    <p>API (Application Programming Interface) คือ "สัญญา" ระหว่าง 2 โปรแกรม — กำหนดว่าจะส่งข้อมูลรูปแบบใด และรับผลลัพธ์รูปแบบใดกลับมา</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-blue">Client</span> <span class="c-gray">(Browser/App)</span>
+   <span class="c-gray">│</span>
+   <span class="c-gray">│  HTTP Request:  GET /api/todos</span>
+   <span class="c-gray">│  Headers: { "Authorization": "Bearer token" }</span>
+   <span class="c-gray">▼</span>
+<span class="c-green">Server</span> <span class="c-gray">(Node.js + Express)</span>     <span class="c-gray">───► </span><span class="c-teal">Database</span> <span class="c-gray">(PostgreSQL)</span>
+   <span class="c-gray">│</span>
+   <span class="c-gray">│  HTTP Response: 200 OK</span>
+   <span class="c-gray">│  Body: [{"id":1,"title":"Learn DevOps","done":false}]</span>
+   <span class="c-gray">▼</span>
+<span class="c-blue">Client</span> <span class="c-gray">แสดงข้อมูลบนหน้าเว็บ</span>
+    </div>
+
+    <div class="alert info">
+      <span class="ai">💡</span>
+      <div>
+        <strong>ทำไมต้องแยก Frontend กับ Backend?</strong>
+        การแยก concerns ทำให้พัฒนาแบบขนานได้ — Frontend dev และ Backend dev ทำงานได้พร้อมกัน โดยตกลงกันแค่เรื่อง API contract<br>
+        นอกจากนี้ Backend เดียวกันยังรองรับ Web, Mobile, Desktop App ได้พร้อมกัน
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. REST Principles -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📐</span>2. REST — 6 หลักการหลัก</div>
+    <p>REST (Representational State Transfer) ไม่ใช่ protocol แต่เป็น <strong>architectural style</strong> — ชุดข้อกำหนดสำหรับออกแบบ API บน HTTP</p>
+
+    <div class="concept-grid">
+      <div class="concept-card teal">
+        <div class="cc-title">1. Client-Server</div>
+        <div class="cc-body">แยก UI (client) ออกจาก data storage (server) — แต่ละฝั่งพัฒนาอิสระจากกัน</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">2. Stateless</div>
+        <div class="cc-body">แต่ละ request ต้องมีข้อมูลครบในตัว — server ไม่เก็บ session state ระหว่าง requests</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">3. Cacheable</div>
+        <div class="cc-body">Response ระบุได้ว่า cache ได้หรือไม่ — ลด latency และ server load</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">4. Uniform Interface</div>
+        <div class="cc-body">ใช้ HTTP methods (GET/POST/PUT/DELETE) ตาม convention — ทำให้ API เข้าใจง่าย</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">5. Layered System</div>
+        <div class="cc-body">Client ไม่รู้ว่าคุยกับ server จริงหรือ load balancer, proxy, CDN — แต่ละ layer ทำหน้าที่ของตัวเอง</div>
+      </div>
+      <div class="concept-card red">
+        <div class="cc-title">6. Code on Demand (Optional)</div>
+        <div class="cc-body">Server ส่ง executable code มาให้ client รัน (เช่น JavaScript) — ข้อนี้ optional</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. HTTP Methods -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📨</span>3. HTTP Methods — CRUD Mapping</div>
+    <p>RESTful API ใช้ HTTP methods แทนการกระทำกับ resource — ทำให้ URL อ่านแล้วรู้ว่าทำอะไร</p>
+
+    <table class="info-table" style="margin-top:1rem;">
+      <tr><th>Method</th><th>CRUD</th><th>ตัวอย่าง URL</th><th>คำอธิบาย</th><th>Idempotent?</th></tr>
+      <tr>
+        <td><span class="method-tag get">GET</span></td>
+        <td>Read</td>
+        <td><code>GET /todos</code><br><code>GET /todos/1</code></td>
+        <td>ดึงรายการ / ดึง 1 รายการ</td>
+        <td>✓ ใช่ (รันกี่ครั้งก็ได้ผลเหมือนกัน)</td>
+      </tr>
+      <tr>
+        <td><span class="method-tag post">POST</span></td>
+        <td>Create</td>
+        <td><code>POST /todos</code></td>
+        <td>สร้าง resource ใหม่</td>
+        <td>✗ ไม่ใช่ (รันซ้ำ = สร้างซ้ำ)</td>
+      </tr>
+      <tr>
+        <td><span class="method-tag put">PUT</span></td>
+        <td>Replace</td>
+        <td><code>PUT /todos/1</code></td>
+        <td>แทนที่ resource ทั้งหมด</td>
+        <td>✓ ใช่</td>
+      </tr>
+      <tr>
+        <td><span class="method-tag patch">PATCH</span></td>
+        <td>Update</td>
+        <td><code>PATCH /todos/1</code></td>
+        <td>แก้ไข resource บางส่วน</td>
+        <td>✓ ใช่ (ถ้าออกแบบดี)</td>
+      </tr>
+      <tr>
+        <td><span class="method-tag delete">DELETE</span></td>
+        <td>Delete</td>
+        <td><code>DELETE /todos/1</code></td>
+        <td>ลบ resource</td>
+        <td>✓ ใช่ (ลบซ้ำก็ไม่มีอยู่อยู่ดี)</td>
+      </tr>
+    </table>
+
+    <div class="alert tip">
+      <span class="ai">💡</span>
+      <div>
+        <strong>Idempotent คือ?</strong>
+        การรัน operation เดิมหลายครั้งให้ผลเหมือนกับรันครั้งเดียว — เช่น <code>DELETE /todos/1</code> จะลบ todo#1 ไม่ว่ารันกี่ครั้ง (ครั้งแรกลบ ครั้งต่อมาก็แค่ return 404)
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. HTTP Status Codes -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📊</span>4. HTTP Status Codes</div>
+    <p>Status code บอก client ว่าผลลัพธ์ของ request เป็นอย่างไร — แบ่งเป็น 5 กลุ่มตาม prefix</p>
+
+    <div class="status-grid" style="margin-top:1rem;">
+      <div class="status-item s2">
+        <div class="s-code">2xx</div>
+        <div class="s-name">Success</div>
+        <div class="s-desc">200 OK · 201 Created · 204 No Content</div>
+      </div>
+      <div class="status-item s3">
+        <div class="s-code">3xx</div>
+        <div class="s-name">Redirect</div>
+        <div class="s-desc">301 Moved Permanently · 304 Not Modified</div>
+      </div>
+      <div class="status-item s4">
+        <div class="s-code">4xx</div>
+        <div class="s-name">Client Error</div>
+        <div class="s-desc">400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 422 Unprocessable</div>
+      </div>
+      <div class="status-item s5">
+        <div class="s-code">5xx</div>
+        <div class="s-name">Server Error</div>
+        <div class="s-desc">500 Internal Server Error · 502 Bad Gateway · 503 Service Unavailable</div>
+      </div>
+    </div>
+
+    <div class="alert note">
+      <span class="ai">⚠️</span>
+      <div>
+        <strong>ผิดพลาดที่พบบ่อย</strong>
+        อย่า return 200 OK เมื่อเกิด error! — บาง API ทำแบบนี้แล้วใส่ error ไว้ใน body แทน ซึ่งทำให้ client ต้อง parse body เพิ่มเติม ควรใช้ status code ที่ถูกต้อง
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Node.js Event Loop -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚡</span>5. Node.js — Single-Threaded & Non-Blocking I/O</div>
+    <p>Node.js ใช้ single thread แต่รับได้หลาย request พร้อมกัน — ด้วย Event Loop ที่จัดการ async operations แบบ non-blocking</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-yellow">Call Stack</span>        <span class="c-gray">Node.js APIs</span>          <span class="c-green">Callback Queue</span>
+<span class="c-gray">┌──────────┐</span>       <span class="c-gray">┌─────────────────┐</span>       <span class="c-gray">┌────────────────────┐</span>
+<span class="c-gray">│ main()   │</span>  <span class="c-gray">──►  │ setTimeout()    │</span>  <span class="c-gray">──►  │ timer callbacks    │</span>
+<span class="c-gray">│ readDB() │</span>       <span class="c-gray">│ fs.readFile()   │</span>       <span class="c-gray">│ I/O callbacks      │</span>
+<span class="c-gray">│ express()│</span>       <span class="c-gray">│ fetch()         │</span>       <span class="c-gray">│ HTTP callbacks     │</span>
+<span class="c-gray">└──────────┘</span>       <span class="c-gray">└─────────────────┘</span>       <span class="c-gray">└────────────────────┘</span>
+     <span class="c-gray">▲                                               │</span>
+     <span class="c-gray">└───────────── </span><span class="c-blue">Event Loop</span><span class="c-gray"> ◄──────────────────────┘</span>
+                 <span class="c-gray">(ถ้า Call Stack ว่าง → ดึง callback มารัน)</span>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card teal">
+        <div class="cc-title">Synchronous (Blocking)</div>
+        <div class="cc-body">รอให้ operation เสร็จก่อนทำต่อ — ถ้า query DB ใช้เวลา 2 วินาที request อื่นต้องรอ 2 วินาที</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">Asynchronous (Non-blocking)</div>
+        <div class="cc-body">ส่ง operation ไปทำ background แล้วรับ callback เมื่อเสร็จ — ระหว่างรอรับ request อื่นได้ปกติ</div>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <span class="ai">🧵</span>
+      <div>
+        <strong>Node.js เหมาะกับงานอะไร?</strong>
+        ดี: I/O intensive (API servers, real-time apps, proxies) — เพราะรอ I/O แบบ non-blocking ได้ดี<br>
+        ไม่เหมาะ: CPU intensive (video encoding, image processing, ML) — เพราะ single thread จะ block ทั้งหมด
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Express Middleware -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🚂</span>6. Express.js — Middleware Pattern</div>
+    <p>Middleware คือ function ที่นั่งกลาง request กับ response — ทุก request ผ่าน middleware stack ตามลำดับ</p>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-blue">Request</span> <span class="c-gray">──►</span> <span class="c-yellow">[logger]</span> <span class="c-gray">──►</span> <span class="c-yellow">[auth]</span> <span class="c-gray">──►</span> <span class="c-yellow">[validate]</span> <span class="c-gray">──►</span> <span class="c-green">[handler]</span> <span class="c-gray">──►</span> <span class="c-blue">Response</span>
+               <span class="c-gray">ถ้า next()      ถ้า next()    ถ้า next()     return res.json()</span>
+               <span class="c-gray">ไม่ถูกเรียก → หยุดที่นี่ (เช่น auth fail → 401)</span>
+    </div>
+
+    <table class="info-table" style="margin-top:1rem;">
+      <tr><th>Middleware</th><th>หน้าที่</th><th>ตัวอย่าง</th></tr>
+      <tr><td><code>express.json()</code></td><td>Parse JSON body ของ request</td><td>app.use(express.json())</td></tr>
+      <tr><td><code>cors()</code></td><td>จัดการ CORS headers</td><td>app.use(cors())</td></tr>
+      <tr><td>Custom auth</td><td>ตรวจสอบ token ก่อนเข้า route</td><td>app.use(authMiddleware)</td></tr>
+      <tr><td>Error handler</td><td>catch error จากทุก route</td><td>app.use((err, req, res, next) => ...)</td></tr>
+    </table>
+  </div>
+
+  <!-- 7. PostgreSQL & ACID -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🗄️</span>7. PostgreSQL — ACID Properties</div>
+    <p>PostgreSQL เป็น Relational Database ที่รองรับ ACID — คุณสมบัติที่รับประกันความถูกต้องของข้อมูลแม้เกิดข้อผิดพลาด</p>
+
+    <div class="concept-grid">
+      <div class="concept-card teal">
+        <div class="cc-title">A — Atomicity (ครบหรือไม่มีเลย)</div>
+        <div class="cc-body">Transaction ทำสำเร็จทั้งหมดหรือล้มเหลวทั้งหมด — ไม่มีสถานะกึ่งกลาง เช่น โอนเงิน: หักต้นทาง + เพิ่มปลายทาง ต้องเกิดพร้อมกัน</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">C — Consistency (ถูกต้องตลอด)</div>
+        <div class="cc-body">ข้อมูลต้องผ่าน constraints ทุกข้อก่อนและหลัง transaction — เช่น NOT NULL, UNIQUE, FOREIGN KEY</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">I — Isolation (แยกจากกัน)</div>
+        <div class="cc-body">Transactions หลายอันรันพร้อมกันไม่กวนกัน — ผลลัพธ์เหมือนรันทีละอัน</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">D — Durability (คงทน)</div>
+        <div class="cc-body">เมื่อ commit แล้ว ข้อมูลจะอยู่แม้ server ล่มหรือไฟดับ — บันทึกลง disk จริง</div>
+      </div>
+    </div>
+
+    <div class="alert tip">
+      <span class="ai">🆚</span>
+      <div>
+        <strong>SQL vs NoSQL — เลือกอะไร?</strong>
+        <strong>SQL (PostgreSQL):</strong> ข้อมูลมีโครงสร้างชัดเจน, ต้องการ ACID, queries ซับซ้อน (JOIN)<br>
+        <strong>NoSQL (MongoDB):</strong> ข้อมูลยืดหยุ่น, scale horizontal ง่าย, ไม่ต้องการ schema เข้มงวด<br>
+        สำหรับ Todo App ที่มี schema ชัดเจน → PostgreSQL เหมาะกว่า
+      </div>
+    </div>
+
+    <p style="margin-top:1rem;"><strong>Connection Pooling:</strong></p>
+    <p style="font-size:.92rem;">การสร้าง DB connection ใหม่ทุก request มีต้นทุนสูง (TCP handshake, auth) — Connection Pool เก็บ connections สำเร็จรูปและ reuse ได้ทันที ลด latency และ resource usage</p>
+  </div>
+
+  <!-- 8. Key Terms -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📖</span>8. คำศัพท์ที่ควรรู้</div>
+    <div class="term-list">
+      <div class="term-item"><div class="term-name">endpoint</div><div class="term-def">URL + HTTP method คู่หนึ่ง เช่น GET /todos — แต่ละ endpoint ทำหน้าที่เฉพาะ</div></div>
+      <div class="term-item"><div class="term-name">request body</div><div class="term-def">ข้อมูลที่ client ส่งมาใน POST/PUT/PATCH — มักเป็น JSON format</div></div>
+      <div class="term-item"><div class="term-name">response body</div><div class="term-def">ข้อมูลที่ server ตอบกลับ — มักเป็น JSON ใน REST API</div></div>
+      <div class="term-item"><div class="term-name">query parameter</div><div class="term-def">ตัวกรองใน URL เช่น /todos?done=true&limit=10 — ใช้สำหรับ filter/sort/paginate</div></div>
+      <div class="term-item"><div class="term-name">route parameter</div><div class="term-def">ค่าในเส้นทาง URL เช่น /todos/:id — ดึงได้ด้วย req.params.id ใน Express</div></div>
+      <div class="term-item"><div class="term-name">middleware</div><div class="term-def">function ที่อยู่กลาง request-response cycle — ใช้สำหรับ auth, logging, validation</div></div>
+      <div class="term-item"><div class="term-name">ORM</div><div class="term-def">Object-Relational Mapper — ใช้ code แทน SQL เช่น Prisma, Sequelize (เราใช้ raw SQL ใน Week 2)</div></div>
+      <div class="term-item"><div class="term-name">CORS</div><div class="term-def">Cross-Origin Resource Sharing — browser security ที่บล็อก request ข้าม domain ต้องตั้งค่า header ฝั่ง server</div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  📘 ใบความรู้ที่ 2 · วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)<br>
+  <a href="../week2-fullstack-nodejs/tutorial.html" style="color:#0891b2;text-decoration:none;display:inline-block;margin-top:.5rem;">→ ไปที่ Lab Tutorial สัปดาห์ที่ 2</a>
+</footer>
+
+</body>
+</html>

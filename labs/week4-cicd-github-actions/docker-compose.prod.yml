@@ -1,0 +1,43 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       stockpro
+      POSTGRES_USER:     stockuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-stockpass123}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockuser -d stockpro"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    # GitHub Actions จะ push image นี้ให้อัตโนมัติ
+    image: ${REGISTRY_URL}/stockpro-backend:latest
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     stockpro
+      DB_USER:     stockuser
+      DB_PASSWORD: ${DB_PASSWORD:-stockpass123}
+      PORT:        3001
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: ${REGISTRY_URL}/stockpro-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:

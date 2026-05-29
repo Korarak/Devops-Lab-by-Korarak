@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบความรู้ที่ 4 — CI/CD & DevOps Culture | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sky: #0ea5e9; --sky-light: #e0f2fe;
+      --amber: #f59e0b; --amber-light: #fffbeb;
+      --green: #059669; --green-light: #d1fae5;
+      --purple: #7c3aed; --purple-light: #ede9fe;
+      --red: #dc2626; --red-light: #fee2e2;
+      --blue: #2563eb; --blue-light: #dbeafe;
+      --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f0f9ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.8; }
+
+    .top-bar { background: #0c1445; color: #fff; padding: .75rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    .top-bar a { color: #7dd3fc; text-decoration: none; font-size: .85rem; }
+    .top-bar a:hover { color: #fff; }
+    .top-bar .sep { color: #1e3a8a; }
+    .top-bar .current { color: #38bdf8; font-weight: 600; font-size: .85rem; }
+
+    .hero { background: linear-gradient(135deg, #0c1445, #0ea5e9, #f59e0b); color: #fff; padding: 3rem 2rem; text-align: center; }
+    .hero .sheet-label { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .3rem 1rem; font-size: .8rem; margin-bottom: 1rem; letter-spacing: .05em; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: .4rem; }
+    .hero .subtitle { opacity: .85; font-size: .95rem; }
+    .hero .meta { display: flex; gap: 2rem; justify-content: center; margin-top: 1.5rem; }
+    .hero .meta-item { text-align: center; }
+    .hero .meta-item .val { font-size: 1.1rem; font-weight: 700; }
+    .hero .meta-item .lbl { font-size: .72rem; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .section { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+    .section-title .icon { font-size: 1.4rem; }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .concept-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid; }
+    .concept-card .cc-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
+    .concept-card .cc-body { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+    .concept-card.sky    { background: var(--sky-light); border-color: #7dd3fc; }
+    .concept-card.green  { background: var(--green-light); border-color: #6ee7b7; }
+    .concept-card.amber  { background: var(--amber-light); border-color: #fcd34d; }
+    .concept-card.purple { background: var(--purple-light); border-color: #c4b5fd; }
+    .concept-card.blue   { background: var(--blue-light); border-color: #93c5fd; }
+
+    .diagram { background: #1e293b; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 1.9; overflow-x: auto; }
+    .diagram .c-blue   { color: #7dd3fc; }
+    .diagram .c-green  { color: #86efac; }
+    .diagram .c-yellow { color: #fde68a; }
+    .diagram .c-purple { color: #c4b5fd; }
+    .diagram .c-sky    { color: #67e8f9; }
+    .diagram .c-gray   { color: #64748b; }
+    .diagram .c-orange { color: #fdba74; }
+    .diagram .c-red    { color: #fca5a5; }
+
+    .info-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .info-table th { background: #0c1445; color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+    .info-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8fafc; }
+    .info-table code { background: #f1f5f9; padding: .1rem .35rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+    .alert { border-radius: 8px; padding: .9rem 1rem; display: flex; gap: .7rem; font-size: .9rem; margin: 1rem 0; }
+    .alert.info   { background: var(--sky-light); border-left: 4px solid var(--sky); }
+    .alert.tip    { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.note   { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.purple { background: var(--purple-light); border-left: 4px solid var(--purple); }
+    .alert .ai    { font-size: 1.1rem; flex-shrink: 0; }
+    .alert strong { display: block; margin-bottom: .2rem; }
+
+    /* PIPELINE VISUALIZATION */
+    .pipeline { display: flex; gap: 0; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+    .pipe-stage { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: .7rem 1rem; font-size: .82rem; font-weight: 600; text-align: center; min-width: 100px; }
+    .pipe-stage.ci    { background: var(--sky-light); border-color: #7dd3fc; color: #0369a1; }
+    .pipe-stage.build { background: var(--amber-light); border-color: #fcd34d; color: #92400e; }
+    .pipe-stage.test  { background: var(--purple-light); border-color: #c4b5fd; color: #5b21b6; }
+    .pipe-stage.push  { background: var(--green-light); border-color: #6ee7b7; color: #065f46; }
+    .pipe-stage.deploy { background: var(--blue-light); border-color: #93c5fd; color: #1e40af; }
+    .pipe-arrow { color: var(--muted); font-size: 1.2rem; padding: 0 .3rem; }
+
+    /* DEVOPS LOOP */
+    .devops-loop { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin: 1rem 0; }
+    .loop-item { border-radius: 8px; padding: .75rem; text-align: center; border: 1.5px solid; }
+    .loop-item .li-icon { font-size: 1.5rem; margin-bottom: .3rem; }
+    .loop-item .li-title { font-weight: 700; font-size: .82rem; }
+    .loop-item .li-desc { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+    .loop-item.dev  { background: #dbeafe; border-color: #93c5fd; }
+    .loop-item.ops  { background: var(--green-light); border-color: #6ee7b7; }
+
+    .term-list { display: grid; gap: .5rem; }
+    .term-item { display: grid; grid-template-columns: 200px 1fr; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+    .term-item:last-child { border-bottom: none; }
+    .term-name { font-weight: 700; color: var(--sky); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+    .term-def { color: var(--muted); }
+
+    /* DEPLOY STRATEGIES */
+    .deploy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+    .deploy-card { border-radius: 10px; padding: 1.1rem; border: 1.5px solid var(--border); background: #f8fafc; }
+    .deploy-card .dc-title { font-weight: 700; margin-bottom: .4rem; }
+    .deploy-card .dc-visual { font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: var(--muted); margin: .5rem 0; background: #1e293b; padding: .5rem; border-radius: 6px; color: #94a3b8; }
+    .deploy-card .dc-desc { font-size: .84rem; color: var(--muted); }
+
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--border); background: #fff; }
+    @media (max-width:600px) { .hero h1 { font-size: 1.5rem; } .devops-loop { grid-template-columns: repeat(2, 1fr); } .term-item { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">DevOps Labs</a>
+  <span class="sep">›</span>
+  <a href="index.html">ใบความรู้</a>
+  <span class="sep">›</span>
+  <span class="current">CI/CD & DevOps Culture</span>
+</div>
+
+<div class="hero">
+  <div class="sheet-label">ใบความรู้ที่ 4 · DevOps 30901-2008</div>
+  <h1>🔄 CI/CD & DevOps Culture</h1>
+  <p class="subtitle">DevOps Philosophy, CI/CD Pipeline, GitFlow, GitHub Actions Architecture และ Deployment Strategies</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">สัปดาห์ 4</div><div class="lbl">ประกอบกับ Lab</div></div>
+    <div class="meta-item"><div class="val">ทฤษฎี</div><div class="lbl">ประเภท</div></div>
+    <div class="meta-item"><div class="val">40 นาที</div><div class="lbl">เวลาอ่าน</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1. DevOps Culture -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🤝</span>1. DevOps คืออะไร?</div>
+    <p>DevOps ไม่ใช่แค่ tool หรือ process — มันคือ <strong>วัฒนธรรม (culture)</strong> ที่รวม Development กับ Operations เข้าด้วยกัน เพื่อส่งมอบ software ได้เร็วขึ้นและมีคุณภาพสูงขึ้น</p>
+
+    <div class="devops-loop">
+      <div class="loop-item dev"><div class="li-icon">📋</div><div class="li-title">Plan</div><div class="li-desc">วางแผน features</div></div>
+      <div class="loop-item dev"><div class="li-icon">💻</div><div class="li-title">Code</div><div class="li-desc">เขียน code</div></div>
+      <div class="loop-item dev"><div class="li-icon">🔨</div><div class="li-title">Build</div><div class="li-desc">Compile, package</div></div>
+      <div class="loop-item dev"><div class="li-icon">🧪</div><div class="li-title">Test</div><div class="li-desc">Automated tests</div></div>
+      <div class="loop-item ops"><div class="li-icon">🚀</div><div class="li-title">Release</div><div class="li-desc">Tag, changelog</div></div>
+      <div class="loop-item ops"><div class="li-icon">📦</div><div class="li-title">Deploy</div><div class="li-desc">Production release</div></div>
+      <div class="loop-item ops"><div class="li-icon">📊</div><div class="li-title">Operate</div><div class="li-desc">Monitor, scale</div></div>
+      <div class="loop-item ops"><div class="li-icon">👁️</div><div class="li-title">Monitor</div><div class="li-desc">Logs, metrics</div></div>
+    </div>
+
+    <div class="alert info">
+      <span class="ai">💡</span>
+      <div>
+        <strong>ก่อน DevOps vs หลัง DevOps</strong>
+        <strong>ก่อน:</strong> Dev ทำงานแยก Ops — "works on my machine!" เป็น meme ที่โด่งดัง ทีม deploy เดือนละครั้ง<br>
+        <strong>หลัง:</strong> ทีมเดียวกันรับผิดชอบตั้งแต่ code จนถึง production — deploy หลายสิบครั้งต่อวัน
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CI vs CD -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔁</span>2. CI vs CD — ความแตกต่าง</div>
+
+    <div class="concept-grid">
+      <div class="concept-card sky">
+        <div class="cc-title">🔄 CI — Continuous Integration</div>
+        <div class="cc-body">นักพัฒนา merge code บ่อยๆ (วันละหลายครั้ง) — ทุก merge trigger automated build และ test ให้ตรวจสอบโดยทันที ตรวจจับ integration bug ได้เร็ว</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">📬 CD — Continuous Delivery</div>
+        <div class="cc-body">Code ที่ผ่าน CI จะ <strong>พร้อม deploy</strong> อัตโนมัติเสมอ — แต่ยังต้องใช้คนกด deploy เข้า production จริง (manual approval step)</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">🚀 CD — Continuous Deployment</div>
+        <div class="cc-body">Code ที่ผ่าน CI จะ <strong>deploy อัตโนมัติ</strong> เข้า production ทันที — ไม่ต้องมีคนกด เหมาะกับ teams ที่มี test coverage สูงมาก</div>
+      </div>
+    </div>
+
+    <div class="alert note">
+      <span class="ai">⚠️</span>
+      <div>
+        <strong>"CD" มีความหมาย 2 อย่าง</strong>
+        Continuous Delivery = พร้อมแต่คนกด · Continuous Deployment = อัตโนมัติทั้งหมด<br>
+        ใน Lab นี้เราทำ Continuous Delivery — CD workflow push image ไปที่ Registry แต่ยังต้องรัน docker compose ด้วยมือบน server
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Pipeline Stages -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🏭</span>3. CI/CD Pipeline — ขั้นตอนทั่วไป</div>
+    <p>Pipeline คือลำดับขั้นตอนที่ code ต้องผ่านทั้งหมดก่อนถึง production — ถ้า stage ใด fail pipeline จะหยุดทันที</p>
+
+    <div class="pipeline" style="margin-top:1rem;">
+      <div class="pipe-stage ci">📥 Checkout</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-stage test">📦 Install</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-stage test">🧪 Test/Lint</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-stage build">🔨 Build</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-stage push">📤 Push</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-stage deploy">🚀 Deploy</div>
+    </div>
+
+    <table class="info-table" style="margin-top:1.25rem;">
+      <tr><th>Stage</th><th>ทำอะไร</th><th>ตัวอย่าง Tool</th></tr>
+      <tr><td><strong>Checkout</strong></td><td>ดึง source code มายัง runner</td><td>actions/checkout@v4</td></tr>
+      <tr><td><strong>Install</strong></td><td>ติดตั้ง dependencies</td><td>npm ci, pip install</td></tr>
+      <tr><td><strong>Lint</strong></td><td>ตรวจสอบ code style และ potential bugs</td><td>ESLint, Flake8</td></tr>
+      <tr><td><strong>Test</strong></td><td>รัน unit/integration tests</td><td>Jest, Pytest, Go test</td></tr>
+      <tr><td><strong>Build</strong></td><td>สร้าง artifact (Docker image, binary)</td><td>docker build</td></tr>
+      <tr><td><strong>Push</strong></td><td>ส่ง artifact ไปยัง registry/storage</td><td>docker push</td></tr>
+      <tr><td><strong>Deploy</strong></td><td>นำ artifact ไปใช้บน environment จริง</td><td>kubectl apply, docker compose</td></tr>
+    </table>
+  </div>
+
+  <!-- 4. GitHub Actions -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚙️</span>4. GitHub Actions Architecture</div>
+    <p>GitHub Actions เป็น CI/CD platform ที่ built-in อยู่ใน GitHub ทุก account — ใช้ YAML ไว้ใน <code>.github/workflows/</code> และ GitHub จัดการ infrastructure ให้ทั้งหมด</p>
+
+    <div class="concept-grid">
+      <div class="concept-card sky">
+        <div class="cc-title">Workflow</div>
+        <div class="cc-body">ไฟล์ YAML หนึ่งไฟล์ใน .github/workflows/ — กำหนด trigger และ jobs ทั้งหมด</div>
+      </div>
+      <div class="concept-card amber">
+        <div class="cc-title">Event (Trigger)</div>
+        <div class="cc-body">สิ่งที่ทำให้ workflow รัน เช่น push, pull_request, schedule, workflow_dispatch</div>
+      </div>
+      <div class="concept-card purple">
+        <div class="cc-title">Job</div>
+        <div class="cc-body">กลุ่มของ steps ที่รันบน runner เดียวกัน — หลาย jobs รันพร้อมกันได้ (parallel)</div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">Step</div>
+        <div class="cc-body">หน่วยเล็กสุดใน job — แต่ละ step รัน action หรือ shell command</div>
+      </div>
+      <div class="concept-card blue">
+        <div class="cc-title">Runner</div>
+        <div class="cc-body">VM ที่ GitHub จัดให้รัน workflow — ubuntu-latest, windows-latest, macos-latest</div>
+      </div>
+      <div class="concept-card sky">
+        <div class="cc-title">Action</div>
+        <div class="cc-body">Reusable component เช่น actions/checkout@v4 — ดาวน์โหลดจาก GitHub Marketplace</div>
+      </div>
+    </div>
+
+    <div class="diagram" style="margin-top:1rem;">
+<span class="c-gray"># โครงสร้าง Workflow YAML</span>
+<span class="c-sky">name</span>: CI                        <span class="c-gray"># ชื่อ workflow</span>
+
+<span class="c-sky">on</span>:                              <span class="c-gray"># trigger events</span>
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop]
+
+<span class="c-sky">jobs</span>:                            <span class="c-gray"># รายการ jobs</span>
+  build:                         <span class="c-gray"># ชื่อ job</span>
+    <span class="c-orange">runs-on</span>: ubuntu-latest       <span class="c-gray"># เลือก runner</span>
+    <span class="c-orange">steps</span>:                        <span class="c-gray"># รายการ steps</span>
+      - <span class="c-orange">uses</span>: actions/checkout@v4  <span class="c-gray"># ใช้ action สำเร็จรูป</span>
+      - <span class="c-orange">name</span>: Install deps          <span class="c-gray"># ชื่อ step</span>
+        <span class="c-orange">run</span>: npm ci                 <span class="c-gray"># รัน shell command</span>
+        <span class="c-orange">working-directory</span>: ./backend
+    </div>
+
+    <div class="alert purple">
+      <span class="ai">💰</span>
+      <div>
+        <strong>GitHub Actions Free Tier</strong>
+        Public repositories: ฟรีไม่จำกัด ✓<br>
+        Private repositories: 2,000 นาที/เดือน (ubuntu) ฟรี — เพียงพอสำหรับ project ขนาดเล็ก-กลาง
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. GitFlow vs GitHub Flow -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🌿</span>5. GitFlow vs GitHub Flow — เลือกอะไร?</div>
+
+    <table class="info-table">
+      <tr><th>เรื่อง</th><th>GitFlow</th><th>GitHub Flow</th></tr>
+      <tr>
+        <td><strong>Branches หลัก</strong></td>
+        <td>main, develop</td>
+        <td>main เท่านั้น</td>
+      </tr>
+      <tr>
+        <td><strong>Feature branches</strong></td>
+        <td>feature/* → develop</td>
+        <td>feature/* → main</td>
+      </tr>
+      <tr>
+        <td><strong>Release</strong></td>
+        <td>release/* branch แยก</td>
+        <td>tag บน main โดยตรง</td>
+      </tr>
+      <tr>
+        <td><strong>Hotfix</strong></td>
+        <td>hotfix/* จาก main</td>
+        <td>fix/* จาก main</td>
+      </tr>
+      <tr>
+        <td><strong>เหมาะกับ</strong></td>
+        <td>มี versioned releases หลาย version พร้อมกัน, mobile app, library</td>
+        <td>web app ที่ deploy บ่อย, startup, SaaS</td>
+      </tr>
+      <tr>
+        <td><strong>ความซับซ้อน</strong></td>
+        <td>ซับซ้อนกว่า ต้องเข้าใจ branch roles</td>
+        <td>เรียบง่าย เหมาะกับทีมเล็ก</td>
+      </tr>
+    </table>
+
+    <div class="alert tip">
+      <span class="ai">✅</span>
+      <div>
+        <strong>แนะนำสำหรับ Lab นี้</strong>
+        GitFlow เหมาะกับ Lab เพราะช่วยสอนแนวคิด branching อย่างชัดเจน — ในการทำงานจริงให้เลือก flow ที่เหมาะกับ team size และ release cadence
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Deployment Strategies -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🎯</span>6. Deployment Strategies</div>
+    <p>วิธีนำ version ใหม่ขึ้น production มีหลายแบบ — แต่ละแบบมี tradeoff ระหว่าง risk, downtime, และความซับซ้อน</p>
+
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <div class="dc-title">🔄 Rolling Deployment</div>
+        <div class="dc-visual">v1 v1 v1 → v2 v1 v1 → v2 v2 v1 → v2 v2 v2</div>
+        <div class="dc-desc">อัพเดต instances ทีละน้อย — ไม่มี downtime แต่ 2 versions รันพร้อมกันช่วงสั้นๆ</div>
+      </div>
+      <div class="deploy-card">
+        <div class="dc-title">🔵🟢 Blue-Green Deployment</div>
+        <div class="dc-visual">Blue(v1) [live]  Green(v2) [standby]
+switch traffic → Green(v2) [live]  Blue(v1) [standby]</div>
+        <div class="dc-desc">มี 2 environment — switch traffic ทันที rollback ได้เร็ว แต่ต้องการ resource 2 เท่า</div>
+      </div>
+      <div class="deploy-card">
+        <div class="dc-title">🐦 Canary Deployment</div>
+        <div class="dc-visual">100% → v1 users
+ 10%  → v2 users (canary)
+ถ้า OK → เพิ่มเป็น 100% → v2</div>
+        <div class="dc-desc">ค่อยๆ เพิ่ม traffic ไปหา version ใหม่ — ทดสอบกับ users จริงก่อน full rollout</div>
+      </div>
+      <div class="deploy-card">
+        <div class="dc-title">💥 Recreate Deployment</div>
+        <div class="dc-visual">v1 [running]
+↓ stop v1 (downtime!)
+v2 [start]</div>
+        <div class="dc-desc">หยุด version เก่าก่อนแล้วค่อยเริ่ม version ใหม่ — มี downtime แต่ simple ที่สุด เหมาะกับ dev/staging</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Code Review Best Practices -->
+  <div class="section">
+    <div class="section-title"><span class="icon">👁️</span>7. Code Review — Best Practices</div>
+    <p>Code Review ที่ดีไม่ใช่แค่ตรวจหา bugs — มันเป็นกระบวนการ knowledge sharing และรักษา code quality ของทีม</p>
+
+    <div class="concept-grid">
+      <div class="concept-card sky">
+        <div class="cc-title">Author (ผู้เปิด PR)</div>
+        <div class="cc-body">
+          ✓ PR ขนาดเล็ก (ไม่เกิน 400 บรรทัด)<br>
+          ✓ เขียน description ชัดเจน<br>
+          ✓ ทดสอบก่อน request review<br>
+          ✓ ตอบ comment ทุกข้อ
+        </div>
+      </div>
+      <div class="concept-card green">
+        <div class="cc-title">Reviewer (ผู้ review)</div>
+        <div class="cc-body">
+          ✓ Review ภายใน 24 ชั่วโมง<br>
+          ✓ Comment เชิงสร้างสรรค์ มีเหตุผล<br>
+          ✓ แยก blocking vs non-blocking issues<br>
+          ✓ Approve เมื่อพร้อม — ไม่ delay โดยไม่มีเหตุ
+        </div>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <span class="ai">💬</span>
+      <div>
+        <strong>Comment ที่ดี vs ไม่ดี</strong>
+        ❌ "ทำไม่ถูก" — ไม่มีเหตุผล สร้าง friction<br>
+        ✓ "บรรทัดนี้อาจ throw error ถ้า users เป็น null เพราะ... แนะนำให้ add null check ก่อน access users.id"<br><br>
+        ใช้ prefix: <code>nit:</code> (minor) · <code>blocking:</code> (ต้องแก้ก่อน merge) · <code>question:</code> (แค่สงสัย)
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Key Terms -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📖</span>8. คำศัพท์ที่ควรรู้</div>
+    <div class="term-list">
+      <div class="term-item"><div class="term-name">pipeline</div><div class="term-def">ลำดับขั้นตอนอัตโนมัติที่ code ต้องผ่านตั้งแต่ push จนถึง deploy</div></div>
+      <div class="term-item"><div class="term-name">runner</div><div class="term-def">VM หรือ server ที่รัน GitHub Actions jobs — GitHub จัดให้หรือเป็น self-hosted</div></div>
+      <div class="term-item"><div class="term-name">workflow trigger</div><div class="term-def">event ที่ทำให้ workflow รัน เช่น push, pull_request, schedule (cron)</div></div>
+      <div class="term-item"><div class="term-name">artifact</div><div class="term-def">ผลลัพธ์ของ build step เช่น Docker image, binary file, test report</div></div>
+      <div class="term-item"><div class="term-name">secret</div><div class="term-def">ค่าลับที่ encrypt เก็บใน GitHub Settings — ใช้ใน workflow ผ่าน secrets.NAME</div></div>
+      <div class="term-item"><div class="term-name">environment</div><div class="term-def">กลุ่มของ server ที่ deploy ลงไป เช่น development, staging, production</div></div>
+      <div class="term-item"><div class="term-name">branch protection</div><div class="term-def">กฎที่บังคับ workflow ก่อน merge — เช่น ต้อง review, ต้องผ่าน CI</div></div>
+      <div class="term-item"><div class="term-name">semantic versioning</div><div class="term-def">รูปแบบ version เช่น v1.2.3 = MAJOR.MINOR.PATCH — MAJOR: breaking, MINOR: feature, PATCH: fix</div></div>
+      <div class="term-item"><div class="term-name">CHANGELOG</div><div class="term-def">ไฟล์บันทึกการเปลี่ยนแปลงในแต่ละ release — generate อัตโนมัติจาก conventional commits ได้</div></div>
+      <div class="term-item"><div class="term-name">rollback</div><div class="term-def">การย้อนกลับไปใช้ version ก่อนหน้า เมื่อ deployment ใหม่มีปัญหา</div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  📘 ใบความรู้ที่ 4 · วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)<br>
+  <a href="../week4-cicd-github-actions/tutorial.html" style="color:#0ea5e9;text-decoration:none;display:inline-block;margin-top:.5rem;">→ ไปที่ Lab Tutorial สัปดาห์ที่ 4</a>
+</footer>
+
+</body>
+</html>

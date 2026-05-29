@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Week 1 — Git &amp; GitHub Onboarding | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #2563EB;
+      --primary-dark: #1D4ED8;
+      --primary-light: #DBEAFE;
+      --secondary: #7C3AED;
+      --success: #059669;
+      --success-light: #D1FAE5;
+      --warning: #D97706;
+      --warning-light: #FEF3C7;
+      --error: #DC2626;
+      --info: #0284C7;
+      --info-light: #E0F2FE;
+      --bg: #F1F5F9;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --sidebar-width: 270px;
+      --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    /* ── TOP BAR ─────────────────────────────────────────────── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height);
+      display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar .logo { font-weight: 700; color: var(--primary); font-size: .88rem; white-space: nowrap; text-decoration: none; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--secondary)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── HERO ────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg,#0f2557 0%,#2563EB 55%,#7C3AED 100%);
+      color: #fff; padding: 3.5rem 2rem 3rem; text-align: center;
+    }
+    .hero .badge {
+      display: inline-block; background: rgba(255,255,255,.18); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
+      padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: 1rem; letter-spacing: .03em;
+    }
+    .hero h1 { font-size: 2.1rem; font-weight: 700; margin-bottom: .5rem; text-shadow: 0 2px 8px rgba(0,0,0,.2); }
+    .hero .subtitle { font-size: 1rem; opacity: .87; margin-bottom: 2rem; }
+    .meta-cards { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .meta-card {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px; padding: .65rem 1.3rem; text-align: center; min-width: 110px;
+    }
+    .meta-card .mc-label { font-size: .7rem; opacity: .72; text-transform: uppercase; letter-spacing: .06em; }
+    .meta-card .mc-val { font-size: 1.05rem; font-weight: 700; margin-top: .15rem; }
+
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-width); flex-shrink: 0;
+      position: sticky; top: calc(var(--header-height) + .75rem);
+      max-height: calc(100vh - var(--header-height) - 1.5rem);
+      overflow-y: auto; scrollbar-width: thin;
+    }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,var(--primary),var(--secondary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link {
+      display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem;
+      font-size: .84rem; color: var(--text); text-decoration: none;
+      border-left: 3px solid transparent; transition: all .2s;
+    }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--success); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    /* ── MAIN CONTENT ────────────────────────────────────────── */
+    .main { flex: 1; min-width: 0; }
+
+    /* ── OVERVIEW CARD ───────────────────────────────────────── */
+    .overview {
+      background: #fff; border-radius: 14px; border: 1px solid var(--border);
+      padding: 1.6rem; margin-bottom: 2rem;
+    }
+    .overview-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .goal-list { list-style: none; display: grid; gap: .5rem; }
+    .goal-list li { display: flex; align-items: flex-start; gap: .7rem; font-size: .94rem; }
+    .goal-icon { width: 20px; height: 20px; border-radius: 5px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 800; flex-shrink: 0; margin-top: .15rem; }
+
+    /* ── SECTION ─────────────────────────────────────────────── */
+    .section { margin-bottom: 2.5rem; }
+    .sec-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .sec-num {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg,var(--primary),var(--secondary));
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.25rem; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(37,99,235,.3);
+    }
+    .sec-title { font-size: 1.25rem; font-weight: 700; }
+    .sec-time { font-size: .8rem; color: var(--text-muted); margin-top: .1rem; }
+
+    /* ── STEP CARD ───────────────────────────────────────────── */
+    .step {
+      background: #fff; border-radius: 12px; border: 1px solid var(--border);
+      margin-bottom: 1.1rem; overflow: hidden; transition: box-shadow .2s;
+    }
+    .step:hover { box-shadow: 0 4px 16px rgba(37,99,235,.1); }
+    .step-hd {
+      display: flex; align-items: center; gap: .9rem;
+      padding: 1rem 1.25rem; cursor: pointer; user-select: none;
+    }
+    .step-num {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: var(--primary-light); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .88rem; flex-shrink: 0;
+      transition: all .2s;
+    }
+    .step.done .step-num { background: var(--success-light); color: var(--success); }
+    .step-title-text { font-weight: 600; font-size: .98rem; flex: 1; }
+    .step-badge { font-size: .72rem; background: #f1f5f9; color: var(--text-muted); padding: .15rem .5rem; border-radius: 4px; }
+    .step-chevron { color: var(--text-muted); font-size: .7rem; transition: transform .3s; }
+    .step.open .step-chevron { transform: rotate(180deg); }
+    .step-bd { padding: 0 1.25rem 1.25rem; }
+
+    /* ── ALERT BOXES ─────────────────────────────────────────── */
+    .alert {
+      border-radius: 8px; padding: .85rem 1rem;
+      margin: .9rem 0; display: flex; gap: .7rem; font-size: .9rem; line-height: 1.65;
+    }
+    .alert-icon { font-size: 1.05rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert strong { display: block; margin-bottom: .15rem; }
+    .alert.info  { background: var(--info-light); border-left: 4px solid var(--info); color: #0c4a6e; }
+    .alert.warn  { background: var(--warning-light); border-left: 4px solid var(--warning); color: #78350f; }
+    .alert.ok    { background: var(--success-light); border-left: 4px solid var(--success); color: #064e3b; }
+    .alert.tip   { background: #faf5ff; border-left: 4px solid #8b5cf6; color: #4c1d95; }
+
+    /* ── VERIFY BOX ──────────────────────────────────────────── */
+    .verify {
+      background: var(--success-light); border: 1px solid #86efac;
+      border-radius: 8px; padding: .85rem 1rem; margin: .9rem 0;
+    }
+    .verify .v-title { font-weight: 700; color: var(--success); font-size: .88rem; margin-bottom: .35rem; }
+    .verify ul { list-style: none; font-size: .875rem; color: #065f46; }
+    .verify ul li::before { content: "✓ "; color: var(--success); font-weight: 700; }
+
+    /* ── CODE BLOCK ──────────────────────────────────────────── */
+    .code-block { position: relative; margin: .9rem 0; border-radius: 10px; overflow: hidden; }
+    .cb-head {
+      background: #1e293b; color: #94a3b8;
+      padding: .45rem 1rem; font-size: .73rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .copy-btn {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+      color: #94a3b8; padding: .2rem .55rem; border-radius: 4px;
+      font-size: .68rem; cursor: pointer; transition: all .2s;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+    .copy-btn.copied { background: var(--success); border-color: var(--success); color: #fff; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; font-family: 'JetBrains Mono', monospace !important; }
+
+    /* ── STEP CHECKBOX ───────────────────────────────────────── */
+    .step-check {
+      display: flex; align-items: center; gap: .55rem;
+      margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border);
+      font-size: .875rem; color: var(--text-muted);
+    }
+    .step-check input[type="checkbox"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--success); }
+
+    /* ── INLINE CODE ─────────────────────────────────────────── */
+    code:not([class]) {
+      background: #f1f5f9; color: #be185d;
+      padding: .08em .38em; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: .84em;
+    }
+
+    /* ── ORDERED LIST ────────────────────────────────────────── */
+    .inst { padding-left: 1.4rem; }
+    .inst li { margin-bottom: .55rem; font-size: .93rem; line-height: 1.7; }
+    .inst li ul { margin-top: .35rem; margin-left: 1rem; }
+    .inst li ul li { list-style: disc; margin-bottom: .2rem; }
+
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .tbl-wrap { overflow-x: auto; margin: 1rem 0; }
+    .tbl-wrap table { width: 100%; border-collapse: collapse; font-size: .875rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    th { background: var(--primary); color: #fff; padding: .7rem 1rem; text-align: left; font-weight: 600; }
+    td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── PAIR SWAP CARD ──────────────────────────────────────── */
+    .pair-card { background: #fff; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 2rem; }
+    .pair-head { background: linear-gradient(135deg,var(--secondary),#5b21b6); color: #fff; padding: 1rem 1.5rem; }
+    .pair-head h2 { font-size: 1.05rem; }
+    .pair-head p { font-size: .83rem; opacity: .85; margin-top: .25rem; }
+    .pair-body { padding: 1.25rem 1.5rem; }
+    .ci { display: flex; align-items: flex-start; gap: .7rem; padding: .45rem 0; border-bottom: 1px solid #f1f5f9; font-size: .9rem; }
+    .ci:last-child { border-bottom: none; }
+    .ci input[type="checkbox"] { margin-top: .15rem; accent-color: var(--success); flex-shrink: 0; }
+
+    /* ── GRADE TABLE ─────────────────────────────────────────── */
+    .grade-card { background: #fff; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 2rem; }
+    .grade-head { background: linear-gradient(135deg,#0f2557,var(--primary)); color: #fff; padding: 1rem 1.5rem; }
+    .grade-head h2 { font-size: 1.05rem; }
+    .score-total td { background: #eff6ff !important; font-weight: 700; }
+
+    /* ── CHEAT SHEET ─────────────────────────────────────────── */
+    .cheat { background: #fff; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 2rem; }
+    .cheat-head { background: linear-gradient(135deg,#1e293b,#334155); color: #fff; padding: 1rem 1.5rem; display: flex; align-items: center; gap: .5rem; }
+    .cheat-head h2 { font-size: 1rem; }
+    .cmd { display: flex; gap: 1rem; padding: .6rem 1.5rem; border-bottom: 1px solid var(--border); align-items: center; }
+    .cmd:last-child { border-bottom: none; }
+    .cmd-code {
+      font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+      background: #1e293b; color: #7dd3fc; padding: .22rem .6rem;
+      border-radius: 4px; white-space: nowrap; flex-shrink: 0; min-width: 215px;
+    }
+    .cmd-desc { font-size: .86rem; color: var(--text-muted); }
+
+    /* ── FOOTER ──────────────────────────────────────────────── */
+    .footer { background: #1e293b; color: #94a3b8; text-align: center; padding: 2rem; font-size: .84rem; margin-top: 1rem; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 900px) { .sidebar { display: none; } .layout { padding: 1rem; } }
+    @media (max-width: 600px) { .hero h1 { font-size: 1.55rem; } .meta-cards { gap: .5rem; } }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="../index.html" class="logo">📘 DevOps Labs</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progBar"></div></div>
+  <div class="progress-label" id="progLabel">0 / 13 ขั้นตอน</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)</div>
+  <h1>🔀 สัปดาห์ที่ 1 — Git &amp; GitHub Onboarding</h1>
+  <p class="subtitle">ติดตั้งเครื่องมือ • ตั้งค่า GitHub • เรียนรู้คำสั่ง Git • สร้าง Profile Repository</p>
+  <div class="meta-cards">
+    <div class="meta-card"><div class="mc-label">เวลาทั้งหมด</div><div class="mc-val">⏱ 5 ชั่วโมง</div></div>
+    <div class="meta-card"><div class="mc-label">Stack</div><div class="mc-val">Git + GitHub</div></div>
+    <div class="meta-card"><div class="mc-label">เป้าหมาย</div><div class="mc-val">≥ 5 commits</div></div>
+    <div class="meta-card"><div class="mc-label">ส่งงาน</div><div class="mc-val">GitHub Profile URL</div></div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 สารบัญขั้นตอน</div>
+      <div class="toc-section">ส่วนที่ 1 — ติดตั้งเครื่องมือ</div>
+      <a class="toc-link" href="#step1" data-s="1"><span class="dot"></span>1. ติดตั้ง Git for Windows</a>
+      <a class="toc-link" href="#step2" data-s="2"><span class="dot"></span>2. ติดตั้ง Node.js (LTS)</a>
+      <a class="toc-link" href="#step3" data-s="3"><span class="dot"></span>3. ติดตั้ง VS Code</a>
+      <a class="toc-link" href="#step4" data-s="4"><span class="dot"></span>4. ติดตั้ง Docker Desktop</a>
+      <div class="toc-section">ส่วนที่ 2 — ตั้งค่า GitHub</div>
+      <a class="toc-link" href="#step5" data-s="5"><span class="dot"></span>5. สมัคร GitHub Account</a>
+      <a class="toc-link" href="#step6" data-s="6"><span class="dot"></span>6. ตั้งค่า Git บนเครื่อง</a>
+      <a class="toc-link" href="#step7" data-s="7"><span class="dot"></span>7. สร้าง SSH Key</a>
+      <div class="toc-section">ส่วนที่ 3 — Git พื้นฐาน</div>
+      <a class="toc-link" href="#step8" data-s="8"><span class="dot"></span>8. สร้าง Local Repository</a>
+      <a class="toc-link" href="#step9" data-s="9"><span class="dot"></span>9. สร้างไฟล์ &amp; Commit แรก</a>
+      <a class="toc-link" href="#step10" data-s="10"><span class="dot"></span>10. Branch &amp; Merge</a>
+      <div class="toc-section">ส่วนที่ 4 — Profile Repository</div>
+      <a class="toc-link" href="#step11" data-s="11"><span class="dot"></span>11. สร้าง Repo บน GitHub</a>
+      <a class="toc-link" href="#step12" data-s="12"><span class="dot"></span>12. เขียน README แนะนำตัว</a>
+      <a class="toc-link" href="#step13" data-s="13"><span class="dot"></span>13. Push ≥ 5 Commits</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div class="overview">
+      <div class="overview-title">🎯 ภาพรวมของวันนี้</div>
+      <p style="font-size:.93rem;margin-bottom:.9rem;">ในสัปดาห์นี้คุณจะทำสิ่งต่อไปนี้ให้สำเร็จภายใน 1 วัน:</p>
+      <ul class="goal-list">
+        <li><span class="goal-icon">1</span> ติดตั้ง Git, Node.js, VS Code, Docker Desktop บน Windows</li>
+        <li><span class="goal-icon">2</span> สมัคร GitHub Account และตั้งค่า SSH Key</li>
+        <li><span class="goal-icon">3</span> เรียนรู้คำสั่ง Git พื้นฐาน (init, add, commit, push, pull, branch)</li>
+        <li><span class="goal-icon">4</span> สร้าง GitHub Profile Repository พร้อม README แนะนำตัว</li>
+        <li><span class="goal-icon">5</span> ทำ commit ≥ 5 ครั้ง พร้อม message ที่สื่อความหมาย</li>
+      </ul>
+      <div class="alert info" style="margin-top:1rem;">
+        <span class="alert-icon">ℹ️</span>
+        <div><strong>วิธีใช้ Tutorial นี้:</strong> อ่านทีละขั้นตอน ทำตามแล้วค่อยอ่านต่อ <u>อย่าข้ามขั้น</u> ทำเครื่องหมาย ✓ ที่ท้ายแต่ละขั้นเมื่อทำเสร็จ — ระบบจะจดจำความคืบหน้าของคุณ</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ SECTION 1 ══════════════════════════════ -->
+    <div class="section">
+      <div class="sec-header">
+        <div class="sec-num">1</div>
+        <div><div class="sec-title">ติดตั้งเครื่องมือ</div><div class="sec-time">⏱ ประมาณ 60 นาที</div></div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step open" id="step1">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">1</div>
+          <div class="step-title-text">ติดตั้ง Git for Windows</div>
+          <span class="step-badge">git-scm.com</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>เปิด Browser → ไปที่ <strong>https://git-scm.com/download/win</strong></li>
+            <li>คลิก <strong>"64-bit Git for Windows Setup"</strong> → รอดาวน์โหลด → รัน installer</li>
+            <li>ตั้งค่าระหว่าง install เลือกค่าเหล่านี้ (ค่าอื่นปล่อย default):
+              <ul>
+                <li><strong>Default editor</strong> → เลือก <em>"Use Visual Studio Code"</em></li>
+                <li><strong>Adjusting PATH</strong> → เลือก <em>"Git from the command line and also 3rd-party software"</em></li>
+                <li><strong>Line ending</strong> → เลือก <em>"Checkout Windows-style, commit Unix-style"</em></li>
+              </ul>
+            </li>
+            <li>เมื่อ install เสร็จ → เปิด <strong>PowerShell ใหม่</strong> → พิมพ์คำสั่งด้านล่าง</li>
+          </ol>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">git --version</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul><li><code>git version 2.4x.x</code> (ตัวเลขอาจต่างกันเล็กน้อย)</li></ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c1" onchange="mark(1,this.checked)">
+            <label for="c1">✓ ฉันติดตั้ง Git เสร็จและเห็นเวอร์ชันแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step open" id="step2">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">2</div>
+          <div class="step-title-text">ติดตั้ง Node.js (LTS)</div>
+          <span class="step-badge">nodejs.org</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>ไปที่ <strong>https://nodejs.org</strong> → คลิกปุ่ม <strong>"LTS"</strong> สีเขียว → ดาวน์โหลดไฟล์ <code>.msi</code></li>
+            <li>รัน installer → คลิก <strong>Next</strong> ทุกขั้น (ไม่ต้องเปลี่ยนอะไร) → Finish</li>
+            <li>เปิด <strong>PowerShell ใหม่</strong> → ทดสอบ:</li>
+          </ol>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">node --version
+npm --version</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>Node.js: <code>v20.x.x</code> หรือสูงกว่า</li>
+              <li>npm: <code>10.x.x</code></li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c2" onchange="mark(2,this.checked)">
+            <label for="c2">✓ ฉันติดตั้ง Node.js เสร็จและเห็นเวอร์ชันแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step open" id="step3">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">3</div>
+          <div class="step-title-text">ติดตั้ง Visual Studio Code</div>
+          <span class="step-badge">code.visualstudio.com</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>ไปที่ <strong>https://code.visualstudio.com</strong> → คลิก <strong>"Download for Windows"</strong></li>
+            <li>รัน installer → ติ๊ก <strong>"Add to PATH"</strong> และ <strong>"Open with Code"</strong> ทั้งสองช่อง → Install</li>
+            <li>เปิด VS Code → กด <code>Ctrl+`</code> (backtick) เพื่อเปิด Terminal ด้านล่าง</li>
+          </ol>
+          <div class="alert tip">
+            <span class="alert-icon">💡</span>
+            <div><strong>Extension แนะนำ:</strong> กด <code>Ctrl+Shift+X</code> แล้วค้นหาและติดตั้ง <strong>GitLens</strong> เพื่อดู git history ได้สะดวกขึ้น</div>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul><li>VS Code เปิดได้และมี Terminal ด้านล่าง</li></ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c3" onchange="mark(3,this.checked)">
+            <label for="c3">✓ ฉันติดตั้ง VS Code และเปิด Terminal ได้แล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step open" id="step4">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">4</div>
+          <div class="step-title-text">ติดตั้ง Docker Desktop</div>
+          <span class="step-badge">docker.com</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>ไปที่ <strong>https://www.docker.com/products/docker-desktop</strong> → คลิก <strong>"Download for Windows"</strong></li>
+            <li>รัน installer → เมื่อถามเรื่อง WSL 2 ให้ติ๊ก <strong>"Use WSL 2 instead of Hyper-V"</strong> → OK</li>
+          </ol>
+          <div class="alert warn">
+            <span class="alert-icon">⚠️</span>
+            <div><strong>ระวัง:</strong> ถ้าเครื่องขอ Restart → <u>บันทึกงานทั้งหมดก่อน</u> แล้วค่อย Restart</div>
+          </div>
+          <ol class="inst" start="3">
+            <li>หลัง Restart → เปิด Docker Desktop → รอจนไอคอน Docker ล่างขวาเป็น <strong>สีเขียว (Running)</strong></li>
+            <li>ทดสอบใน PowerShell:</li>
+          </ol>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">docker --version
+docker run hello-world</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul><li>ข้อความ <strong>"Hello from Docker!"</strong> ในผลลัพธ์</li></ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c4" onchange="mark(4,this.checked)">
+            <label for="c4">✓ ฉันเห็น "Hello from Docker!" แล้ว</label>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section 1 -->
+
+    <!-- ═══════════════════════════════ SECTION 2 ══════════════════════════════ -->
+    <div class="section">
+      <div class="sec-header">
+        <div class="sec-num">2</div>
+        <div><div class="sec-title">ตั้งค่า GitHub Account</div><div class="sec-time">⏱ ประมาณ 30 นาที</div></div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step open" id="step5">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">5</div>
+          <div class="step-title-text">สมัคร GitHub Account</div>
+          <span class="step-badge">github.com</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>ไปที่ <strong>https://github.com</strong> → คลิก <strong>"Sign up"</strong></li>
+            <li>กรอก email, password, username (ใช้ภาษาอังกฤษ ไม่มีเว้นวรรค เช่น <code>somchai-devops</code>)</li>
+          </ol>
+          <div class="alert info">
+            <span class="alert-icon">ℹ️</span>
+            <div><strong>สำคัญ:</strong> Username จะใช้ตลอดเทอม — ตั้งให้ดูเป็นมืออาชีพ แนะนำรูปแบบ <code>firstname-lastname</code> หรือ <code>nickname-devops</code> ใช้ตัวพิมพ์เล็กและขีดกลางเท่านั้น</div>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c5" onchange="mark(5,this.checked)">
+            <label for="c5">✓ ฉันมี GitHub Account แล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step open" id="step6">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">6</div>
+          <div class="step-title-text">ตั้งค่า Git บนเครื่อง (Global Config)</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <p style="font-size:.92rem;margin-bottom:.8rem;">เปิด PowerShell → พิมพ์คำสั่งด้านล่าง <strong>แทนที่ข้อมูลในเครื่องหมาย " " ด้วยชื่อและ email จริงของคุณ</strong></p>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">git config --global user.name "Your Name in English"
+git config --global user.email "your-email@github.com"
+git config --global core.autocrlf true
+
+# ตรวจสอบว่าบันทึกแล้ว
+git config --global --list</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>เห็น <code>user.name=Your Name</code> ในผลลัพธ์</li>
+              <li>เห็น <code>user.email=your-email@github.com</code></li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c6" onchange="mark(6,this.checked)">
+            <label for="c6">✓ ฉันตั้งค่า git config เสร็จแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="step open" id="step7">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">7</div>
+          <div class="step-title-text">สร้าง SSH Key และผูกกับ GitHub</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <p style="font-size:.92rem;margin-bottom:.7rem;font-weight:600;">ขั้นตอน 1 — สร้าง SSH Key</p>
+          <p style="font-size:.88rem;margin-bottom:.5rem;">เปิด PowerShell → พิมพ์คำสั่งด้านล่าง กด <kbd>Enter</kbd> ทุกครั้งที่ถาม (ไม่ต้องใส่ passphrase)</p>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell — แทนที่ email ด้วย email ที่ใช้สมัคร GitHub</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">ssh-keygen -t ed25519 -C "your-email@github.com"</code></pre>
+          </div>
+
+          <p style="font-size:.92rem;margin:1rem 0 .5rem;font-weight:600;">ขั้นตอน 2 — คัดลอก Public Key</p>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">cat $HOME\.ssh\id_ed25519.pub</code></pre>
+          </div>
+          <div class="alert info">
+            <span class="alert-icon">ℹ️</span>
+            <div>ผลที่ได้จะเป็นข้อความยาวขึ้นต้นด้วย <code>ssh-ed25519 ...</code> — <strong>เลือกและคัดลอกทั้งหมด</strong></div>
+          </div>
+
+          <p style="font-size:.92rem;margin:1rem 0 .5rem;font-weight:600;">ขั้นตอน 3 — เพิ่ม Key บน GitHub</p>
+          <ol class="inst">
+            <li>ไปที่ GitHub → คลิกรูปโปรไฟล์มุมบนขวา → <strong>Settings</strong></li>
+            <li>เลือก <strong>SSH and GPG keys</strong> → คลิก <strong>New SSH key</strong></li>
+            <li>ตั้งชื่อ: <code>"School PC"</code> → วางข้อความที่คัดลอกมา → คลิก <strong>"Add SSH key"</strong></li>
+          </ol>
+
+          <p style="font-size:.92rem;margin:1rem 0 .5rem;font-weight:600;">ขั้นตอน 4 — ทดสอบการเชื่อมต่อ</p>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">ssh -T git@github.com</code></pre>
+          </div>
+          <div class="alert warn">
+            <span class="alert-icon">⚠️</span>
+            <div>ถ้าเห็นข้อความ <em>"Are you sure you want to continue connecting?"</em> → พิมพ์ <code>yes</code> แล้วกด Enter</div>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul><li><code>Hi username! You've successfully authenticated, but GitHub does not provide shell access.</code></li></ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c7" onchange="mark(7,this.checked)">
+            <label for="c7">✓ ฉัน SSH เชื่อมต่อกับ GitHub ได้แล้ว</label>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section 2 -->
+
+    <!-- ═══════════════════════════════ SECTION 3 ══════════════════════════════ -->
+    <div class="section">
+      <div class="sec-header">
+        <div class="sec-num">3</div>
+        <div><div class="sec-title">เรียนรู้ Git พื้นฐาน</div><div class="sec-time">⏱ ประมาณ 60 นาที</div></div>
+      </div>
+
+      <!-- STEP 8 -->
+      <div class="step open" id="step8">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">8</div>
+          <div class="step-title-text">สร้าง Local Repository แรก</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <p style="font-size:.92rem;margin-bottom:.7rem;">สร้างโฟลเดอร์ทดลอง → เข้า VS Code Terminal แล้วพิมพ์:</p>
+          <div class="code-block">
+            <div class="cb-head"><span>VS Code Terminal / PowerShell</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash"># สร้างโฟลเดอร์
+mkdir C:\devops-labs\git-practice
+cd C:\devops-labs\git-practice
+
+# เริ่มต้น Git repository
+git init
+
+# ดูสถานะ (ยังว่างอยู่)
+git status</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li><code>Initialized empty Git repository in C:/devops-labs/git-practice/.git/</code></li>
+              <li>เห็น <code>On branch master</code> หรือ <code>main</code></li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c8" onchange="mark(8,this.checked)">
+            <label for="c8">✓ ฉันสร้าง Local Repository แรกได้แล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 9 -->
+      <div class="step open" id="step9">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">9</div>
+          <div class="step-title-text">สร้างไฟล์และทำ Commit แรก</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <div class="code-block">
+            <div class="cb-head"><span>VS Code Terminal</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash"># สร้างไฟล์
+echo "# Git Practice" > README.md
+
+# ดู status — ไฟล์ยัง untracked (สีแดง)
+git status
+
+# เพิ่มไฟล์เข้า staging area
+git add README.md
+
+# ดู status อีกครั้ง — ไฟล์เป็นสีเขียว (staged)
+git status
+
+# บันทึก commit แรก
+git commit -m "docs: add README"
+
+# ดูประวัติ
+git log --oneline</code></pre>
+          </div>
+          <div class="alert tip">
+            <span class="alert-icon">💡</span>
+            <div>
+              <strong>รูปแบบ Commit Message ที่ดี (Conventional Commits):</strong><br>
+              <code>feat:</code> เพิ่ม feature ใหม่ &nbsp;|&nbsp; <code>fix:</code> แก้บัก &nbsp;|&nbsp; <code>docs:</code> แก้เอกสาร &nbsp;|&nbsp; <code>chore:</code> งานทั่วไป<br>
+              <em>ตัวอย่าง:</em> <code>feat: add login page</code>, <code>fix: correct SQL query</code>
+            </div>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>เห็น commit แรกใน <code>git log --oneline</code></li>
+              <li>message เป็น <code>docs: add README</code></li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c9" onchange="mark(9,this.checked)">
+            <label for="c9">✓ ฉันทำ Commit แรกเสร็จแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 10 -->
+      <div class="step open" id="step10">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">10</div>
+          <div class="step-title-text">ฝึก Branch และ Merge</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <div class="code-block">
+            <div class="cb-head"><span>VS Code Terminal</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash"># ดู branch ปัจจุบัน
+git branch
+
+# สร้าง branch ใหม่และเปลี่ยนไปใช้
+git checkout -b feature/add-description
+
+# แก้ไข README.md ใน VS Code — เพิ่มบรรทัดนี้ต่อท้าย:
+# "นักเรียน: ชื่อของคุณ"
+
+# บันทึก
+git add README.md
+git commit -m "docs: add student name to README"
+
+# กลับไป main (หรือ master)
+git checkout main
+
+# รวม feature branch เข้า main
+git merge feature/add-description
+
+# ดูประวัติแบบ Graph
+git log --oneline --graph --all</code></pre>
+          </div>
+          <div class="alert tip">
+            <span class="alert-icon">🌿</span>
+            <div>
+              <strong>ทำไมต้องใช้ Branch?</strong><br>
+              Branch ช่วยให้คุณพัฒนา feature ใหม่โดยไม่กระทบ code หลัก ใน DevOps เป็นเรื่องปกติที่จะทำงานบน branch แล้ว merge กลับเมื่อเสร็จ
+            </div>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>กลับมาอยู่ branch main แล้ว</li>
+              <li>เนื้อหา README.md มีบรรทัดที่เพิ่มจาก feature branch</li>
+              <li>เห็น commit history ใน <code>git log --oneline --graph</code></li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c10" onchange="mark(10,this.checked)">
+            <label for="c10">✓ ฉัน Branch, Commit, และ Merge เสร็จแล้ว</label>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section 3 -->
+
+    <!-- ═══════════════════════════════ SECTION 4 ══════════════════════════════ -->
+    <div class="section">
+      <div class="sec-header">
+        <div class="sec-num">4</div>
+        <div><div class="sec-title">Deliverable — GitHub Profile Repository</div><div class="sec-time">⏱ ประมาณ 120 นาที</div></div>
+      </div>
+      <div class="alert ok" style="margin-bottom:1.2rem;">
+        <span class="alert-icon">⭐</span>
+        <div><strong>ชิ้นงานหลักของสัปดาห์นี้!</strong> Profile Repository คือ repository พิเศษที่ตั้งชื่อตรงกับ username ของคุณ — จะแสดงบนหน้า GitHub โดยอัตโนมัติ</div>
+      </div>
+
+      <!-- STEP 11 -->
+      <div class="step open" id="step11">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">11</div>
+          <div class="step-title-text">สร้าง Profile Repository บน GitHub</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <ol class="inst">
+            <li>ไปที่ <strong>github.com</strong> → คลิก <strong>"+"</strong> มุมบนขวา → <strong>"New repository"</strong></li>
+            <li>ตั้งชื่อ Repository ให้ <strong>ตรงกับ Username ของคุณพอดี</strong> (เช่น ถ้า username คือ <code>somchai-devops</code> ให้ตั้งชื่อว่า <code>somchai-devops</code>)</li>
+            <li>ติ๊ก <strong>"Public"</strong> และ <strong>"Add a README file"</strong> → คลิก <strong>"Create repository"</strong></li>
+            <li>Clone ลงมาที่เครื่อง:</li>
+          </ol>
+          <div class="code-block">
+            <div class="cb-head"><span>PowerShell — แทนที่ YOUR-USERNAME ด้วย username จริง</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash">cd C:\devops-labs
+git clone git@github.com:YOUR-USERNAME/YOUR-USERNAME.git
+cd YOUR-USERNAME
+code .</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>VS Code เปิดโฟลเดอร์ profile repository</li>
+              <li>มีไฟล์ <code>README.md</code> อยู่</li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c11" onchange="mark(11,this.checked)">
+            <label for="c11">✓ ฉัน Clone Profile Repository ลงมาที่เครื่องได้แล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 12 -->
+      <div class="step open" id="step12">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">12</div>
+          <div class="step-title-text">เขียน README แนะนำตัว</div>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <p style="font-size:.92rem;margin-bottom:.8rem;">เปิดไฟล์ <code>README.md</code> ใน VS Code → แก้ไขเนื้อหาตาม template ด้านล่าง (แทนที่ข้อมูลส่วนตัว):</p>
+          <div class="code-block">
+            <div class="cb-head"><span>README.md — Template (คัดลอกและแก้ไข)</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-markdown"># สวัสดี! ฉันชื่อ [ชื่อ-นามสกุลภาษาไทย] 👋
+
+## เกี่ยวกับฉัน
+- 🎓 กำลังศึกษา ปวส. เทคโนโลยีสารสนเทศ
+- 💻 กำลังเรียนวิชา DevOps (30901-2008)
+- 🔧 Stack ที่กำลังเรียน: Git, Node.js, Docker, Kubernetes
+
+## สิ่งที่ฉันจะสร้างในเทอมนี้
+- [ ] Fullstack App (Node.js + PostgreSQL)
+- [ ] CI/CD Pipeline ด้วย GitHub Actions
+- [ ] Deploy บน Docker + Kubernetes
+
+## สถิติ GitHub
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=YOUR-USERNAME&show_icons=true&theme=tokyonight)</code></pre>
+          </div>
+          <div class="alert warn">
+            <span class="alert-icon">⚠️</span>
+            <div>แทนที่ <code>YOUR-USERNAME</code> ในบรรทัดสุดท้ายด้วย username จริงของคุณ เพื่อให้รูปสถิติแสดงข้อมูลจริง</div>
+          </div>
+          <div class="alert info">
+            <span class="alert-icon">📁</span>
+            <div>ดู template ฉบับเต็มได้ที่ไฟล์ <code>profile-template/README.md</code> ในโฟลเดอร์นี้</div>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c12" onchange="mark(12,this.checked)">
+            <label for="c12">✓ ฉันเขียน README แนะนำตัวเสร็จแล้ว</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 13 -->
+      <div class="step open" id="step13">
+        <div class="step-hd" onclick="toggle(this)">
+          <div class="step-num">13</div>
+          <div class="step-title-text">Commit และ Push ≥ 5 ครั้ง</div>
+          <span class="step-badge">ชิ้นงานหลัก</span>
+          <span class="step-chevron">▼</span>
+        </div>
+        <div class="step-bd">
+          <div class="alert warn">
+            <span class="alert-icon">⚠️</span>
+            <div><strong>สำคัญมาก:</strong> ต้องทำ commit <u>อย่างน้อย 5 ครั้ง</u> — ทำทีละนิดแล้ว commit ห้ามทำทีเดียวครั้งเดียว!</div>
+          </div>
+          <div class="code-block">
+            <div class="cb-head"><span>VS Code Terminal — ทำตามลำดับ ทีละ commit</span><button class="copy-btn" onclick="cp(this)">คัดลอก</button></div>
+            <pre><code class="language-bash"># commit ครั้งที่ 1: โครงสร้าง README
+git add README.md
+git commit -m "docs: add profile README structure"
+
+# แก้ส่วน "เกี่ยวกับฉัน" ให้ครบก่อน แล้ว commit ครั้งที่ 2
+git add README.md
+git commit -m "docs: add about me section"
+
+# เพิ่มไฟล์ .gitignore
+echo "node_modules/" > .gitignore
+echo ".env" >> .gitignore
+# commit ครั้งที่ 3
+git add .gitignore
+git commit -m "chore: add gitignore"
+
+# แก้ checklist "สิ่งที่จะสร้าง" ให้ตรงกับความตั้งใจ
+# commit ครั้งที่ 4
+git add README.md
+git commit -m "docs: update learning goals checklist"
+
+# ใส่ username จริงในบรรทัด GitHub Stats
+# commit ครั้งที่ 5
+git add README.md
+git commit -m "docs: add github stats badge"
+
+# Push ทั้งหมดขึ้น GitHub
+git push origin main</code></pre>
+          </div>
+          <div class="verify">
+            <div class="v-title">✅ ผลที่ควรเห็น</div>
+            <ul>
+              <li>ไปที่ <strong>github.com/YOUR-USERNAME</strong> เห็น README แสดงบนหน้าโปรไฟล์</li>
+              <li>กด <strong>Commits</strong> ใน Repository เห็น ≥ 5 commits</li>
+              <li>ทุก commit message สื่อความหมาย ไม่ใช่แค่ "update" หรือ "fix"</li>
+            </ul>
+          </div>
+          <div class="step-check">
+            <input type="checkbox" id="c13" onchange="mark(13,this.checked)">
+            <label for="c13">✓ ฉัน Push ≥ 5 commits ขึ้น GitHub เสร็จแล้ว!</label>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section 4 -->
+
+    <!-- PAIR SWAP -->
+    <div class="pair-card">
+      <div class="pair-head">
+        <h2>🤝 ส่วนที่ 5 — Pair Swap ตรวจสอบ (15 นาที)</h2>
+        <p>หาเพื่อนข้างๆ 1 คน → แลก GitHub URL กัน → ตรวจสอบตามรายการด้านล่าง</p>
+      </div>
+      <div class="pair-body">
+        <div class="ci"><input type="checkbox"><span>README แสดงบนหน้าโปรไฟล์ <code>github.com/username</code></span></div>
+        <div class="ci"><input type="checkbox"><span>มี commit ≥ 5 ครั้ง</span></div>
+        <div class="ci"><input type="checkbox"><span>ทุก commit message สื่อความหมาย (ไม่ใช่ "update" หรือ "fix" อย่างเดียว)</span></div>
+        <div class="ci"><input type="checkbox"><span>มีไฟล์ <code>.gitignore</code></span></div>
+        <div class="ci"><input type="checkbox"><span>ไม่มีข้อมูลส่วนตัวที่ไม่ควร commit (รหัสผ่าน, API key, .env)</span></div>
+      </div>
+    </div>
+
+    <!-- GRADE TABLE -->
+    <div class="grade-card">
+      <div class="grade-head"><h2>📊 เกณฑ์การประเมิน — คะแนนเต็ม 100</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>รายการ</th><th style="width:90px;text-align:center;">คะแนน</th></tr></thead>
+          <tbody>
+            <tr><td>Profile Repository สร้างและเข้าถึงได้จาก github.com/username</td><td style="text-align:center;font-weight:600;">20</td></tr>
+            <tr><td>README อ่านเข้าใจ มีข้อมูลครบตาม template</td><td style="text-align:center;font-weight:600;">20</td></tr>
+            <tr><td>Commit ≥ 5 ครั้ง ทุก message สื่อความหมาย</td><td style="text-align:center;font-weight:600;">30</td></tr>
+            <tr><td>มีไฟล์ .gitignore และไม่มีข้อมูลลับใน repository</td><td style="text-align:center;font-weight:600;">20</td></tr>
+            <tr><td>ผ่านการตรวจจาก Pair Swap (เพื่อน sign-off)</td><td style="text-align:center;font-weight:600;">10</td></tr>
+            <tr class="score-total"><td><strong>รวม</strong></td><td style="text-align:center;font-size:1.15rem;">100</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);">
+        <div class="alert info" style="margin:0;">
+          <span class="alert-icon">📤</span>
+          <div><strong>ส่งงาน:</strong> แชร์ลิงก์ <code>github.com/YOUR-USERNAME</code> ให้ครูผู้สอน</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHEAT SHEET -->
+    <div class="cheat">
+      <div class="cheat-head"><span>📋</span><h2>Git Command Cheat Sheet</h2></div>
+      <div class="cmd"><div class="cmd-code">git init</div><div class="cmd-desc">เริ่ม repository ใหม่ในโฟลเดอร์ปัจจุบัน</div></div>
+      <div class="cmd"><div class="cmd-code">git status</div><div class="cmd-desc">ดูสถานะไฟล์ (modified / staged / untracked)</div></div>
+      <div class="cmd"><div class="cmd-code">git add &lt;file&gt;</div><div class="cmd-desc">เพิ่มไฟล์นั้นเข้า staging area</div></div>
+      <div class="cmd"><div class="cmd-code">git add .</div><div class="cmd-desc">เพิ่มทุกไฟล์ที่เปลี่ยนแปลงเข้า staging</div></div>
+      <div class="cmd"><div class="cmd-code">git commit -m "msg"</div><div class="cmd-desc">บันทึก snapshot พร้อม message</div></div>
+      <div class="cmd"><div class="cmd-code">git log --oneline</div><div class="cmd-desc">ดูประวัติ commit แบบย่อ</div></div>
+      <div class="cmd"><div class="cmd-code">git push origin main</div><div class="cmd-desc">ส่งขึ้น GitHub</div></div>
+      <div class="cmd"><div class="cmd-code">git pull origin main</div><div class="cmd-desc">ดึงการเปลี่ยนแปลงจาก GitHub</div></div>
+      <div class="cmd"><div class="cmd-code">git clone &lt;url&gt;</div><div class="cmd-desc">ดาวน์โหลด repository จาก GitHub</div></div>
+      <div class="cmd"><div class="cmd-code">git checkout -b &lt;name&gt;</div><div class="cmd-desc">สร้าง branch ใหม่และเปลี่ยนไปใช้</div></div>
+      <div class="cmd"><div class="cmd-code">git checkout main</div><div class="cmd-desc">กลับไป branch main</div></div>
+      <div class="cmd"><div class="cmd-code">git merge &lt;branch&gt;</div><div class="cmd-desc">รวม branch เข้า branch ปัจจุบัน</div></div>
+      <div class="cmd"><div class="cmd-code">git diff</div><div class="cmd-desc">ดูการเปลี่ยนแปลงที่ยังไม่ได้ stage</div></div>
+    </div>
+
+  </main>
+</div><!-- /layout -->
+
+<div class="footer">
+  <p>📘 วิชา 30901-2008 การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps) | สัปดาห์ที่ 1 — Git &amp; GitHub Onboarding</p>
+  <p style="margin-top:.5rem;opacity:.7;">ติดต่อครูผู้สอนหากมีข้อสงสัย</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script>
+const TOTAL = 13;
+let done = new Set();
+
+// Restore from localStorage
+try {
+  const s = localStorage.getItem('lab1');
+  if (s) done = new Set(JSON.parse(s));
+  done.forEach(n => {
+    const el = document.getElementById('c'+n);
+    if (el) { el.checked = true; applyDone(n, true); }
+  });
+  updateBar();
+} catch(e){}
+
+function mark(n, checked) {
+  if (checked) done.add(n); else done.delete(n);
+  applyDone(n, checked);
+  updateBar();
+  try { localStorage.setItem('lab1', JSON.stringify([...done])); } catch(e){}
+}
+
+function applyDone(n, checked) {
+  const step = document.getElementById('step'+n);
+  if (step) step.classList.toggle('done', checked);
+  const link = document.querySelector('.toc-link[data-s="'+n+'"]');
+  if (link) { link.classList.toggle('done', checked); link.querySelector('.dot').style.background = checked ? 'var(--success)' : ''; }
+}
+
+function updateBar() {
+  const pct = Math.round(done.size / TOTAL * 100);
+  document.getElementById('progBar').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = done.size + ' / ' + TOTAL + ' ขั้นตอน';
+}
+
+function toggle(hd) { hd.closest('.step').classList.toggle('open'); }
+
+function cp(btn) {
+  const code = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✓ คัดลอกแล้ว'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'คัดลอก'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => { btn.textContent = 'Error'; });
+}
+
+// Active TOC on scroll
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+      const a = document.querySelector('.toc-link[href="#'+id+'"]');
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+document.querySelectorAll('.step').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

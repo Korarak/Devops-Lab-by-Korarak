@@ -1,0 +1,546 @@
+﻿ใบขั้นตอนปฏิบัติงาน
+สัปดาห์ที่ 2  —  Fullstack App: Node.js + Express + PostgreSQL
+รหัสวิชา 30901-2008  การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+
+เวลา
+5 ชั่วโมง (300 นาที)
+
+Stack
+Node.js + Express  |  Vanilla JS  |  PostgreSQL  |  Docker Desktop
+
+ผลลัพธ์
+สร้าง Todo App ที่รันได้จริง: Frontend (HTML/JS) + Backend API (Express) + Database (PostgreSQL) + push ขึ้น GitHub
+
+ภาพรวมของวันนี้
+วันนี้คุณจะสร้าง Todo App แบบ Fullstack ที่ทำงานได้จริงบนเครื่อง:
+☐  Backend: Node.js + Express — API endpoint GET/POST/DELETE
+☐  Database: PostgreSQL ผ่าน Docker (ไม่ต้องลงบนเครื่องโดยตรง)
+☐  Frontend: HTML + Vanilla JavaScript — เรียก API แสดง Todo
+☐  ทดสอบ Pair Swap: เพื่อน clone แล้วรันตาม README ได้
+
+ส่วน
+เทคโนโลยี
+
+Frontend
+HTML5, CSS3, JavaScript (Vanilla — ไม่ใช้ React/Vue)
+
+Backend
+Node.js + Express.js
+
+Database
+PostgreSQL 16 รันใน Docker Container
+
+ติดต่อ DB
+node-postgres (pg)
+
+Dev Tool
+nodemon (auto-restart), dotenv
+
+ส่วนที่ 1  ตั้งค่าโปรเจกต์ (20 นาที)
+
+ขั้นตอนที่ 1  สร้างโครงสร้างโปรเจกต์
+
+เปิด PowerShell → พิมพ์:
+mkdir C:\devops-labs\todo-app
+cd C:\devops-labs\todo-app
+
+# สร้างโฟลเดอร์ย่อย
+mkdir backend
+mkdir frontend
+
+# เข้าโฟลเดอร์ backend
+cd backend
+
+# เริ่มต้น Node.js project
+npm init -y
+
+# ติดตั้ง packages
+npm install express pg dotenv cors
+npm install --save-dev nodemon
+
+# กลับไปรูท
+cd ..
+
+# เปิดใน VS Code
+code .
+
+✅ ตรวจสอบ: ใน VS Code เห็นโฟลเดอร์  backend/  และ  frontend/
+
+ขั้นตอนที่ 2  สร้างไฟล์ .gitignore และ .env ที่ root
+
+ใน VS Code คลิกขวาที่ Explorer → New File → ตั้งชื่อ  .gitignore  (ที่ root):
+node_modules/
+.env
+*.log
+.DS_Store
+
+สร้างไฟล์  backend/.env  (ใส่ค่าตาม PostgreSQL ที่จะตั้งในขั้นตอนถัดไป):
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=tododb
+DB_USER=todouser
+DB_PASSWORD=todopass123
+PORT=3001
+
+⚠ ระวัง: ไฟล์ .env ต้องไม่ถูก commit ขึ้น GitHub เด็ดขาด — ตรวจ .gitignore อีกครั้ง
+
+ส่วนที่ 2  ตั้งค่า PostgreSQL ด้วย Docker (20 นาที)
+
+ขั้นตอนที่ 3  รัน PostgreSQL Container
+
+เปิด PowerShell → รันคำสั่งนี้ (รันครั้งเดียว):
+docker run -d ^
+  --name todo-postgres ^
+  -e POSTGRES_DB=tododb ^
+  -e POSTGRES_USER=todouser ^
+  -e POSTGRES_PASSWORD=todopass123 ^
+  -p 5432:5432 ^
+  postgres:16-alpine
+
+ℹ หมายเหตุ: สัญลักษณ์  ^  ใน PowerShell คือการขึ้นบรรทัดใหม่ (เหมือน \ ใน Linux)
+
+รอ 10 วินาที แล้วตรวจสอบ:
+docker ps
+
+✅ ตรวจสอบ: เห็น container ชื่อ  todo-postgres  STATUS เป็น  Up
+
+ขั้นตอนที่ 4  สร้างตาราง todos
+
+เชื่อมต่อเข้า PostgreSQL และสร้างตาราง:
+docker exec -it todo-postgres psql -U todouser -d tododb
+
+เมื่อเข้าไปได้จะเห็น prompt  tododb=#  → พิมพ์ SQL นี้:
+CREATE TABLE todos (
+  id        SERIAL PRIMARY KEY,
+  title     VARCHAR(255) NOT NULL,
+  completed BOOLEAN      DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ใส่ข้อมูลทดลอง
+INSERT INTO todos (title) VALUES
+  (&apos;เรียน Git&apos;),
+  (&apos;เรียน Docker&apos;),
+  (&apos;สร้าง CI/CD Pipeline&apos;);
+
+-- ตรวจสอบ
+SELECT * FROM todos;
+
+-- ออกจาก psql
+\q
+
+✅ ตรวจสอบ: เห็น 3 แถวข้อมูลใน todos
+
+ส่วนที่ 3  เขียน Backend API (60 นาที)
+
+ขั้นตอนที่ 5  สร้าง database connection module
+
+สร้างไฟล์  backend/db.js:
+const { Pool } = require(&apos;pg&apos;);
+require(&apos;dotenv&apos;).config();
+
+const pool = new Pool({
+  host:     process.env.DB_HOST,
+  port:     process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+// ทดสอบการเชื่อมต่อเมื่อ import module นี้
+pool.query(&apos;SELECT NOW()&apos;, (err, res) => {
+  if (err) {
+    console.error(&apos;❌ DB connection failed:&apos;, err.message);
+  } else {
+    console.log(&apos;✅ DB connected at:&apos;, res.rows[0].now);
+  }
+});
+
+module.exports = pool;
+
+ขั้นตอนที่ 6  สร้าง Express API Server
+
+สร้างไฟล์  backend/index.js:
+const express = require(&apos;express&apos;);
+const cors    = require(&apos;cors&apos;);
+const pool    = require(&apos;./db&apos;);
+require(&apos;dotenv&apos;).config();
+
+const app  = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+// ─── Health Check ───────────────────────────────────────────────
+app.get(&apos;/health&apos;, (req, res) => {
+  res.json({ status: &apos;ok&apos;, timestamp: new Date() });
+});
+
+// ─── GET /api/todos — ดึง Todo ทั้งหมด ─────────────────────────
+app.get(&apos;/api/todos&apos;, async (req, res) => {
+  try {
+    const result = await pool.query(
+      &apos;SELECT * FROM todos ORDER BY created_at DESC&apos;
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── POST /api/todos — เพิ่ม Todo ใหม่ ──────────────────────────
+app.post(&apos;/api/todos&apos;, async (req, res) => {
+  const { title } = req.body;
+  if (!title || title.trim() === &apos;&apos;) {
+    return res.status(400).json({ error: &apos;title is required&apos; });
+  }
+  try {
+    const result = await pool.query(
+      &apos;INSERT INTO todos (title) VALUES ($1) RETURNING *&apos;,
+      [title.trim()]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── PATCH /api/todos/:id — toggle completed ─────────────────────
+app.patch(&apos;/api/todos/:id&apos;, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      &apos;UPDATE todos SET completed = NOT completed WHERE id = $1 RETURNING *&apos;,
+      [id]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: &apos;not found&apos; });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DELETE /api/todos/:id — ลบ Todo ─────────────────────────────
+app.delete(&apos;/api/todos/:id&apos;, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      &apos;DELETE FROM todos WHERE id = $1 RETURNING *&apos;,
+      [id]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: &apos;not found&apos; });
+    res.json({ message: &apos;deleted&apos;, todo: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running at http://localhost:${PORT}`);
+});
+
+ขั้นตอนที่ 7  เพิ่ม npm scripts และรัน Backend
+
+เปิดไฟล์  backend/package.json  → แก้ส่วน "scripts" เป็น:
+"scripts": {
+  "start": "node index.js",
+  "dev":   "nodemon index.js"
+},
+
+รัน Backend (เปิด Terminal ใหม่ใน VS Code แล้วพิมพ์):
+cd C:\devops-labs\todo-app\backend
+npm run dev
+
+✅ ตรวจสอบ: เห็น ✅ DB connected และ 🚀 Backend running at http://localhost:3001
+
+ขั้นตอนที่ 8  ทดสอบ API ด้วย Browser
+
+เปิด Browser → ลองเข้า URL เหล่านี้ (GET endpoint ทดสอบผ่าน browser ได้เลย):
+http://localhost:3001/health
+http://localhost:3001/api/todos
+
+✅ ตรวจสอบ: http://localhost:3001/health  ตอบ  {"status":"ok",...}
+
+✅ ตรวจสอบ: http://localhost:3001/api/todos  ตอบ array ของ Todo 3 รายการ
+
+ℹ หมายเหตุ: POST, PATCH, DELETE ทดสอบผ่าน browser ตรง ๆ ไม่ได้ — จะทดสอบผ่าน Frontend ใน step ถัดไป
+
+ส่วนที่ 4  เขียน Frontend (60 นาที)
+
+ขั้นตอนที่ 9  สร้างไฟล์ Frontend
+
+สร้างไฟล์  frontend/index.html  (ไฟล์เดียว ไม่มี build process):
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Todo App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", sans-serif; background: #f0f4f8;
+           display: flex; justify-content: center; padding: 2rem; }
+    .container { background: white; border-radius: 12px; padding: 2rem;
+                 width: 100%; max-width: 600px; box-shadow: 0 2px 16px #0001; }
+    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #1a1a2e; }
+    .add-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .add-form input { flex: 1; padding: 0.6rem 1rem;
+                      border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+    .add-form button { padding: 0.6rem 1.2rem; background: #2E75B6;
+                       color: white; border: none; border-radius: 8px;
+                       cursor: pointer; font-size: 1rem; }
+    .add-form button:hover { background: #1a5a99; }
+    .todo-item { display: flex; align-items: center; gap: 0.75rem;
+                 padding: 0.75rem; border-bottom: 1px solid #eee; }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .todo-title { flex: 1; font-size: 1rem; }
+    .todo-title.done { text-decoration: line-through; color: #999; }
+    .delete-btn { background: #e53e3e; color: white; border: none;
+                  border-radius: 6px; padding: 0.3rem 0.7rem;
+                  cursor: pointer; font-size: 0.85rem; }
+    .delete-btn:hover { background: #c0392b; }
+    .status { font-size: 0.85rem; color: #666; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 DevOps Todo List</h1>
+    <div class="add-form">
+      <input type="text" id="new-todo" placeholder="พิมพ์งานใหม่แล้วกด Enter" />
+      <button onclick="addTodo()">เพิ่ม</button>
+    </div>
+    <div id="todo-list">กำลังโหลด...</div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <script>
+    const API = &apos;http://localhost:3001/api&apos;;
+
+    async function fetchTodos() {
+      const res  = await fetch(`${API}/todos`);
+      const data = await res.json();
+      renderTodos(data);
+    }
+
+    function renderTodos(todos) {
+      const list = document.getElementById(&apos;todo-list&apos;);
+      if (todos.length === 0) { list.innerHTML = &apos;<p style="color:#999">ยังไม่มีงาน</p>&apos;; return; }
+      list.innerHTML = todos.map(t => `
+        <div class="todo-item">
+          <input type="checkbox" ${t.completed ? &apos;checked&apos; : &apos;&apos;}
+                 onchange="toggleTodo(${t.id})" />
+          <span class="todo-title ${t.completed ? &apos;done&apos; : &apos;&apos;}">${t.title}</span>
+          <button class="delete-btn" onclick="deleteTodo(${t.id})">ลบ</button>
+        </div>`,).join(&apos;&apos;);
+    }
+
+    async function addTodo() {
+      const input = document.getElementById(&apos;new-todo&apos;);
+      const title = input.value.trim();
+      if (!title) return;
+      await fetch(`${API}/todos`, {
+        method: &apos;POST&apos;,
+        headers: { &apos;Content-Type&apos;: &apos;application/json&apos; },
+        body: JSON.stringify({ title })
+      });
+      input.value = &apos;&apos;;
+      fetchTodos();
+    }
+
+    async function toggleTodo(id) {
+      await fetch(`${API}/todos/${id}`, { method: &apos;PATCH&apos; });
+      fetchTodos();
+    }
+
+    async function deleteTodo(id) {
+      if (!confirm(&apos;ลบงานนี้?&apos;)) return;
+      await fetch(`${API}/todos/${id}`, { method: &apos;DELETE&apos; });
+      fetchTodos();
+    }
+
+    // Enter key เพื่อเพิ่ม todo
+    document.getElementById(&apos;new-todo&apos;)
+      .addEventListener(&apos;keydown&apos;, e => { if (e.key === &apos;Enter&apos;) addTodo(); });
+
+    // โหลด todo เมื่อเปิดหน้า
+    fetchTodos();
+  </script>
+</body>
+</html>
+
+✅ ตรวจสอบ: บันทึกไฟล์แล้วเปิด frontend/index.html ด้วย browser (drag ไฟล์ลง browser โดยตรง)
+
+✅ ตรวจสอบ: เห็น Todo List แสดง 3 รายการ สามารถ เพิ่ม / ติ๊ก / ลบ ได้
+
+ส่วนที่ 5  สร้าง GitHub Repository และ README (30 นาที)
+
+ขั้นตอนที่ 10  สร้าง README.md ที่ root ของโปรเจกต์
+
+สร้างไฟล์  README.md  ที่ root  todo-app/  :
+# DevOps Todo App — สัปดาห์ที่ 2
+
+## Tech Stack
+- **Backend**: Node.js + Express.js (port 3001)
+- **Database**: PostgreSQL 16 (Docker)
+- **Frontend**: Vanilla HTML/CSS/JS
+
+## วิธีรันโปรเจกต์
+
+### 1. Prerequisites
+- Node.js v20+
+- Docker Desktop (ต้องรันอยู่)
+
+### 2. Clone โปรเจกต์
+```bash
+git clone git@github.com:YOUR-USERNAME/todo-app.git
+cd todo-app
+```
+
+### 3. ตั้งค่า Database (รันครั้งเดียว)
+```bash
+docker run -d \
+  --name todo-postgres \
+  -e POSTGRES_DB=tododb \
+  -e POSTGRES_USER=todouser \
+  -e POSTGRES_PASSWORD=todopass123 \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
+
+### 4. สร้างตาราง
+```bash
+docker exec -it todo-postgres psql -U todouser -d tododb \
+  -c "CREATE TABLE todos (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL,
+       completed BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW());"
+```
+
+### 5. ติดตั้ง Dependencies
+```bash
+cd backend
+npm install
+```
+
+### 6. สร้างไฟล์ .env
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=tododb
+DB_USER=todouser
+DB_PASSWORD=todopass123
+PORT=3001
+```
+
+### 7. รัน Backend
+```bash
+npm run dev
+```
+
+### 8. เปิด Frontend
+เปิดไฟล์ `frontend/index.html` ด้วย Browser
+
+## API Endpoints
+| Method | Path | คำอธิบาย |
+|--------|------|-----------|
+| GET | /health | ตรวจสอบสถานะ server |
+| GET | /api/todos | ดึง Todo ทั้งหมด |
+| POST | /api/todos | เพิ่ม Todo ใหม่ |
+| PATCH | /api/todos/:id | toggle completed |
+| DELETE | /api/todos/:id | ลบ Todo |
+
+ขั้นตอนที่ 11  Push ขึ้น GitHub
+
+สร้าง repository ใหม่บน GitHub ชื่อ  todo-app  (Public, ไม่ต้องใส่ README):
+กลับมาที่ VS Code Terminal → พิมพ์:
+cd C:\devops-labs\todo-app
+
+# เริ่ม git repository
+git init
+
+# commit ครั้งที่ 1: โครงสร้างโปรเจกต์
+git add .gitignore README.md
+git commit -m "chore: init project with gitignore and README"
+
+# commit ครั้งที่ 2: database module
+git add backend/db.js backend/package.json
+git commit -m "feat: add database connection module"
+
+# commit ครั้งที่ 3: backend API
+git add backend/index.js
+git commit -m "feat: add Express API with CRUD endpoints"
+
+# commit ครั้งที่ 4: frontend
+git add frontend/
+git commit -m "feat: add vanilla JS frontend"
+
+# commit ครั้งที่ 5: แก้ README ให้สมบูรณ์
+git add README.md
+git commit -m "docs: complete setup instructions in README"
+
+# เชื่อม remote และ push
+git remote add origin git@github.com:YOUR-USERNAME/todo-app.git
+git branch -M main
+git push -u origin main
+
+✅ ตรวจสอบ: ไปที่ github.com/YOUR-USERNAME/todo-app และเห็นไฟล์ทั้งหมด
+
+✅ ตรวจสอบ: ตรวจว่าไฟล์  .env  ไม่ปรากฏใน repository
+
+ส่วนที่ 6  Pair Swap Test — "It works on my machine" (30 นาที)
+นี่คือกิจกรรมสำคัญ — เพื่อนจะ clone repo ของคุณและลองรันตาม README ดูว่าสำเร็จหรือไม่
+
+ขั้นตอนที่ 12  ให้เพื่อน Clone และรัน
+
+เพื่อน clone repo ของคุณ → รันตาม README ทุก step → จดปัญหาที่เจอ:
+ปัญหาที่เพื่อนเจอ
+วิธีแก้ (ถ้าพบ)
+
+หลัง Pair Swap → ปรับปรุง README ตามปัญหาที่พบ → commit ครั้งที่ 6:
+git add README.md
+git commit -m "docs: fix setup instructions based on peer feedback"
+git push
+
+ส่วนที่ 7  Reflection — เตรียมความพร้อมสำหรับสัปดาห์ 3
+เขียนคำตอบในช่องว่าง:
+ปัญหาที่พบมากที่สุดระหว่างทำ Pair Swap คืออะไร?
+ตอบ: .............................................................................................
+ถ้า Docker แก้ปัญหา "works on my machine" ได้ — มันแก้ยังไง? (อธิบายด้วยคำของคุณเอง)
+ตอบ: .............................................................................................
+Endpoint ใดใน API ที่คิดว่าควรมีเพิ่ม? เพราะอะไร?
+ตอบ: .............................................................................................
+
+เกณฑ์การประเมิน
+รายการ
+คะแนน
+ได้รับ
+
+Backend รันได้ — GET /health และ GET /api/todos ตอบถูกต้อง
+20
+...........
+
+API ครบ 4 endpoint (GET list, POST, PATCH toggle, DELETE)
+25
+...........
+
+Frontend แสดง Todo และทำ เพิ่ม/ติ๊ก/ลบ ได้จริง
+20
+...........
+
+GitHub Repository มี commit ≥ 5 ครั้ง พร้อม message ที่สื่อความหมาย
+15
+...........
+
+ไฟล์ .env ไม่ขึ้น GitHub, README รันตามได้จริง (Pair Swap ผ่าน)
+20
+...........
+
+รวม
+100
+...........
+
+ส่งงาน: แชร์ลิงก์  github.com/YOUR-USERNAME/todo-app  ให้ครู + URL บน browser ที่รัน App ได้จริง
+
+
