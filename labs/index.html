@@ -83,6 +83,7 @@
     .lab-card.week3 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#42b883); }
     .lab-card.week4 { --accent: #fbbf24; --gradient: linear-gradient(90deg,#0ea5e9,#f59e0b); }
     .lab-card.week5 { --accent: #34d399; --gradient: linear-gradient(90deg,#059669,#10b981); }
+    .lab-card.week6 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#8b5cf6); }
 
     .theory-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
     .theory-section h2 { font-size: 1.15rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
@@ -101,6 +102,7 @@
     .theory-card.t3 { --tc-accent: #60a5fa; }
     .theory-card.t4 { --tc-accent: #fbbf24; }
     .theory-card.t5 { --tc-accent: #34d399; }
+    .theory-card.t6 { --tc-accent: #a78bfa; }
     .theory-all-btn { display: inline-block; margin-top: 1rem; background: linear-gradient(90deg,#0ea5e9,#7c3aed); color: #fff; border-radius: 8px; padding: .6rem 1.4rem; font-size: .9rem; font-weight: 600; text-decoration: none; font-family: 'Sarabun',sans-serif; transition: opacity .2s; }
     .theory-all-btn:hover { opacity: .9; }
 
@@ -168,8 +170,8 @@
     <h1>📘 <span>DevOps</span> Labs</h1>
     <p>การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ — ใบงานปฏิบัติ พร้อม Tutorial ครบทุกขั้นตอน</p>
     <div class="stats">
-      <div class="stat"><div class="num">5<span style="font-size:1.1rem;opacity:.45">/17</span></div><div class="lbl">Labs ที่พร้อมแล้ว</div></div>
-      <div class="stat"><div class="num">69</div><div class="lbl">ขั้นตอนรวม</div></div>
+      <div class="stat"><div class="num">6<span style="font-size:1.1rem;opacity:.45">/17</span></div><div class="lbl">Labs ที่พร้อมแล้ว</div></div>
+      <div class="stat"><div class="num">84</div><div class="lbl">ขั้นตอนรวม</div></div>
       <div class="stat"><div class="num">85</div><div class="lbl">ชั่วโมงตลอดเทอม</div></div>
     </div>
   </div>
@@ -314,6 +316,34 @@
       </div>
     </a>
 
+
+    <!-- WEEK 6 -->
+    <a class="lab-card week6" href="week6-ci-advanced/tutorial.html">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="lab-number">สัปดาห์ที่ 6</div>
+        <div class="lab-title">CI Advanced: Quality Gate + Build Image</div>
+        <div class="lab-desc">อัปเกรด Pipeline ด้วย SonarQube Quality Gate และ Docker Build & Push ไป Private Registry อัตโนมัติพร้อม Image Tagging Strategy</div>
+        <div class="lab-chips">
+          <span class="chip">SonarQube</span>
+          <span class="chip">Quality Gate</span>
+          <span class="chip">Build Push</span>
+          <span class="chip">Image Tag</span>
+          <span class="chip">BuildKit</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li>ตั้งค่า SonarQube บน Proxmox และสร้าง sonar-project.properties</li>
+          <li>เพิ่ม Job: SonarQube Scan + Quality Gate ใน CI</li>
+          <li>Push Docker Image ด้วย docker/build-push-action@v5</li>
+          <li>Tag Image ด้วย sha-short + latest และ Conditional Step</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ 5 ชั่วโมง | 15 ขั้นตอน</span>
+          <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
   </div>
 </div>
 
@@ -345,6 +375,11 @@
       <div class="theory-num">ใบความรู้ที่ 5</div>
       <div class="theory-title">CI Principles & Testing</div>
       <div class="theory-topics">CI Principles · GitHub Actions Arch · Testing Pyramid</div>
+    </a>
+    <a class="theory-card t6" href="theory/week6-quality-theory.html">
+      <div class="theory-num">ใบความรู้ที่ 6</div>
+      <div class="theory-title">Code Quality & Image Tagging</div>
+      <div class="theory-topics">SonarQube · SAST · Quality Gate · Docker Tags</div>
     </a>
   </div>
   <a class="theory-all-btn" href="theory/index.html">ดูใบความรู้ทั้งหมด →</a>
@@ -400,14 +435,14 @@
       </div>
       <div class="rm-badge done">✓ พร้อม</div>
     </a>
-    <div class="rm-card upcoming">
+    <a class="rm-card done" href="week6-ci-advanced/tutorial.html">
       <div class="rm-num">6</div>
       <div class="rm-body">
         <div class="rm-title">CI Advanced: Quality Gate + Build Image</div>
-        <div class="rm-deliver">Tools: SonarQube · Coverage≥60% · Docker Build Push</div>
+        <div class="rm-deliver">Deliverable: SonarQube PASSED + Image push ทุก merge</div>
       </div>
-      <div class="rm-badge soon">เร็วๆ นี้</div>
-    </div>
+      <div class="rm-badge done">✓ พร้อม</div>
+    </a>
     <div class="rm-card upcoming">
       <div class="rm-num">7</div>
       <div class="rm-body">

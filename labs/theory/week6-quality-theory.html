@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ใบความรู้ที่ 6 — Code Quality & Image Tagging | DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--primary:#8b5cf6;--primary-dark:#7c3aed;--primary-light:#ede9fe;--accent:#f59e0b;--accent-light:#fef3c7;--green:#10b981;--green-light:#d1fae5;--blue:#3b82f6;--blue-light:#dbeafe;--red:#ef4444;--red-light:#fee2e2;--sky:#0ea5e9;--sky-light:#e0f2fe;--bg:#faf5ff;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code{font-family:'JetBrains Mono',monospace;background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em}
+.site-header{background:linear-gradient(135deg,#3b0764,#6d28d9,#8b5cf6);color:#fff;padding:3rem 2rem;text-align:center;position:relative}
+.back-link{position:absolute;top:1rem;left:1.25rem;color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem}
+.back-link:hover{background:rgba(255,255,255,.25)}
+.theory-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem}
+.site-header h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:800;margin-bottom:.5rem}
+.site-header p{opacity:.85;font-size:1rem}
+.container{max-width:900px;margin:2.5rem auto;padding:0 1.5rem}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.section h2{font-size:1.3rem;font-weight:800;margin-bottom:1.25rem;color:var(--primary-dark);display:flex;align-items:center;gap:.5rem}
+.section h3{font-size:1.05rem;font-weight:700;margin:1.5rem 0 .6rem;color:var(--text)}
+.section p{margin-bottom:1rem;line-height:1.8}
+.section ul,.section ol{padding-left:1.4rem;margin-bottom:1rem}
+.section li{margin-bottom:.4rem;line-height:1.75}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1rem 0}
+th{background:#f8fafc;padding:.6rem .85rem;text-align:left;font-weight:700;border-bottom:2px solid var(--border)}
+td{padding:.6rem .85rem;border-bottom:1px solid #f1f5f9;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin:1rem 0}
+.metric-card{background:#faf5ff;border:1px solid #ddd6fe;border-radius:10px;padding:1rem;text-align:center}
+.metric-icon{font-size:1.8rem;margin-bottom:.4rem}
+.metric-name{font-size:.82rem;font-weight:700;color:var(--primary-dark)}
+.metric-desc{font-size:.78rem;color:var(--muted);margin-top:.3rem;line-height:1.4}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:var(--sky-light);border-left:4px solid var(--sky)}
+.alert.tip{background:var(--primary-light);border-left:4px solid var(--primary)}
+.alert.warning{background:var(--accent-light);border-left:4px solid var(--accent)}
+.alert.success{background:var(--green-light);border-left:4px solid var(--green)}
+.code-block{background:#1e293b;border-radius:10px;padding:1.2rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.7;color:#e2e8f0;overflow-x:auto}
+.comment{color:#64748b}.highlight{color:#a78bfa}.green{color:#6ee7b7}.yellow{color:#fbbf24}.red{color:#f87171}.white{color:#fff}
+.tag-flow{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;padding:1rem;background:#f8fafc;border-radius:10px;margin:1rem 0;border:1px solid var(--border)}
+.tag-box{background:#fff;border:2px solid #ddd6fe;border-radius:8px;padding:.4rem .85rem;font-size:.82rem;font-weight:600;color:#4c1d95;font-family:'JetBrains Mono',monospace}
+.arrow{color:#94a3b8;font-size:1.1rem}
+.sonar-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin:1rem 0}
+.flow-step{background:#fff;border:1px solid var(--border);border-radius:8px;padding:.75rem;text-align:center;font-size:.82rem}
+.flow-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto .4rem}
+.flow-title{font-weight:700;margin-bottom:.2rem}
+.flow-desc{font-size:.75rem;color:var(--muted)}
+.cheatsheet{background:#1e293b;border-radius:12px;padding:1.5rem;margin:1rem 0}
+.cheatsheet h4{color:#a78bfa;font-size:.88rem;font-weight:700;margin-bottom:.75rem;font-family:'JetBrains Mono',monospace}
+.cs-row{display:flex;gap:1rem;align-items:flex-start;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.cs-row:last-child{border-bottom:none}
+.cs-cmd{color:#6ee7b7;font-family:'JetBrains Mono',monospace;font-size:.8rem;flex-shrink:0;min-width:200px}
+.cs-desc{color:#94a3b8;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="back-link" href="index.html">← ใบความรู้ทั้งหมด</a>
+  <div class="theory-badge">ใบความรู้ที่ 6</div>
+  <h1>Code Quality Metrics, SAST & Image Tagging</h1>
+  <p>SonarQube · Quality Gate · Static Analysis · Docker Image Tagging Strategies</p>
+</header>
+
+<div class="container">
+
+<!-- SECTION 1: Code Quality -->
+<div class="section">
+  <h2>📊 Code Quality คืออะไร</h2>
+  <p>Code Quality คือการวัดว่า source code มีคุณภาพดีแค่ไหนในมิติต่างๆ ทั้ง correctness, maintainability, security และ reliability</p>
+
+  <h3>มิติของ Code Quality</h3>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-icon">🐛</div>
+      <div class="metric-name">Reliability</div>
+      <div class="metric-desc">ไม่มี Bug ที่ทำให้ app crash หรือ behave ผิดพลาด</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon">🔒</div>
+      <div class="metric-name">Security</div>
+      <div class="metric-desc">ไม่มี Vulnerability ที่ผู้โจมตีสามารถใช้ประโยชน์ได้</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon">🔧</div>
+      <div class="metric-name">Maintainability</div>
+      <div class="metric-desc">Code อ่านง่าย ไม่ซับซ้อนเกินไป ไม่มี Code Smells</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon">📊</div>
+      <div class="metric-name">Coverage</div>
+      <div class="metric-desc">% ของ code ที่ถูกทดสอบด้วย unit/integration tests</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon">🔁</div>
+      <div class="metric-name">Duplications</div>
+      <div class="metric-desc">ปริมาณ code ที่ซ้ำกัน (ยิ่งน้อยยิ่งดี)</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: SAST -->
+<div class="section">
+  <h2>🔬 SAST — Static Application Security Testing</h2>
+  <p>SAST (Static Analysis) วิเคราะห์ source code <strong>โดยไม่ต้องรัน</strong> — ค้นหา bug, vulnerability และ code smell จากการอ่าน code อย่างเดียว</p>
+
+  <h3>SAST vs DAST</h3>
+  <table>
+    <tr><th></th><th>SAST (Static)</th><th>DAST (Dynamic)</th></tr>
+    <tr><td>วิธีทำงาน</td><td>วิเคราะห์ source code โดยตรง</td><td>ทดสอบ app ที่รันอยู่</td></tr>
+    <tr><td>ต้องการ environment</td><td>ไม่ต้องรัน app</td><td>ต้องรัน app</td></tr>
+    <tr><td>จับ bug ได้</td><td>SQL Injection pattern, hardcoded secret</td><td>Runtime vulnerability</td></tr>
+    <tr><td>เครื่องมือ</td><td>SonarQube, Semgrep, ESLint</td><td>OWASP ZAP, Burp Suite</td></tr>
+    <tr><td>ใช้ใน CI</td><td>ทำได้ง่าย ทุก push</td><td>ต้องการ deployed app</td></tr>
+  </table>
+
+  <h3>SonarQube Architecture</h3>
+  <div class="sonar-flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-title">Code</div>
+      <div class="flow-desc">Source code + test files</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-title">Scanner</div>
+      <div class="flow-desc">sonar-scanner CLI อ่าน code + lcov</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-title">Server</div>
+      <div class="flow-desc">SonarQube รับข้อมูล วิเคราะห์</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-title">Database</div>
+      <div class="flow-desc">เก็บประวัติ metrics</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <div class="flow-title">Quality Gate</div>
+      <div class="flow-desc">PASS / FAIL ส่งกลับมา CI</div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <span class="alert-icon">ℹ️</span>
+    <div class="alert-body">
+      <strong>SonarQube Community Edition</strong>
+      เวอร์ชัน Community ฟรี รองรับภาษาหลักครบ (JS, TS, Java, Python, Go, C#) เหมาะสำหรับการเรียนการสอนและ SME — ความแตกต่างหลักจากเวอร์ชัน Developer+ คือ Multi-branch analysis และ Pull Request Decoration
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: Quality Gate -->
+<div class="section">
+  <h2>🚦 Quality Gate — กลไกการควบคุมคุณภาพ</h2>
+  <p>Quality Gate คือชุดของ Conditions (เงื่อนไข) ที่กำหนดว่า code ต้องผ่านอะไรบ้างก่อนถือว่า "พร้อม release"</p>
+
+  <h3>ตัวอย่าง Quality Gate Conditions</h3>
+  <table>
+    <tr><th>Metric</th><th>Condition</th><th>เหตุผล</th></tr>
+    <tr><td>Coverage</td><td>≥ 60%</td><td>ต้องมี test ครอบคลุมพอสมควร</td></tr>
+    <tr><td>Duplicated Lines</td><td>&lt; 30%</td><td>หลีกเลี่ยง copy-paste code</td></tr>
+    <tr><td>Reliability Rating</td><td>≥ A</td><td>ไม่มี Bug ระดับ Critical/Major</td></tr>
+    <tr><td>Security Rating</td><td>≥ A</td><td>ไม่มี Vulnerability</td></tr>
+    <tr><td>Security Hotspots Reviewed</td><td>= 100%</td><td>Hotspots ทั้งหมดถูก review</td></tr>
+  </table>
+
+  <h3>New Code vs Overall Code</h3>
+  <div class="alert tip">
+    <span class="alert-icon">💡</span>
+    <div class="alert-body">
+      <strong>Default Sonar Way Gate ตรวจเฉพาะ "New Code"</strong>
+      SonarQube นิยาม "New Code" ว่าคือ code ที่เพิ่มหรือแก้ตั้งแต่วันที่กำหนด (เช่น 30 วันล่าสุด) — ทำให้ team ที่มี legacy code ไม่ถูก block ด้วยปัญหาเก่า แต่ต้องรักษาคุณภาพ code ใหม่
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: Image Tagging -->
+<div class="section">
+  <h2>🏷️ Docker Image Tagging Strategies</h2>
+  <p>Tag คือ label ที่ใช้ระบุ version ของ Docker Image — Strategy ที่เลือกมีผลต่อ traceability, rollback และ deployment safety</p>
+
+  <h3>Strategy ต่างๆ</h3>
+  <table>
+    <tr><th>Strategy</th><th>ตัวอย่าง Tag</th><th>ข้อดี</th><th>ข้อเสีย</th></tr>
+    <tr><td>latest only</td><td><code>:latest</code></td><td>เรียบง่าย</td><td>ไม่รู้ว่า image ไหนถูก deploy</td></tr>
+    <tr><td>Commit SHA</td><td><code>:sha-a3f7c91</code></td><td>trace ได้แม่นยำ</td><td>ต้องรู้ SHA ก่อน pull</td></tr>
+    <tr><td>Semantic Version</td><td><code>:v1.2.3</code></td><td>human-readable, stable</td><td>ต้อง tag manually</td></tr>
+    <tr><td>Branch + SHA</td><td><code>:develop-abc1234</code></td><td>รู้ branch + commit</td><td>tag ยาว</td></tr>
+    <tr><td>SHA + latest (Week 6)</td><td><code>:sha-a3f7c91</code> + <code>:latest</code></td><td>สมดุลระหว่าง trace กับ ง่ายใช้</td><td>ต้องจัดการสองตัว</td></tr>
+  </table>
+
+  <h3>Tag Flow ใน Week 6</h3>
+  <div class="tag-flow">
+    <div class="tag-box">push to develop</div>
+    <span class="arrow">→</span>
+    <div class="tag-box">CI Pipeline ผ่าน</div>
+    <span class="arrow">→</span>
+    <div class="tag-box">sha-a3f7c91</div>
+    <span class="arrow">+</span>
+    <div class="tag-box">latest</div>
+    <span class="arrow">→</span>
+    <div class="tag-box">push to Registry</div>
+  </div>
+
+  <h3>git rev-parse --short HEAD</h3>
+  <div class="code-block">
+<span class="comment"># ดู full SHA</span>
+<span class="green">$ git rev-parse HEAD</span>
+<span class="white">a3f7c91b2d4e8f0c1234567890abcdef12345678</span>
+
+<span class="comment"># ดู short SHA (7 ตัว — unique พอสำหรับงานทั่วไป)</span>
+<span class="green">$ git rev-parse --short HEAD</span>
+<span class="white">a3f7c91</span>
+
+<span class="comment"># ใน GitHub Actions</span>
+<span class="highlight">run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT</span>
+  </div>
+
+  <div class="alert warning">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-body">
+      <strong>ระวัง: :latest ไม่ใช่ "ล่าสุดเสมอ"</strong>
+      <code>:latest</code> tag ถูก overwrite ทุกครั้งที่ push — ถ้า push หลาย version พร้อมกัน อาจมี race condition ที่ :latest ชี้ไปที่ version เก่ากว่า ใน production ควรใช้ specific tag (SHA หรือ SemVer) เสมอ
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5: BuildKit -->
+<div class="section">
+  <h2>⚡ Docker BuildKit & Layer Cache</h2>
+  <p>BuildKit คือ build engine รุ่นใหม่ของ Docker ที่มี parallel build, advanced caching และ secrets handling ที่ปลอดภัยกว่า</p>
+
+  <h3>Layer Cache ทำงานอย่างไร</h3>
+  <div class="code-block">
+<span class="comment"># Dockerfile layer analysis</span>
+<span class="yellow">FROM node:20-alpine</span>      <span class="comment">← Layer 1: cache hit เกือบทุกครั้ง (image ไม่เปลี่ยน)</span>
+<span class="yellow">WORKDIR /app</span>             <span class="comment">← Layer 2: cache hit (ไม่เปลี่ยน)</span>
+<span class="yellow">COPY package*.json ./</span>    <span class="comment">← Layer 3: cache MISS ถ้า package.json เปลี่ยน</span>
+<span class="yellow">RUN npm ci --omit=dev</span>    <span class="comment">← Layer 4: cache MISS ถ้า Layer 3 miss (npm install ใหม่)</span>
+<span class="yellow">COPY . .</span>                 <span class="comment">← Layer 5: cache MISS เกือบทุกครั้ง (code เปลี่ยน)</span>
+<span class="yellow">CMD ["node", "index.js"]</span> <span class="comment">← Layer 6: cache hit ถ้า Layer 5 ไม่เปลี่ยน CMD</span>
+  </div>
+
+  <div class="alert success">
+    <span class="alert-icon">✅</span>
+    <div class="alert-body">
+      <strong>Best Practice: แยก COPY package.json ออกมาก่อน</strong>
+      การ <code>COPY package*.json ./</code> ก่อน <code>RUN npm ci</code> แล้วค่อย <code>COPY . .</code> ทีหลัง ทำให้ Docker cache layer ของ npm install ได้ — ถ้าแค่ code เปลี่ยน (ไม่เปลี่ยน package.json) จะไม่ต้อง npm install ใหม่
+    </div>
+  </div>
+
+  <h3>GitHub Actions Cache (type=gha)</h3>
+  <table>
+    <tr><th>Parameter</th><th>ความหมาย</th></tr>
+    <tr><td><code>cache-from: type=gha</code></td><td>restore Docker layer cache จาก GitHub Actions cache store</td></tr>
+    <tr><td><code>cache-to: type=gha,mode=max</code></td><td>save ทุก layer กลับเข้า cache (mode=max = เก็บทุก intermediate layer)</td></tr>
+  </table>
+</div>
+
+<!-- SECTION 6: Cheat Sheet -->
+<div class="section">
+  <h2>📋 Cheat Sheet: Actions ที่ใช้ใน Week 6</h2>
+  <div class="cheatsheet">
+    <h4>GitHub Actions — docker & sonar actions</h4>
+    <div class="cs-row"><span class="cs-cmd">actions/checkout@v4 (fetch-depth: 0)</span><span class="cs-desc">checkout พร้อม git history ทั้งหมด</span></div>
+    <div class="cs-row"><span class="cs-cmd">docker/setup-buildx-action@v3</span><span class="cs-desc">ติดตั้ง Docker BuildKit builder</span></div>
+    <div class="cs-row"><span class="cs-cmd">docker/login-action@v3</span><span class="cs-desc">login เข้า Docker Registry</span></div>
+    <div class="cs-row"><span class="cs-cmd">docker/build-push-action@v5</span><span class="cs-desc">build + push image พร้อม cache</span></div>
+    <div class="cs-row"><span class="cs-cmd">SonarSource/sonarqube-scan-action@v3</span><span class="cs-desc">รัน sonar-scanner ส่งผลไป server</span></div>
+    <div class="cs-row"><span class="cs-cmd">SonarSource/sonarqube-quality-gate-action@v1</span><span class="cs-desc">รอและตรวจผล Quality Gate</span></div>
+  </div>
+
+  <div class="cheatsheet" style="margin-top:1rem">
+    <h4>sonar-project.properties — key properties</h4>
+    <div class="cs-row"><span class="cs-cmd">sonar.projectKey</span><span class="cs-desc">unique identifier ของ project ใน SonarQube</span></div>
+    <div class="cs-row"><span class="cs-cmd">sonar.sources</span><span class="cs-desc">directory ของ source code</span></div>
+    <div class="cs-row"><span class="cs-cmd">sonar.tests</span><span class="cs-desc">directory ของ test files</span></div>
+    <div class="cs-row"><span class="cs-cmd">sonar.exclusions</span><span class="cs-cmd">node_modules/**,coverage/**</span></div>
+    <div class="cs-row"><span class="cs-cmd">sonar.javascript.lcov.reportPaths</span><span class="cs-desc">path ของ coverage/lcov.info</span></div>
+  </div>
+
+  <div class="cheatsheet" style="margin-top:1rem">
+    <h4>GitHub Actions — conditional expressions</h4>
+    <div class="cs-row"><span class="cs-cmd">if: github.ref == 'refs/heads/main'</span><span class="cs-desc">รันเฉพาะ main branch</span></div>
+    <div class="cs-row"><span class="cs-cmd">if: startsWith(github.ref, 'refs/tags/')</span><span class="cs-desc">รันเฉพาะ git tag</span></div>
+    <div class="cs-row"><span class="cs-cmd">if: github.event_name == 'push'</span><span class="cs-desc">รันเฉพาะ push event</span></div>
+    <div class="cs-row"><span class="cs-cmd">if: always()</span><span class="cs-desc">รันเสมอ แม้ job ก่อนหน้า fail</span></div>
+  </div>
+</div>
+
+</div>
+
+<footer style="text-align:center;padding:2rem;color:#64748b;font-size:.84rem;border-top:1px solid #e2e8f0">
+  รหัสวิชา 30901-2008 — การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ | <a href="../index.html" style="color:var(--primary)">กลับหน้าหลัก</a>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Week 6 — CI Advanced: Quality Gate + Build Image | DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#8b5cf6;--primary-dark:#7c3aed;--primary-light:#ede9fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --blue:#3b82f6;--blue-light:#dbeafe;
+  --red:#ef4444;--red-light:#fee2e2;
+  --green:#10b981;--green-light:#d1fae5;
+  --sky:#0ea5e9;--sky-light:#e0f2fe;
+  --bg:#faf5ff;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;transition:width .3s}
+.back-link{position:absolute;top:1rem;left:1.25rem;color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s;z-index:10}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.site-header{background:linear-gradient(135deg,#3b0764,#6d28d9,#8b5cf6);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.week-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:1.5rem;height:fit-content;max-height:calc(100vh - 3rem);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.progress-info{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--muted)}
+.progress-track{height:6px;background:#f1f5f9;border-radius:3px;margin-top:.4rem;overflow:hidden}
+.progress-track-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;border-radius:3px;transition:width .3s}
+.content{min-width:0}
+
+/* NEW IN WEEK 6 BOX */
+.new-in-week{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid var(--primary);border-radius:14px;padding:1.5rem;margin-bottom:2rem}
+.new-in-week h3{color:#4c1d95;font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.new-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.new-item{background:#fff;border:1px solid #ddd6fe;border-radius:10px;padding:.75rem 1rem;display:flex;gap:.6rem;align-items:flex-start}
+.new-item .ni-icon{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
+.new-item .ni-title{font-size:.85rem;font-weight:700;color:#4c1d95}
+.new-item .ni-desc{font-size:.78rem;color:#7c3aed;margin-top:.1rem}
+
+/* STEP CARDS */
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.15rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:1rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+
+/* CODE BLOCKS */
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+
+/* ALERTS */
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:var(--sky-light);border-left:4px solid var(--sky)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--primary)}
+.alert.danger{background:var(--red-light);border-left:4px solid var(--red)}
+
+/* VERIFY BOX */
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:10px;padding:1rem 1.15rem;margin-top:1.25rem}
+.verify-title{font-weight:700;color:#065f46;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.25rem}
+
+/* PIPELINE DIAGRAM */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1rem 0;padding:1.25rem;background:#f8fafc;border-radius:12px;border:1px solid var(--border)}
+.pipe-node{background:#fff;border:2px solid var(--border);border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;text-align:center;min-width:100px}
+.pipe-node.trigger{border-color:var(--accent);background:var(--accent-light);color:#92400e}
+.pipe-node.lint{border-color:var(--blue);background:var(--blue-light);color:#1e3a8a}
+.pipe-node.test{border-color:var(--green);background:var(--green-light);color:#065f46}
+.pipe-node.sonar{border-color:var(--primary);background:var(--primary-light);color:#4c1d95}
+.pipe-node.docker{border-color:#0ea5e9;background:#e0f2fe;color:#0369a1}
+.pipe-node.cond{border-color:#f59e0b;background:#fef3c7;color:#92400e;font-size:.75rem}
+.pipe-arrow{color:#94a3b8;font-size:1.2rem;font-weight:700}
+.pipe-note{font-size:.75rem;color:var(--muted);text-align:center;margin-top:.35rem}
+
+/* SECRETS TABLE */
+.secrets-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:1rem 0}
+.secrets-table th{background:#f8fafc;padding:.6rem .85rem;text-align:left;font-weight:700;border-bottom:2px solid var(--border);font-size:.82rem}
+.secrets-table td{padding:.6rem .85rem;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.secrets-table tr:last-child td{border-bottom:none}
+.secret-name{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:#f1f5f9;padding:.2rem .5rem;border-radius:5px;color:#0f172a;white-space:nowrap}
+.tag-pill{display:inline-block;padding:.15rem .55rem;border-radius:20px;font-size:.72rem;font-weight:700}
+.tag-sonar{background:#ede9fe;color:#7c3aed}
+.tag-docker{background:#e0f2fe;color:#0369a1}
+.tag-deploy{background:#d1fae5;color:#065f46}
+
+/* SONAR CARD */
+.sonar-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin:1rem 0}
+.metric-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.85rem;text-align:center}
+.metric-icon{font-size:1.5rem;margin-bottom:.3rem}
+.metric-name{font-size:.75rem;color:var(--muted);font-weight:600}
+.metric-val{font-size:1.2rem;font-weight:800;margin-top:.2rem}
+.metric-val.pass{color:var(--green)}
+.metric-val.warn{color:var(--accent)}
+.metric-val.fail{color:var(--red)}
+
+/* TAGGING DIAGRAM */
+.tag-diagram{background:#0f172a;border-radius:12px;padding:1.25rem;margin:1rem 0;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.8}
+.tag-comment{color:#64748b}
+.tag-highlight{color:#a78bfa}
+.tag-green{color:#6ee7b7}
+.tag-yellow{color:#fbbf24}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;max-height:none}}
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<header class="site-header">
+  <a class="back-link" href="../index.html">← กลับหน้าหลัก</a>
+  <div class="week-badge">สัปดาห์ที่ 6</div>
+  <h1>CI Advanced: Quality Gate + Build Image</h1>
+  <div class="subtitle">SonarQube · Quality Gate · docker/build-push-action · Image Tagging Strategy</div>
+  <div class="header-meta">
+    <span class="meta-chip">⏱ 300 นาที</span>
+    <span class="meta-chip">15 ขั้นตอน</span>
+    <span class="meta-chip">🔬 SonarQube</span>
+    <span class="meta-chip">🐳 Docker Build Push</span>
+    <span class="meta-chip">🔑 GitHub Secrets</span>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="sidebar-card">
+    <div class="sidebar-title">สารบัญ</div>
+    <ul class="toc-list" id="tocList">
+      <li class="toc-item"><a href="#step1"><span class="toc-num">1</span>ทบทวน CI Week 5</a></li>
+      <li class="toc-item"><a href="#step2"><span class="toc-num">2</span>SonarQube คืออะไร</a></li>
+      <li class="toc-item"><a href="#step3"><span class="toc-num">3</span>เชื่อมต่อ SonarQube</a></li>
+      <li class="toc-item"><a href="#step4"><span class="toc-num">4</span>sonar-project.properties</a></li>
+      <li class="toc-item"><a href="#step5"><span class="toc-num">5</span>เพิ่ม Job: SonarQube Scan</a></li>
+      <li class="toc-item"><a href="#step6"><span class="toc-num">6</span>Quality Gate Check</a></li>
+      <li class="toc-item"><a href="#step7"><span class="toc-num">7</span>ตั้งค่า Quality Gate ใน SonarQube</a></li>
+      <li class="toc-item"><a href="#step8"><span class="toc-num">8</span>GitHub Secrets ที่ต้องใช้</a></li>
+      <li class="toc-item"><a href="#step9"><span class="toc-num">9</span>docker/build-push-action</a></li>
+      <li class="toc-item"><a href="#step10"><span class="toc-num">10</span>Image Tagging Strategy</a></li>
+      <li class="toc-item"><a href="#step11"><span class="toc-num">11</span>เพิ่ม Job: Build & Push</a></li>
+      <li class="toc-item"><a href="#step12"><span class="toc-num">12</span>Conditional Step</a></li>
+      <li class="toc-item"><a href="#step13"><span class="toc-num">13</span>BuildKit Cache</a></li>
+      <li class="toc-item"><a href="#step14"><span class="toc-num">14</span>รัน Pipeline ครั้งแรก</a></li>
+      <li class="toc-item"><a href="#step15"><span class="toc-num">15</span>Pipeline Competition</a></li>
+    </ul>
+    <div class="progress-info">
+      ความคืบหน้า
+      <div class="progress-track"><div class="progress-track-fill" id="sidebarProgress"></div></div>
+      <div id="progressText" style="margin-top:.3rem">0 / 15 ขั้นตอน</div>
+    </div>
+  </div>
+</aside>
+
+<main class="content">
+
+<!-- NEW IN WEEK 6 -->
+<div class="new-in-week">
+  <h3>🆕 สิ่งที่เพิ่มมาใน Week 6</h3>
+  <div class="new-grid">
+    <div class="new-item">
+      <span class="ni-icon">🔬</span>
+      <div><div class="ni-title">SonarQube Scan Job</div><div class="ni-desc">ใช้ SonarSource/sonarqube-scan-action@v3</div></div>
+    </div>
+    <div class="new-item">
+      <span class="ni-icon">🚦</span>
+      <div><div class="ni-title">Quality Gate Check</div><div class="ni-desc">Pipeline หยุดอัตโนมัติถ้า Coverage &lt; 60%</div></div>
+    </div>
+    <div class="new-item">
+      <span class="ni-icon">📄</span>
+      <div><div class="ni-title">sonar-project.properties</div><div class="ni-desc">Config file ที่ SonarQube Scanner อ่าน</div></div>
+    </div>
+    <div class="new-item">
+      <span class="ni-icon">🐳</span>
+      <div><div class="ni-title">Docker Build & Push</div><div class="ni-desc">docker/build-push-action@v5 พร้อม BuildKit</div></div>
+    </div>
+    <div class="new-item">
+      <span class="ni-icon">🏷️</span>
+      <div><div class="ni-title">Image Tagging Strategy</div><div class="ni-desc">sha-&lt;short_sha&gt; + latest ทุก push</div></div>
+    </div>
+    <div class="new-item">
+      <span class="ni-icon">🔀</span>
+      <div><div class="ni-title">Conditional Step</div><div class="ni-desc">Build-push เฉพาะ main / develop</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 1 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step1">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">ทบทวน CI Week 5 และ Pipeline ที่จะอัปเกรด</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>ก่อนเริ่ม ให้ดู Pipeline ของ Week 5 และเข้าใจว่าเราจะเพิ่มอะไรเข้าไปบ้าง</p>
+
+    <h4>Pipeline Week 5 (เดิม)</h4>
+    <div class="pipeline">
+      <div class="pipe-node trigger">Push / PR</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node lint">🔍 Lint</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node test">🧪 Test + Coverage</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node docker">🐳 Docker Build (smoke)</div>
+    </div>
+
+    <h4>Pipeline Week 6 (ใหม่)</h4>
+    <div class="pipeline">
+      <div class="pipe-node trigger">Push / PR</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node lint">🔍 Lint</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node test">🧪 Test + Coverage</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node sonar">🔬 SonarQube</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node docker" style="min-width:130px">🐳 Build & Push<div class="pipe-note">เฉพาะ main/develop</div></div>
+    </div>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body">
+        <strong>สิ่งที่เปลี่ยน</strong>
+        Job 3 เปลี่ยนจาก "Docker Build (smoke test)" เป็น SonarQube Quality Gate และเพิ่ม Job 4 ที่ build แล้ว push image จริงขึ้น Private Registry — แต่รันเฉพาะเมื่อ push ถึง main หรือ develop เท่านั้น
+      </div>
+    </div>
+
+    <h4>เปิด Repository ของทีม</h4>
+    <p>เปิด VS Code และ Terminal แล้วตรวจสอบสถานะ:</p>
+    <div class="code-wrap">
+      <div class="code-label">bash</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git status
+git log --oneline -5
+cat .github/workflows/ci.yml</code></pre>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Branch อยู่ที่ develop หรือ feature/*</li>
+        <li>CI workflow ของ Week 5 มี 3 jobs: lint, test, build</li>
+        <li>Tests ทั้งหมดผ่านบนเครื่อง (npm test ใน backend/)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 2 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step2">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">SonarQube คืออะไร และทำงานอย่างไร</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>SonarQube เป็น platform สำหรับ Code Quality Analysis แบบ Static Analysis (SAST) — วิเคราะห์ source code โดยไม่ต้องรัน</p>
+
+    <h4>SonarQube วัดอะไรบ้าง</h4>
+    <div class="sonar-metrics">
+      <div class="metric-card">
+        <div class="metric-icon">📊</div>
+        <div class="metric-name">Coverage</div>
+        <div class="metric-val pass">72.5%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🐛</div>
+        <div class="metric-name">Bugs</div>
+        <div class="metric-val pass">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">⚠️</div>
+        <div class="metric-name">Code Smells</div>
+        <div class="metric-val warn">3</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔒</div>
+        <div class="metric-name">Vulnerabilities</div>
+        <div class="metric-val pass">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔁</div>
+        <div class="metric-name">Duplications</div>
+        <div class="metric-val warn">4.2%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🚦</div>
+        <div class="metric-name">Quality Gate</div>
+        <div class="metric-val pass">PASSED</div>
+      </div>
+    </div>
+
+    <h4>Quality Gate คืออะไร</h4>
+    <p>Quality Gate คือชุดเงื่อนไข (conditions) ที่ SonarQube ใช้ตัดสินว่า code ผ่านมาตรฐานหรือไม่ ถ้า Gate = <strong>FAILED</strong> → Pipeline หยุดทันที ไม่ build image</p>
+
+    <h4>SonarQube Architecture ในแวดวง CI/CD</h4>
+    <div class="code-wrap">
+      <div class="code-label">diagram</div>
+      <pre><code class="language-bash">GitHub Actions Runner
+       │
+       ├─ npm test --coverage  (สร้าง lcov.info)
+       │
+       ├─ sonar-scanner        (อ่าน sonar-project.properties + lcov.info)
+       │    └── ส่งผลไปที่ SonarQube Server บน Proxmox
+       │
+       └─ quality-gate-check   (ดึงผล PASS/FAIL จาก SonarQube API)
+            ├── PASSED → Pipeline ดำเนินต่อ
+            └── FAILED → Pipeline หยุด ❌</code></pre>
+    </div>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body">
+        <strong>fetch-depth: 0</strong>
+        SonarQube ต้องการ git history เพื่อวิเคราะห์ New Code — ต้องใส่ <span class="inline-code">fetch-depth: 0</span> ใน checkout action ไม่งั้น scanner จะไม่รู้ว่าโค้ดไหนใหม่ไหนเก่า
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step3">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">เชื่อมต่อ SonarQube บน Proxmox และสร้าง Project</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>ครูได้ติดตั้ง SonarQube Community Edition บน Proxmox แล้ว ที่อยู่: <span class="inline-code">http://sonarqube.lab:9000</span></p>
+
+    <h4>ขั้นตอนที่ 3.1 — Login SonarQube</h4>
+    <p>เปิด Browser → ไปที่ <span class="inline-code">http://sonarqube.lab:9000</span></p>
+    <ul>
+      <li>Username: <span class="inline-code">admin</span></li>
+      <li>Password: ครูจะแจ้งในห้อง</li>
+    </ul>
+
+    <h4>ขั้นตอนที่ 3.2 — สร้าง Project ใหม่</h4>
+    <ol>
+      <li>คลิก <strong>Projects → Create project → Manually</strong></li>
+      <li>Project key: <span class="inline-code">stockpro-team[N]</span> (แทน N ด้วยเลขทีม เช่น stockpro-team1)</li>
+      <li>Display name: <span class="inline-code">StockPro Team [N]</span></li>
+      <li>คลิก <strong>Set Up</strong></li>
+    </ol>
+
+    <h4>ขั้นตอนที่ 3.3 — สร้าง Token สำหรับ CI</h4>
+    <ol>
+      <li>คลิก <strong>With GitHub Actions</strong></li>
+      <li>เลือก <strong>Other (for JS, TS, Go, Python, PHP, ...)</strong></li>
+      <li>เลือก OS: <strong>Linux</strong></li>
+      <li>SonarQube จะสร้าง Token ให้ — <strong>คัดลอกไว้ทันที</strong> เห็นครั้งเดียว!</li>
+    </ol>
+
+    <div class="alert warning">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <strong>เก็บ Token ให้ดี</strong>
+        Token ที่ SonarQube สร้างให้จะเห็นได้แค่ครั้งเดียว ถ้าปิดหน้าต่างไปแล้วต้องสร้างใหม่เท่านั้น — คัดลอกใส่ Notepad ไว้ก่อน
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>เข้า SonarQube ได้ที่ http://sonarqube.lab:9000</li>
+        <li>Project stockpro-team[N] ปรากฏใน Projects</li>
+        <li>Token มีรูปแบบ: <span class="inline-code">squ_xxxxxxxxxxxxxxxx</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 4 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step4">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div class="step-title">สร้างไฟล์ sonar-project.properties</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>SonarQube Scanner อ่าน config จากไฟล์ <span class="inline-code">sonar-project.properties</span> ที่อยู่ใน project root (ใน folder backend/)</p>
+
+    <h4>สร้างไฟล์ backend/sonar-project.properties</h4>
+    <div class="code-wrap">
+      <div class="code-label">backend/sonar-project.properties</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-properties"># SonarQube Project Configuration
+sonar.projectKey=stockpro-team1
+sonar.projectName=StockPro Team 1
+sonar.projectVersion=1.0.0
+
+# Source and test directories
+sonar.sources=.
+sonar.tests=tests
+sonar.exclusions=node_modules/**,coverage/**,dist/**
+
+# Coverage report path (generated by Jest --coverage)
+sonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+# Language
+sonar.language=js
+sonar.sourceEncoding=UTF-8</code></pre>
+    </div>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body">
+        <strong>sonar.javascript.lcov.reportPaths</strong>
+        บอก SonarQube ว่า Coverage Report (LCOV format) อยู่ที่ไหน — Jest สร้างไฟล์นี้เมื่อรัน <span class="inline-code">npm test</span> ด้วย <span class="inline-code">coverageReporters: ['lcov']</span> ใน jest.config.js
+      </div>
+    </div>
+
+    <h4>ตรวจสอบ jest.config.js รองรับ lcov แล้ว</h4>
+    <div class="code-wrap">
+      <div class="code-label">backend/jest.config.js (ตรวจสอบ)</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-javascript">module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  collectCoverageFrom: ['index.js', '!node_modules/**'],
+  coverageThreshold: {
+    global: { lines: 60, functions: 60, branches: 50 },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],  // ← lcov ต้องมีอยู่แล้ว
+};</code></pre>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>ไฟล์ backend/sonar-project.properties ถูกสร้างแล้ว</li>
+        <li>sonar.projectKey ตรงกับที่สร้างใน SonarQube</li>
+        <li>jest.config.js มี 'lcov' ใน coverageReporters</li>
+        <li>รัน npm test ใน backend/ แล้วมีไฟล์ coverage/lcov.info</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 5 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step5">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div class="step-title">เพิ่ม Job 3: SonarQube Scan ใน CI Workflow</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>เปิดไฟล์ <span class="inline-code">.github/workflows/ci.yml</span> แล้วเพิ่ม Job ใหม่หลัง test job</p>
+
+    <div class="code-wrap">
+      <div class="code-label">.github/workflows/ci.yml — เพิ่ม sonar job</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">  # ─── JOB 3: SONARQUBE QUALITY GATE ──────────────────────────
+  sonar:
+    name: 🔬 SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # ← สำคัญมาก: ต้องการ full history
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run tests to generate lcov coverage
+        run: npm test
+        working-directory: backend
+        env:
+          NODE_ENV: test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}</code></pre>
+    </div>
+
+    <h4>อธิบายแต่ละ Step</h4>
+    <ul>
+      <li><strong>fetch-depth: 0</strong> — ดึง git history ทั้งหมด (ไม่ใช่แค่ commit ล่าสุด) เพื่อให้ SonarQube วิเคราะห์ New Code ได้แม่นยำ</li>
+      <li><strong>npm test</strong> — รัน tests อีกครั้งเพื่อสร้าง coverage/lcov.info ในตัว sonar job</li>
+      <li><strong>sonarqube-scan-action</strong> — รัน sonar-scanner บน projectBaseDir = backend</li>
+      <li><strong>sonarqube-quality-gate-action</strong> — รอผล PASS/FAIL จาก SonarQube (timeout 5 นาที)</li>
+    </ul>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body">
+        <strong>ทำไมต้องรัน test ใน sonar job ด้วย?</strong>
+        Artifact ข้ามระหว่าง Jobs ได้ แต่ actions/download-artifact ซับซ้อนกว่า — สำหรับ lab นี้รัน test ซ้ำใน sonar job ง่ายกว่าและชัดเจนกว่า
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>ci.yml มี sonar job อยู่หลัง test job</li>
+        <li>sonar job ใช้ actions/checkout@v4 พร้อม fetch-depth: 0</li>
+        <li>sonarqube-scan-action ใช้ version @v3</li>
+        <li>SONAR_TOKEN และ SONAR_HOST_URL ใช้ ${{ secrets.XXX }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 6 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step6">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div class="step-title">ทำความเข้าใจ Quality Gate Check</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Step <span class="inline-code">sonarqube-quality-gate-action</span> จะ poll SonarQube API ทุก 10 วินาที จนกว่าการวิเคราะห์จะเสร็จ แล้วตรวจสอบผลลัพธ์</p>
+
+    <h4>ผลลัพธ์ที่เป็นไปได้</h4>
+    <table class="secrets-table">
+      <tr><th>Quality Gate Status</th><th>ผลต่อ Pipeline</th><th>สาเหตุ</th></tr>
+      <tr><td><span class="tag-pill" style="background:#d1fae5;color:#065f46">PASSED</span></td><td>ดำเนินต่อ → Job ถัดไป</td><td>เป็นไปตาม Conditions ทั้งหมด</td></tr>
+      <tr><td><span class="tag-pill" style="background:#fee2e2;color:#991b1b">FAILED</span></td><td>Pipeline หยุด ❌</td><td>Coverage ต่ำเกินไป, มี Bug, มี Vulnerability</td></tr>
+      <tr><td><span class="tag-pill" style="background:#fef3c7;color:#92400e">NONE</span></td><td>ข้ามการตรวจสอบ</td><td>Project ยังไม่มี Quality Gate กำหนด</td></tr>
+      <tr><td><span class="tag-pill" style="background:#fef3c7;color:#92400e">TIMEOUT</span></td><td>Pipeline หยุด ❌</td><td>SonarQube วิเคราะห์ไม่เสร็จใน 5 นาที</td></tr>
+    </table>
+
+    <h4>ทดสอบ: ทำให้ Quality Gate FAIL โดยเจตนา</h4>
+    <div class="alert warning">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <strong>กิจกรรม: ทดสอบการ FAIL</strong>
+        ลองลบ test case ออก 5 ตัว แล้ว push — Pipeline ควรหยุดที่ sonar job ถ้า coverage ตกต่ำกว่า 60% — ดู error message และคืน test case กลับมา
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>เข้าใจว่า Quality Gate PASSED/FAILED ส่งผลต่อ Pipeline อย่างไร</li>
+        <li>เข้าใจว่า timeout-minutes: 5 หมายความว่าอะไร</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 7 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step7">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <div class="step-title">ตั้งค่า Quality Gate ใน SonarQube Dashboard</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Quality Gate เริ่มต้น (Sonar way) ตรวจเฉพาะ New Code — เราจะสร้าง Custom Gate เพื่อควบคุม Coverage ทั้ง project</p>
+
+    <h4>สร้าง Custom Quality Gate</h4>
+    <ol>
+      <li>ไปที่ <strong>Quality Gates → Create</strong></li>
+      <li>ตั้งชื่อ: <span class="inline-code">StockPro Gate</span></li>
+      <li>คลิก <strong>Add Condition</strong> แล้วเพิ่ม:</li>
+    </ol>
+
+    <table class="secrets-table">
+      <tr><th>Metric</th><th>Operator</th><th>Value</th></tr>
+      <tr><td>Coverage</td><td>is less than</td><td><strong>60%</strong></td></tr>
+      <tr><td>Duplicated Lines (%)</td><td>is greater than</td><td><strong>30%</strong></td></tr>
+      <tr><td>Reliability Rating</td><td>is worse than</td><td><strong>A</strong></td></tr>
+      <tr><td>Security Rating</td><td>is worse than</td><td><strong>A</strong></td></tr>
+    </table>
+
+    <h4>ผูก Quality Gate กับ Project</h4>
+    <ol>
+      <li>ไปที่ <strong>Projects → stockpro-team[N] → Project Settings → Quality Gate</strong></li>
+      <li>เลือก <strong>StockPro Gate</strong></li>
+      <li>คลิก <strong>Save</strong></li>
+    </ol>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Custom Quality Gate "StockPro Gate" ถูกสร้างแล้ว</li>
+        <li>Project stockpro-team[N] ใช้ StockPro Gate แล้ว</li>
+        <li>Conditions ครบทั้ง 4 ข้อ</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 8 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step8">
+  <div class="step-header">
+    <div class="step-num">8</div>
+    <div class="step-title">ตั้งค่า GitHub Secrets ที่ต้องใช้</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Pipeline ของ Week 6 ต้องการ Secrets ใหม่ 2 ตัวสำหรับ SonarQube (Secrets ของ Registry มีอยู่แล้วจาก Week 4–5)</p>
+
+    <h4>Secrets ทั้งหมดที่ต้องตั้ง</h4>
+    <table class="secrets-table">
+      <tr><th>Secret Name</th><th>ค่า</th><th>ใช้ที่</th></tr>
+      <tr>
+        <td><span class="secret-name">SONAR_TOKEN</span></td>
+        <td>Token จาก Step 3.3 (<span class="inline-code">squ_xxx...</span>)</td>
+        <td><span class="tag-pill tag-sonar">Sonar Job</span></td>
+      </tr>
+      <tr>
+        <td><span class="secret-name">SONAR_HOST_URL</span></td>
+        <td><span class="inline-code">http://sonarqube.lab:9000</span></td>
+        <td><span class="tag-pill tag-sonar">Sonar Job</span></td>
+      </tr>
+      <tr>
+        <td><span class="secret-name">REGISTRY_URL</span></td>
+        <td><span class="inline-code">registry.lab:5000</span></td>
+        <td><span class="tag-pill tag-docker">Docker Job</span></td>
+      </tr>
+      <tr>
+        <td><span class="secret-name">REGISTRY_USER</span></td>
+        <td>ครูแจ้งในห้อง</td>
+        <td><span class="tag-pill tag-docker">Docker Job</span></td>
+      </tr>
+      <tr>
+        <td><span class="secret-name">REGISTRY_PASS</span></td>
+        <td>ครูแจ้งในห้อง</td>
+        <td><span class="tag-pill tag-docker">Docker Job</span></td>
+      </tr>
+    </table>
+
+    <h4>วิธีตั้ง GitHub Secrets</h4>
+    <ol>
+      <li>ไปที่ Repository บน GitHub → <strong>Settings → Secrets and variables → Actions</strong></li>
+      <li>คลิก <strong>New repository secret</strong></li>
+      <li>ใส่ Name และ Secret แล้วคลิก <strong>Add secret</strong></li>
+      <li>ทำซ้ำสำหรับ Secret แต่ละตัว</li>
+    </ol>
+
+    <div class="alert danger">
+      <span class="alert-icon">🚫</span>
+      <div class="alert-body">
+        <strong>ห้าม hardcode Secrets ใน code</strong>
+        Token, Password, URL ที่มี credential — ห้ามใส่ตรงๆ ใน .yml ไฟล์ เด็ดขาด ใช้ <span class="inline-code">${{ secrets.XXX }}</span> เสมอ
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Repository Settings → Secrets แสดง SONAR_TOKEN, SONAR_HOST_URL</li>
+        <li>REGISTRY_URL, REGISTRY_USER, REGISTRY_PASS มีอยู่แล้ว</li>
+        <li>ค่าของ Secret ไม่ปรากฏในหน้าเว็บ (เห็นเป็น ****)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 9 ───────────────────────────────────────────────── -->
+<div class="step-card" id="step9">
+  <div class="step-header">
+    <div class="step-num">9</div>
+    <div class="step-title">ทำความรู้จัก docker/build-push-action</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p><span class="inline-code">docker/build-push-action@v5</span> เป็น Official Docker Action สำหรับ build และ push Docker image ใน GitHub Actions พร้อม BuildKit และ cache</p>
+
+    <h4>เปรียบเทียบ Week 5 vs Week 6</h4>
+    <table class="secrets-table">
+      <tr><th></th><th>Week 5 (smoke test)</th><th>Week 6 (build-push)</th></tr>
+      <tr><td>คำสั่ง</td><td><span class="inline-code">docker build ...</span></td><td><span class="inline-code">docker/build-push-action@v5</span></td></tr>
+      <tr><td>Push Image</td><td>ไม่ push</td><td>push: true</td></tr>
+      <tr><td>BuildKit</td><td>ไม่ใช้</td><td>setup-buildx-action</td></tr>
+      <tr><td>Layer Cache</td><td>ไม่มี</td><td>cache-from/to type=gha</td></tr>
+      <tr><td>Multi-tag</td><td>ไม่รองรับ</td><td>รองรับ (sha + latest)</td></tr>
+    </table>
+
+    <h4>ทำไมต้องใช้ setup-buildx-action ก่อน</h4>
+    <div class="code-wrap">
+      <div class="code-label">อธิบาย</div>
+      <pre><code class="language-yaml">- name: Set up Docker Buildx
+  uses: docker/setup-buildx-action@v3
+
+# BuildX = Docker Buildkit mode
+# ช่วยให้:
+# - cache-from / cache-to ทำงานได้
+# - Multi-platform build รองรับ
+# - Build เร็วขึ้น 2-3x เพราะ layer cache</code></pre>
+    </div>
+
+    <div class="alert success">
+      <span class="alert-icon">✅</span>
+      <div class="alert-body">
+        <strong>GitHub Actions Cache (type=gha)</strong>
+        <span class="inline-code">cache-from: type=gha</span> ใช้ GitHub Actions cache store เก็บ Docker layers — build ครั้งแรกช้า แต่ครั้งต่อๆ ไปเร็วมากเพราะ layer ที่ไม่เปลี่ยนจะถูก restore จาก cache
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 10 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step10">
+  <div class="step-header">
+    <div class="step-num">10</div>
+    <div class="step-title">Image Tagging Strategy: SHA + Latest</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>การตั้งชื่อ (Tag) Docker Image มีผลต่อความสามารถ rollback และ traceability ของระบบ</p>
+
+    <h4>Tag Strategy ที่ใช้ใน Week 6</h4>
+    <div class="tag-diagram">
+<span class="tag-comment"># git commit SHA</span>
+git log --oneline -1
+<span class="tag-yellow">a3f7c91</span> feat: add product search filter
+
+<span class="tag-comment"># short SHA = 7 ตัวแรก</span>
+git rev-parse --short HEAD
+<span class="tag-yellow">a3f7c91</span>
+
+<span class="tag-comment"># Image Tags ที่จะ push</span>
+<span class="tag-green">registry.lab:5000/stockpro-backend:sha-a3f7c91</span>  ← traceability
+<span class="tag-green">registry.lab:5000/stockpro-backend:latest</span>        ← latest stable
+    </div>
+
+    <h4>ทำไมต้องมีทั้งสอง Tag</h4>
+    <table class="secrets-table">
+      <tr><th>Tag</th><th>ประโยชน์</th><th>ใช้เมื่อ</th></tr>
+      <tr><td><span class="inline-code">sha-a3f7c91</span></td><td>รู้ว่า Image นี้มาจาก commit ไหน, rollback ได้แม่นยำ</td><td>เมื่อต้องการ trace ปัญหา</td></tr>
+      <tr><td><span class="inline-code">latest</span></td><td>ง่ายต่อการ pull, docker compose prod ใช้ latest</td><td>deploy ปกติ</td></tr>
+    </table>
+
+    <h4>วิธีดึง short SHA ใน GitHub Actions</h4>
+    <div class="code-wrap">
+      <div class="code-label">yaml snippet</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">- name: Get short commit SHA
+  id: vars
+  run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+# ใช้งาน:
+# ${{ steps.vars.outputs.sha_short }}</code></pre>
+    </div>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body">
+        <strong>GITHUB_OUTPUT</strong>
+        ใน GitHub Actions สมัยใหม่ (หลัง 2022) ใช้ <span class="inline-code">echo "key=value" >> $GITHUB_OUTPUT</span> แทน <span class="inline-code">set-output</span> เก่าที่ deprecated ไปแล้ว
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 11 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step11">
+  <div class="step-header">
+    <div class="step-num">11</div>
+    <div class="step-title">เพิ่ม Job 4: Build & Push Docker Image</div>
+    <div class="step-time">⏱ 25 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>เพิ่ม Job 4 ต่อจาก sonar job ใน ci.yml</p>
+
+    <div class="code-wrap">
+      <div class="code-label">.github/workflows/ci.yml — เพิ่ม build-push job</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">  # ─── JOB 4: BUILD & PUSH IMAGE ──────────────────────────────
+  build-push:
+    name: 🐳 Build & Push Image
+    runs-on: ubuntu-latest
+    needs: sonar
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:sha-${{ steps.vars.outputs.sha_short }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:sha-${{ steps.vars.outputs.sha_short }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "## 🐳 Images Pushed" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Tag |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| stockpro-backend | sha-${{ steps.vars.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| stockpro-backend | latest |" >> $GITHUB_STEP_SUMMARY
+          echo "| stockpro-frontend | sha-${{ steps.vars.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| stockpro-frontend | latest |" >> $GITHUB_STEP_SUMMARY</code></pre>
+    </div>
+
+    <h4>อธิบาย Step Summary</h4>
+    <p>Step <span class="inline-code">Summary</span> เขียนข้อมูลลงใน <span class="inline-code">$GITHUB_STEP_SUMMARY</span> — ผลจะปรากฏเป็น table สวยงามใน GitHub Actions Run Summary หน้า</p>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>ci.yml มี 4 jobs ครบ: lint → test → sonar → build-push</li>
+        <li>build-push job มี needs: sonar</li>
+        <li>build-push ใช้ docker/build-push-action@v5</li>
+        <li>tags มีทั้ง sha-short และ latest</li>
+        <li>cache-from/cache-to type=gha ถูกตั้งค่าแล้ว</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 12 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step12">
+  <div class="step-header">
+    <div class="step-num">12</div>
+    <div class="step-title">Conditional Step: รันเฉพาะ main/develop</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Job <span class="inline-code">build-push</span> ควรรันเฉพาะเมื่อ push ถึง main หรือ develop — ไม่ควร push image ทุกครั้งที่ push feature branch</p>
+
+    <h4>วิธีใช้ if: condition</h4>
+    <div class="code-wrap">
+      <div class="code-label">yaml — if condition</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">  build-push:
+    name: 🐳 Build & Push Image
+    runs-on: ubuntu-latest
+    needs: sonar
+    # ← รันเฉพาะ push ถึง main หรือ develop
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'</code></pre>
+    </div>
+
+    <h4>ความหมายของ github.ref</h4>
+    <table class="secrets-table">
+      <tr><th>กรณี</th><th>github.ref</th><th>build-push รันไหม</th></tr>
+      <tr><td>push to feature/add-filter</td><td><span class="inline-code">refs/heads/feature/add-filter</span></td><td>❌ ไม่รัน</td></tr>
+      <tr><td>push to develop</td><td><span class="inline-code">refs/heads/develop</span></td><td>✅ รัน</td></tr>
+      <tr><td>push to main</td><td><span class="inline-code">refs/heads/main</span></td><td>✅ รัน</td></tr>
+      <tr><td>PR opened (ไม่ merge)</td><td><span class="inline-code">refs/pull/1/merge</span></td><td>❌ ไม่รัน</td></tr>
+    </table>
+
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body">
+        <strong>ทำไม feature branch ไม่ควร push image</strong>
+        Image ที่ push ขึ้น Registry คือ artifact ที่พร้อม deploy — ถ้า push ทุก feature branch จะมี image ขยะจำนวนมาก และอาจทำให้ deploy ผิด version
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>build-push job มี if: condition ถูกต้อง</li>
+        <li>ทดสอบ: push ไป feature branch แล้ว build-push job ถูก skip (สีเหลือง)</li>
+        <li>ทดสอบ: push ไป develop แล้ว build-push job รันจริง</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 13 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step13">
+  <div class="step-header">
+    <div class="step-num">13</div>
+    <div class="step-title">BuildKit Cache: เร่งความเร็ว Build</div>
+    <div class="step-time">⏱ 15 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Docker BuildKit cache ช่วยให้ build ครั้งที่ 2 เป็นต้นไปเร็วขึ้นมาก เพราะ layer ที่ไม่เปลี่ยนจะถูก cache ไว้</p>
+
+    <h4>วิธีทำงานของ Layer Cache</h4>
+    <div class="code-wrap">
+      <div class="code-label">Dockerfile + cache</div>
+      <pre><code class="language-dockerfile">FROM node:20-alpine           # Layer 1: cached (ไม่ค่อยเปลี่ยน)
+WORKDIR /app                  # Layer 2: cached
+COPY package*.json ./         # Layer 3: เปลี่ยนถ้า package.json เปลี่ยน
+RUN npm ci --omit=dev         # Layer 4: ใช้ cache ถ้า Layer 3 ไม่เปลี่ยน (ประหยัดสุด!)
+COPY . .                      # Layer 5: เปลี่ยนทุก push (code เปลี่ยน)
+CMD ["node", "index.js"]      # Layer 6: cached</code></pre>
+    </div>
+
+    <h4>ผลการ Benchmark</h4>
+    <table class="secrets-table">
+      <tr><th>สถานการณ์</th><th>ไม่มี Cache</th><th>มี Cache (GHA)</th></tr>
+      <tr><td>เฉพาะ code เปลี่ยน (ไม่เปลี่ยน package.json)</td><td>~2 นาที</td><td>~20 วินาที</td></tr>
+      <tr><td>package.json เปลี่ยน (ต้อง npm ci ใหม่)</td><td>~2 นาที</td><td>~1.5 นาที</td></tr>
+      <tr><td>Build ครั้งแรกสุด</td><td>~2 นาที</td><td>~2 นาที</td></tr>
+    </table>
+
+    <div class="code-wrap">
+      <div class="code-label">yaml — cache config อธิบาย</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-yaml">- name: Build & push backend image
+  uses: docker/build-push-action@v5
+  with:
+    context: ./backend
+    push: true
+    tags: |
+      ${{ secrets.REGISTRY_URL }}/stockpro-backend:sha-${{ steps.vars.outputs.sha_short }}
+      ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+    cache-from: type=gha          # ← restore cache จาก GitHub Actions cache
+    cache-to: type=gha,mode=max   # ← save ทุก layer กลับเข้า cache</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 14 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step14">
+  <div class="step-header">
+    <div class="step-num">14</div>
+    <div class="step-title">รัน Pipeline ครั้งแรกและตรวจสอบผล</div>
+    <div class="step-time">⏱ 25 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>Commit และ push workflow ใหม่ไปที่ develop branch แล้วตรวจดู Pipeline</p>
+
+    <h4>ขั้นตอนที่ 14.1 — Commit และ Push</h4>
+    <div class="code-wrap">
+      <div class="code-label">bash</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git add .github/workflows/ci.yml backend/sonar-project.properties
+git commit -m "ci: add SonarQube quality gate and docker build-push job"
+git push origin develop</code></pre>
+    </div>
+
+    <h4>ขั้นตอนที่ 14.2 — ติดตาม Pipeline</h4>
+    <ol>
+      <li>ไปที่ GitHub Repository → <strong>Actions</strong></li>
+      <li>คลิก workflow run ล่าสุด</li>
+      <li>ดู 4 Jobs: lint → test → sonar → build-push</li>
+      <li>คลิก sonar job → ดู log ของ SonarQube Scan</li>
+      <li>ไปที่ SonarQube Dashboard ดูผลการวิเคราะห์</li>
+    </ol>
+
+    <h4>ขั้นตอนที่ 14.3 — ตรวจสอบ Registry</h4>
+    <p>หลัง build-push job สำเร็จ ตรวจสอบ image ใน Private Registry:</p>
+    <div class="code-wrap">
+      <div class="code-label">bash — ตรวจสอบ image ใน registry</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash"># Login ไป registry ก่อน
+docker login registry.lab:5000
+
+# ดู list images
+curl -k https://registry.lab:5000/v2/_catalog
+
+# ดู tags ของ stockpro-backend
+curl -k https://registry.lab:5000/v2/stockpro-backend/tags/list</code></pre>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ ตรวจสอบ</div>
+      <ul>
+        <li>Pipeline ผ่านทั้ง 4 jobs (สีเขียว ✅)</li>
+        <li>SonarQube Dashboard แสดง Quality Gate: PASSED</li>
+        <li>Coverage ≥ 60% ใน SonarQube</li>
+        <li>Registry มี image stockpro-backend:sha-xxxxxxx และ :latest</li>
+        <li>Registry มี image stockpro-frontend:sha-xxxxxxx และ :latest</li>
+        <li>GitHub Actions Summary แสดงตาราง Images Pushed</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 15 ──────────────────────────────────────────────── -->
+<div class="step-card" id="step15">
+  <div class="step-header">
+    <div class="step-num">15</div>
+    <div class="step-title">Pipeline Competition — สรุปและส่งงาน</div>
+    <div class="step-time">⏱ 20 นาที</div>
+  </div>
+  <div class="step-body">
+    <p>กิจกรรมปิดท้าย: แข่งขันว่าทีมไหน Pipeline เร็วที่สุด (ตั้งแต่ push จนถึง image อยู่ใน Registry)</p>
+
+    <h4>เกณฑ์การประเมิน Pipeline</h4>
+    <table class="secrets-table">
+      <tr><th>หัวข้อ</th><th>เกณฑ์</th><th>คะแนน</th></tr>
+      <tr><td>4 Jobs ครบ</td><td>lint, test, sonar, build-push ทั้งหมดผ่าน</td><td>30</td></tr>
+      <tr><td>Quality Gate</td><td>SonarQube PASSED, Coverage ≥ 60%</td><td>25</td></tr>
+      <tr><td>Image Tagging</td><td>มีทั้ง sha-short และ latest tags</td><td>20</td></tr>
+      <tr><td>Conditional</td><td>build-push ไม่รันบน feature branch</td><td>15</td></tr>
+      <tr><td>Cache</td><td>cache-from/cache-to ตั้งค่าถูกต้อง</td><td>10</td></tr>
+    </table>
+
+    <h4>ชิ้นงานที่ต้องส่ง</h4>
+    <ul>
+      <li>Screenshot: GitHub Actions Pipeline ผ่านทั้ง 4 jobs</li>
+      <li>Screenshot: SonarQube Dashboard แสดง Quality Gate PASSED</li>
+      <li>Screenshot: Registry tags list (sha-xxx + latest)</li>
+      <li>Link: Repository GitHub ของทีม</li>
+    </ul>
+
+    <h4>Commit ส่งงาน</h4>
+    <div class="code-wrap">
+      <div class="code-label">bash</div>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><code class="language-bash">git add .
+git commit -m "week6: complete CI advanced with sonarqube quality gate and docker build-push"
+git push origin develop</code></pre>
+    </div>
+
+    <div class="alert success">
+      <span class="alert-icon">🎉</span>
+      <div class="alert-body">
+        <strong>ยินดีด้วย! สำเร็จ Week 6</strong>
+        Pipeline ของคุณตอนนี้ครบสมบูรณ์: Lint → Unit Test → SonarQube Quality Gate → Docker Build & Push — ทุก commit ที่ผ่าน gate จะมี image พร้อม deploy ใน Registry อัตโนมัติ!
+      </div>
+    </div>
+
+    <div class="verify">
+      <div class="verify-title">✅ Checklist สรุป Week 6</div>
+      <ul>
+        <li>sonar-project.properties ถูกสร้างและ config ถูกต้อง</li>
+        <li>CI workflow มี 4 jobs: lint → test → sonar → build-push</li>
+        <li>SonarQube Quality Gate PASSED</li>
+        <li>Docker images push ขึ้น Registry สำเร็จ</li>
+        <li>Image มี tag sha-short และ latest</li>
+        <li>build-push job รันเฉพาะ main/develop</li>
+        <li>GitHub Secrets ตั้งครบทั้ง 5 ตัว</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-properties.min.js"></script>
+<script>
+const TOTAL = 15;
+const KEY   = 'week6-ci-advanced-progress';
+let completed = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+function updateProgress() {
+  const pct = (completed.length / TOTAL) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('sidebarProgress').style.width = pct + '%';
+  document.getElementById('progressText').textContent = completed.length + ' / ' + TOTAL + ' ขั้นตอน';
+}
+
+document.querySelectorAll('.step-card').forEach((card, i) => {
+  const num = i + 1;
+  const hdr = card.querySelector('.step-header');
+  if (completed.includes(num)) hdr.style.background = 'linear-gradient(135deg,#f0fdf4,#dcfce7)';
+  hdr.style.cursor = 'pointer';
+  hdr.title = 'คลิกเพื่อทำเครื่องหมายว่าเสร็จแล้ว';
+  hdr.addEventListener('click', () => {
+    const idx = completed.indexOf(num);
+    if (idx === -1) { completed.push(num); hdr.style.background = 'linear-gradient(135deg,#f0fdf4,#dcfce7)'; }
+    else { completed.splice(idx, 1); hdr.style.background = ''; }
+    localStorage.setItem(KEY, JSON.stringify(completed));
+    updateProgress();
+  });
+});
+
+function copyCode(btn) {
+  const code = btn.closest('.code-wrap').querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+const tocLinks = document.querySelectorAll('.toc-item a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector('.toc-item a[href="#' + e.target.id + '"]');
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('.step-card[id]').forEach(s => observer.observe(s));
+
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+});
+
+updateProgress();
+</script>
+</body>
+</html>

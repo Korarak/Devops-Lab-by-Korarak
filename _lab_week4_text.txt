@@ -1,0 +1,330 @@
+ใบขั้นตอนปฏิบัติงาน
+สัปดาห์ที่ 4  —  GitFlow และ CI/CD ด้วย GitHub Actions
+รหัสวิชา 30901-2008  การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+
+เวลา
+5 ชั่วโมง (300 นาที)
+
+Stack
+Node.js + Express  |  Vue 3 + Vite  |  PostgreSQL  |  Docker  |  GitHub Actions  |  Private Registry
+
+ผลลัพธ์
+ตั้งค่า GitFlow branching strategy • Branch Protection + PR workflow • CI workflow อัตโนมัติ • CD workflow push image ไป Registry เมื่อ release tag
+
+ภาพรวมของวันนี้
+สัปดาห์นี้คุณจะเพิ่มกระบวนการทีม DevOps จริงลงใน StockPro:
+☐  ตั้งค่า GitFlow: main, develop, feature/*, hotfix/* branches
+☐  ตั้งค่า Branch Protection: PR required + status check required
+☐  เขียน CI Workflow ที่ lint + build อัตโนมัติทุก push
+☐  ฝึก Pull Request workflow: create → review → merge
+☐  เขียน CD Workflow ที่ build + push image เมื่อ tag v*
+☐  สร้าง Release tag แบบ SemVer (v1.0.0)
+
+ℹ หมายเหตุ: ทำงานเป็นทีม 3-4 คน ต้องมี GitHub Repository ร่วมกัน
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 1  GitFlow Setup (45 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 1  ตั้งค่า GitFlow Branches
+
+คน A (Team Lead) — สร้าง remote branches:
+git checkout -b develop
+git push origin develop
+
+# ทุกคนในทีม — ดึง develop มา:
+git fetch origin
+git checkout develop
+
+ขั้นตอนที่ 2  ตั้งค่า Branch Protection Rules
+
+ไปที่ GitHub Repository → Settings → Branches → Add branch protection rule
+
+สำหรับ main branch:
+- Branch name pattern: main
+- ✅ Require a pull request before merging
+- ✅ Require status checks to pass before merging
+- ✅ Require branches to be up to date before merging
+- ✅ Include administrators
+- คลิก Create
+
+ทำซ้ำสำหรับ develop branch (เงื่อนไขเดียวกัน)
+
+ขั้นตอนที่ 3  ฝึกสร้าง Feature Branch
+
+แต่ละคนในทีมสร้าง feature branch ของตัวเอง:
+git checkout develop
+git pull origin develop
+git checkout -b feature/add-[ชื่อของคุณ]-endpoint
+
+# แก้ไขหรือเพิ่มอะไรบางอย่าง เช่น เพิ่ม endpoint ใหม่
+git add .
+git commit -m "feat: add [ชื่อ] endpoint"
+git push origin feature/add-[ชื่อของคุณ]-endpoint
+
+✅ ตรวจสอบ: ไปที่ GitHub แล้วเห็น feature branch ที่สร้าง
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 2  CI Workflow (75 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 4  ทำความเข้าใจ GitHub Actions
+
+GitHub Actions คือ CI/CD platform ในตัวของ GitHub
+- Workflow: ไฟล์ YAML ใน .github/workflows/
+- Trigger (on): เหตุการณ์ที่ทำให้ workflow รัน (push, pull_request, schedule, workflow_dispatch)
+- Job: กลุ่มของ Steps ที่รันบน Runner
+- Step: คำสั่งเดี่ยวหรือ Action
+- Runner: VM ที่รัน job (ubuntu-latest)
+
+ขั้นตอนที่ 5  สร้าง CI Workflow
+
+สร้างโฟลเดอร์ .github/workflows/:
+mkdir -p .github/workflows
+
+สร้างไฟล์ .github/workflows/ci.yml:
+name: CI — StockPro
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'hotfix/**'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint:
+    name: 🔍 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image (smoke test)
+        run: |
+          docker build -t stockpro-backend:${{ github.sha }} ./backend
+          echo "✅ Build OK"
+
+ขั้นตอนที่ 6  ติดตั้ง ESLint ใน backend
+
+cd backend
+npm install --save-dev eslint
+
+สร้างไฟล์ backend/.eslintrc.json:
+{
+  "env": { "node": true, "es2021": true },
+  "extends": "eslint:recommended",
+  "parserOptions": { "ecmaVersion": 2021 },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single"],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "warn"
+  }
+}
+
+เพิ่ม script ใน backend/package.json:
+"lint": "eslint . --ext .js"
+
+ขั้นตอนที่ 7  Trigger CI ด้วย Pull Request
+
+สร้าง PR จาก feature branch ไป develop:
+1. ไปที่ GitHub → Pull requests → New pull request
+2. base: develop ← compare: feature/your-branch
+3. เขียน title และ description
+4. คลิก Create pull request
+5. ดู CI รันอยู่ใต้ PR
+
+✅ ตรวจสอบ:
+- CI Pipeline ผ่าน (lint + build สำเร็จ)
+- สัญลักษณ์ ✅ ปรากฏใน PR
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 3  Pull Request Workflow (45 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 8  Code Review และ Merge PR
+
+คนที่ไม่ใช่เจ้าของ PR ทำ Code Review:
+1. คลิก Files changed → ดู diff ทั้งหมด
+2. คลิก Review changes
+3. ถ้าโอเค: เลือก Approve → Submit review
+4. Merge PR: Squash and merge → Confirm
+
+ขั้นตอนที่ 9  Update Local Repository
+
+หลัง merge PR:
+git checkout develop
+git pull origin develop
+
+✅ ตรวจสอบ: git log --oneline -5 เห็น commit จาก feature branch แล้ว
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 4  CD Workflow (75 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 10  ตั้งค่า GitHub Secrets
+
+ไปที่ Settings → Secrets and variables → Actions → New repository secret:
+- REGISTRY_URL: registry.lab:5000
+- REGISTRY_USER: ครูแจ้งในห้อง
+- REGISTRY_PASS: ครูแจ้งในห้อง
+- SERVER_HOST: 10.0.0.X (VM IP ของทีม)
+- SERVER_USER: devops
+- SERVER_SSH_KEY: (private key ที่ copy จาก ~/.ssh/id_rsa)
+
+ขั้นตอนที่ 11  สร้าง CD Workflow
+
+สร้างไฟล์ .github/workflows/cd.yml:
+name: CD — Deploy StockPro
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:${{ steps.version.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/stockpro
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f
+            echo "✅ Deployed at $(date)"
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 5  Release และ SemVer (60 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 12  Merge develop → main และสร้าง Release
+
+Merge develop ไป main:
+1. สร้าง PR: base: main ← compare: develop
+2. ชื่อ PR: "Release v1.0.0"
+3. Review และ Approve
+4. Merge
+
+ขั้นตอนที่ 13  สร้าง Release Tag (SemVer)
+
+หลัง merge:
+git checkout main
+git pull origin main
+git tag -a v1.0.0 -m "Release v1.0.0 — StockPro Week 4"
+git push origin v1.0.0
+
+✅ ตรวจสอบ:
+- CD Pipeline trigger ด้วย tag v1.0.0
+- Images push ขึ้น registry พร้อม tag v1.0.0
+
+ขั้นตอนที่ 14  ตรวจสอบ Deployment
+
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs backend
+
+✅ ตรวจสอบ: http://[SERVER_IP] เปิด StockPro ได้จาก server
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 6  สรุปและส่งงาน (สัปดาห์นี้ทำต่อจาก setup)
+──────────────────────────────────────────────────────────────────
+
+Checklist สรุป Week 4:
+☐ GitFlow branches: main, develop, feature/* ทั้งหมดมีอยู่
+☐ Branch Protection ตั้งค่าแล้ว (main + develop)
+☐ CI Workflow ผ่าน: lint + docker build
+☐ Pull Request workflow: create, review, merge ได้
+☐ CD Workflow: build + push + deploy via SSH
+☐ Release tag v1.0.0 trigger CD Pipeline
+☐ Images อยู่ใน Registry พร้อม version tag
+☐ README มี Status Badge CI + CD

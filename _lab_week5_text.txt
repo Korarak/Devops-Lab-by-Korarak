@@ -1,0 +1,357 @@
+ใบขั้นตอนปฏิบัติงาน
+สัปดาห์ที่ 5  —  Continuous Integration: First Pipeline
+รหัสวิชา 30901-2008  การพัฒนาซอฟต์แวร์รูปแบบเดฟออฟส์ (DevOps)
+
+เวลา
+5 ชั่วโมง (300 นาที)
+
+Stack
+Node.js + Express  |  Vue 3 + Vite  |  PostgreSQL  |  Jest + Supertest  |  ESLint  |  GitHub Actions
+
+ผลลัพธ์
+Unit Tests ≥ 8 cases ครอบคลุม API endpoints • Coverage ≥ 60% • CI Pipeline 3 jobs (lint → test → build) • Branch Protection ต้องผ่าน CI ก่อน merge
+
+ภาพรวมของวันนี้
+สัปดาห์นี้คุณจะเพิ่ม Quality Gate ด้วย Unit Tests จริงลงใน StockPro:
+☐  ติดตั้ง Jest + Supertest และตั้งค่า jest.config.js
+☐  เขียน Unit Tests ≥ 8 cases ใน 3 ไฟล์ (health, products, stats)
+☐  ตั้งค่า Coverage threshold ≥ 60%
+☐  ปรับ CI workflow เป็น 3 jobs: lint → test (coverage) → build
+☐  ตั้งค่า Branch Protection ต้องผ่าน CI ก่อน merge
+
+ℹ หมายเหตุ: Backend ต้อง export app ด้วย module.exports = app เพื่อให้ test ได้
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 1  ตั้งค่า Testing Environment (45 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 1  ติดตั้ง Jest + Supertest
+
+cd backend
+npm install --save-dev jest supertest
+
+เพิ่ม script ใน backend/package.json:
+"test": "jest --coverage",
+"test:watch": "jest --watch"
+
+ขั้นตอนที่ 2  สร้าง jest.config.js
+
+สร้างไฟล์ backend/jest.config.js:
+module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  collectCoverageFrom: [
+    'index.js',
+    '!node_modules/**',
+  ],
+  coverageThreshold: {
+    global: {
+      lines:     60,
+      functions: 60,
+      branches:  50,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],
+};
+
+ขั้นตอนที่ 3  ปรับ backend/index.js ให้ export app
+
+เพิ่มบรรทัดนี้ที่ท้ายไฟล์ index.js แทนการเรียก listen โดยตรง:
+
+// เปลี่ยนจาก:
+app.listen(PORT, () => { ... })
+
+// เป็น: (รัน server เฉพาะเมื่อ execute โดยตรง)
+if (require.main === module) {
+  initDb().then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 StockPro API running at http://localhost:${PORT}`);
+    });
+  });
+}
+
+module.exports = app;  // ← Export สำหรับ test
+
+✅ ตรวจสอบ: npm start ยังรันได้ปกติ
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 2  เขียน Unit Tests (90 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 4  สร้างโฟลเดอร์ tests/
+
+mkdir backend/tests
+
+ขั้นตอนที่ 5  เขียน health.test.js (3 tests)
+
+สร้างไฟล์ backend/tests/health.test.js:
+const request = require('supertest');
+const app = require('../index');
+
+describe('GET /health', () => {
+  test('returns 200 with status ok', async () => {
+    const res = await request(app).get('/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('status', 'ok');
+  });
+
+  test('returns version field', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body).toHaveProperty('version');
+    expect(typeof res.body.version).toBe('string');
+  });
+
+  test('returns uptime as a number', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body).toHaveProperty('uptime');
+    expect(typeof res.body.uptime).toBe('number');
+    expect(res.body.uptime).toBeGreaterThanOrEqual(0);
+  });
+});
+
+ขั้นตอนที่ 6  เขียน products.test.js (3 tests + mock DB)
+
+สร้างไฟล์ backend/tests/products.test.js:
+const request = require('supertest');
+
+// Mock database ก่อน require app
+jest.mock('../db', () => ({
+  query: jest.fn(),
+}));
+const db = require('../db');
+const app = require('../index');
+
+describe('GET /api/products', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 200 with array of products', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { id: 1, name: 'MacBook Air M3', category: 'Electronics', price: '44900.00', stock: 15, description: '' },
+      ],
+    });
+    const res = await request(app).get('/api/products');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('returns empty array when no products', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).get('/api/products');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+});
+
+describe('POST /api/products', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('creates product and returns 201 with id', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 3, name: 'Nike Air Max', category: 'Footwear', price: '4590.00', stock: 32 }],
+    });
+    const res = await request(app)
+      .post('/api/products')
+      .send({ name: 'Nike Air Max', category: 'Footwear', price: 4590, stock: 32 });
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('id');
+  });
+});
+
+ขั้นตอนที่ 7  เขียน stats.test.js (3 tests)
+
+สร้างไฟล์ backend/tests/stats.test.js:
+const request = require('supertest');
+
+jest.mock('../db', () => ({ query: jest.fn() }));
+const db = require('../db');
+const app = require('../index');
+
+describe('POST /api/products — validation', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 400 when name is missing', async () => {
+    const res = await request(app)
+      .post('/api/products')
+      .send({ category: 'Electronics', price: 1000, stock: 5 });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('returns 400 when category is missing', async () => {
+    const res = await request(app)
+      .post('/api/products')
+      .send({ name: 'Test', price: 100, stock: 10 });
+    expect(res.statusCode).toBe(400);
+  });
+});
+
+describe('GET /api/stats', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns stats object with overview and by_category', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total_products: '10', total_stock: '243' }] })
+      .mockResolvedValueOnce({ rows: [{ category: 'Electronics', products: '5' }] });
+    const res = await request(app).get('/api/stats');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('overview');
+    expect(res.body).toHaveProperty('by_category');
+  });
+});
+
+ขั้นตอนที่ 8  รัน Tests บนเครื่อง
+
+cd backend
+npm test
+
+ผลที่ควรเห็น:
+PASS tests/health.test.js
+PASS tests/products.test.js
+PASS tests/stats.test.js
+
+Test Suites: 3 passed
+Tests:       9 passed
+Coverage: ≥ 60% ✅
+
+✅ ตรวจสอบ: npm test ผ่านทั้ง 9 tests, Coverage ≥ 60%
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 3  อัปเกรด CI Workflow (60 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 9  ปรับ CI Workflow เป็น 3 Jobs
+
+อัปเดต .github/workflows/ci.yml:
+name: CI — StockPro
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: 🔍 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    name: 🧪 Test & Coverage
+    runs-on: ubuntu-latest
+    needs: lint
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Run tests with coverage
+        run: npm test
+        env:
+          NODE_ENV: test
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 7
+
+  build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: |
+          docker build -t stockpro-backend:${{ github.sha }} ./backend
+          echo "✅ Build OK: stockpro-backend:${{ github.sha }}"
+
+ขั้นตอนที่ 10  Commit และ Push
+
+git add .
+git commit -m "ci: upgrade to 3-job pipeline with unit tests and coverage"
+git push origin develop
+
+✅ ตรวจสอบ: ไปที่ GitHub → Actions → ดู 3 jobs: lint, test, build ผ่านทั้งหมด
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 4  Branch Protection + Debug Challenge (60 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 11  ตั้งค่า Branch Protection ให้ต้องผ่าน CI
+
+ไปที่ Settings → Branches → แก้ไข main + develop:
+เพิ่ม Status checks ที่ต้องผ่าน:
+✅ 🔍 Lint
+✅ 🧪 Test & Coverage
+✅ 🐳 Docker Build
+
+ขั้นตอนที่ 12  Debug Challenge — หา Bug ที่ครูซ่อนไว้
+
+ครูจะ push code ที่มีปัญหาให้ทีมค้นหา:
+เป้าหมาย: หาสาเหตุที่ CI fail และแก้ไขให้ผ่าน
+
+วิธีดู error:
+1. ไปที่ GitHub → Actions → คลิก run ที่ fail
+2. คลิก job ที่ fail → ดู log
+3. ค้นหาบรรทัดที่มี FAIL หรือ Error
+4. แก้ไข code และ push ใหม่
+
+ขั้นตอนที่ 13  เพิ่ม Status Badge ใน README.md
+
+เพิ่มใน README.md:
+[![CI](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/ci.yml)
+
+แทน YOUR_USERNAME ด้วย username GitHub ของทีม
+
+──────────────────────────────────────────────────────────────────
+ส่วนที่ 5  สรุปและส่งงาน (45 นาที)
+──────────────────────────────────────────────────────────────────
+
+ขั้นตอนที่ 14  ทบทวน Pipeline
+
+Pipeline ที่สมบูรณ์ของ Week 5:
+Push/PR → 🔍 Lint → 🧪 Test + Coverage → 🐳 Docker Build
+
+ขั้นตอนที่ 15  Commit และ Push ขึ้น GitHub
+
+git add .
+git commit -m "week5: complete CI pipeline with unit tests, coverage ≥60%"
+git push origin develop
+
+Checklist สรุป Week 5:
+☐ Jest + Supertest ติดตั้งแล้ว
+☐ jest.config.js มี coverageThreshold ≥ 60%
+☐ tests/health.test.js — 3 tests ผ่าน
+☐ tests/products.test.js — 3 tests ผ่าน (mock DB)
+☐ tests/stats.test.js — 3 tests ผ่าน (mock DB)
+☐ npm test → ทุก tests pass + coverage ≥ 60%
+☐ CI workflow มี 3 jobs: lint → test → build
+☐ Coverage artifact upload สำเร็จ (ดาวน์โหลดได้จาก Actions)
+☐ Branch Protection ต้องการ CI pass ก่อน merge
+☐ Status Badge ปรากฏใน README
