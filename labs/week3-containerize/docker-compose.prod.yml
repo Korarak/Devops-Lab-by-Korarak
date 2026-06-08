@@ -12,7 +12,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
@@ -24,7 +24,12 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     stockpro
+      DB_USER:     dev
+      DB_PASSWORD: secret
+      PORT:        3001
     depends_on:
       db:
         condition: service_healthy

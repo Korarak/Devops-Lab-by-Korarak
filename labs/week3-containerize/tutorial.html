@@ -394,10 +394,11 @@ week3-containerize/<br>
             <th style="padding:.6rem 1rem;text-align:left;">URL</th>
             <th style="padding:.6rem 1rem;text-align:left;">ทำอะไร</th>
           </tr>
-          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products?search=&category=</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงรายการสินค้า + filter</td></tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products?search=&amp;category=</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงรายการสินค้า + filter</td></tr>
           <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/categories</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงรายการ category ทั้งหมด</td></tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงสินค้าตาม id</td></tr>
           <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#dbeafe;color:#1e40af;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">POST</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">เพิ่มสินค้าใหม่</td></tr>
-          <tr><td style="padding:.5rem 1em;border-bottom:1px solid #e2e8f0;"><span style="background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">PUT</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">แก้ไขสินค้า</td></tr>
+          <tr><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">PUT</span></td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;border-bottom:1px solid #e2e8f0;">แก้ไขสินค้า</td></tr>
           <tr><td style="padding:.5rem 1rem;"><span style="background:#fee2e2;color:#991b1b;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">DELETE</span></td><td style="padding:.5rem 1rem;font-family:monospace;font-size:.85rem;">/api/products/:id</td><td style="padding:.5rem 1rem;">ลบสินค้า</td></tr>
         </table>
 
@@ -424,6 +425,29 @@ week3-containerize/<br>
   );
   res.json(rows);
 });</code></pre>
+        </div>
+
+        <p><strong>backend/db.js — เชื่อมต่อ PostgreSQL ด้วย Pool:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/db.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  host:     process.env.DB_HOST,      // ชื่อ host — ใน Docker ใช้ชื่อ service
+  port:     process.env.DB_PORT,      // default 5432
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+// ทดสอบการเชื่อมต่อตอน startup
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) console.error('❌ DB connection failed:', err.message);
+  else     console.log('✅ DB connected at:', res.rows[0].now);
+});
+
+module.exports = pool;</code></pre>
         </div>
 
         <div class="alert tip">
@@ -455,12 +479,19 @@ npm install
 # ต้องมี PostgreSQL รันอยู่ก่อน (จาก docker หรือ local)
 docker run -d --name pg-test \
   -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_USER=dev \
   -e POSTGRES_DB=stockpro \
   -p 5432:5432 postgres:15-alpine
 
 # สร้าง .env จาก .env.example
 cp .env.example .env
-# แก้ไข DATABASE_URL ใน .env ให้ถูกต้อง
+# ไฟล์ .env จะมีค่า default พร้อมใช้งาน:
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_NAME=stockpro
+# DB_USER=dev
+# DB_PASSWORD=secret
+# PORT=3001
 
 node index.js</code></pre>
         </div>
@@ -492,7 +523,7 @@ curl http://localhost:3001/health</code></pre>
             <ul>
               <li>GET /api/products คืน array ของ products (มี seed data 10 รายการ)</li>
               <li>?search=macbook คืนเฉพาะสินค้าที่มีชื่อหรือรายละเอียดตรง</li>
-              <li>GET /health คืน <code>{"status":"ok"}</code></li>
+              <li>GET /health คืน <code>{"status":"ok","service":"StockPro API","timestamp":"..."}</code></li>
             </ul>
           </div>
         </div>
@@ -878,22 +909,17 @@ async function saveProduct() {
         <div class="code-wrap">
           <div class="code-label"><span>backend/Dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-dockerfile"><code>FROM node:20-alpine
-
 WORKDIR /app
 
 # Copy package files ก่อน — ใช้ประโยชน์ Docker layer cache
 # ถ้า package.json ไม่เปลี่ยน layer นี้จะถูก cache ไว้ npm install ไม่รันซ้ำ
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev    # ติดตั้งเฉพาะ production dependencies (ไม่รวม nodemon ฯลฯ)
 
 # Copy source code ทีหลัง (เปลี่ยนบ่อย → layer บน = invalidate น้อยกว่า)
 COPY . .
 
 EXPOSE 3001
-
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget -qO- http://localhost:3001/health || exit 1
-
 CMD ["node", "index.js"]</code></pre>
         </div>
 
@@ -933,6 +959,39 @@ CMD ["nginx", "-g", "daemon off;"]</code></pre>
             nginx:alpine มีขนาดแค่ ~25MB — เหมาะสำหรับ production ที่ต้องการแค่ serve HTML/JS/CSS
           </div>
         </div>
+
+        <p><strong>frontend/nginx.conf — ตั้งค่า Nginx ให้ proxy /api ไปที่ backend:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/nginx.conf</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-nginx"><code>server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # ทุก path อื่น → ส่งไปที่ index.html (รองรับ Vue Router)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # /api/* → ส่งต่อไป backend container (Docker DNS resolve ชื่อ service)
+    location /api {
+        proxy_pass         http://backend:3001;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+    }
+}</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔀</span>
+          <div>
+            <strong>nginx.conf ทำหน้าที่อะไรใน Docker?</strong>
+            ใน container, Nginx รับ request ที่ port 80 — request ที่ URL ขึ้นต้นด้วย <code>/api</code>
+            จะถูก proxy ไปที่ service ชื่อ <code>backend</code> port 3001 (Docker DNS resolve อัตโนมัติ)
+            ส่วน path อื่นๆ จะ serve ไฟล์ static จาก /app/dist
+          </div>
+        </div>
       </div>
     </div>
 
@@ -949,29 +1008,36 @@ CMD ["nginx", "-g", "daemon off;"]</code></pre>
         <div class="code-wrap">
           <div class="code-label"><span>docker-compose.yml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-yaml"><code>services:
+
   # ── Database ─────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB:       stockpro
       POSTGRES_USER:     dev
       POSTGRES_PASSWORD: secret
     volumes:
-      - pgdata:/var/lib/postgresql/data   # persist data
+      - pg_data:/var/lib/postgresql/data   # Named volume — ข้อมูลคงอยู่แม้ restart
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
-      interval: 10s
+      interval: 5s     # ตรวจทุก 5 วินาที (เร็วกว่า default เพื่อให้ backend start ได้เร็ว)
       timeout: 5s
       retries: 5
 
   # ── Backend ───────────────────────────────────────────────────
   backend:
     build: ./backend
+    restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
-      # db = ชื่อ service ด้านบน — Docker DNS แก้ไขเป็น IP อัตโนมัติ
+      DB_HOST:     db          # "db" = ชื่อ service ด้านบน — Docker DNS resolve เป็น IP
+      DB_PORT:     5432
+      DB_NAME:     stockpro
+      DB_USER:     dev
+      DB_PASSWORD: secret
+      PORT:        3001
     depends_on:
       db:
         condition: service_healthy   # รอให้ DB healthy ก่อน start
@@ -979,13 +1045,14 @@ CMD ["nginx", "-g", "daemon off;"]</code></pre>
   # ── Frontend ──────────────────────────────────────────────────
   frontend:
     build: ./frontend
+    restart: unless-stopped
     ports:
-      - "5173:80"     # host:container (Nginx รันที่ 80 ใน container)
+      - "5173:80"   # host:container — Nginx รันที่ 80 ใน container, เข้าผ่าน :5173 บน host
     depends_on:
       - backend
 
 volumes:
-  pgdata:             # Named volume — ข้อมูลไม่หายแม้ restart</code></pre>
+  pg_data:            # Named volume สร้างโดย Docker Compose อัตโนมัติ</code></pre>
         </div>
 
         <div class="alert tip">
@@ -993,7 +1060,7 @@ volumes:
           <div>
             <strong>ทำไม Frontend ต้อง proxy ไปที่ backend?</strong>
             Nginx ใน container ต้องรู้ว่าจะส่ง <code>/api/*</code> ไปที่ไหน — ดู <code>nginx.conf</code> ซึ่งตั้งค่า
-            <code>proxy_pass http://backend:3001/;</code> (ใช้ชื่อ service แทน IP)
+            <code>proxy_pass http://backend:3001;</code> (ใช้ชื่อ service "backend" แทน IP — Docker DNS จัดการให้)
           </div>
         </div>
       </div>
@@ -1122,6 +1189,7 @@ docker push $HUB_USER/stockpro-frontend:latest
         <div class="code-wrap">
           <div class="code-label"><span>docker-compose.prod.yml — ใช้ image จาก Docker Hub</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-yaml"><code>services:
+
   # ── Database ─────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
@@ -1134,25 +1202,32 @@ docker push $HUB_USER/stockpro-frontend:latest
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  # ── Backend (Pull จาก Docker Hub) ────────────────────────────
+  # ── Backend — Pull จาก Docker Hub ────────────────────────────
   backend:
-    image: YOUR_USERNAME/stockpro-backend:latest   # ← เปลี่ยน YOUR_USERNAME
+    # เปลี่ยน YOUR_USERNAME เป็น Docker Hub username ของตัวเอง
+    image: YOUR_USERNAME/stockpro-backend:latest
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     stockpro
+      DB_USER:     dev
+      DB_PASSWORD: secret
+      PORT:        3001
     depends_on:
       db:
         condition: service_healthy
 
-  # ── Frontend (Pull จาก Docker Hub) ───────────────────────────
+  # ── Frontend — Pull จาก Docker Hub ───────────────────────────
   frontend:
-    image: YOUR_USERNAME/stockpro-frontend:latest  # ← เปลี่ยน YOUR_USERNAME
+    # เปลี่ยน YOUR_USERNAME เป็น Docker Hub username ของตัวเอง
+    image: YOUR_USERNAME/stockpro-frontend:latest
     restart: unless-stopped
     ports:
       - "5173:80"
