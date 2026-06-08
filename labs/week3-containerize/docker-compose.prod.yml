@@ -1,42 +1,43 @@
 services:
 
+  # ── Database ─────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       tododb
-      POSTGRES_USER:     todouser
-      POSTGRES_PASSWORD: todopass123
+      POSTGRES_DB:       stockpro
+      POSTGRES_USER:     dev
+      POSTGRES_PASSWORD: secret
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U todouser -d tododb"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
+  # ── Backend — Pull จาก Docker Hub ────────────────────────────
   backend:
-    # เปลี่ยน YOUR-USERNAME เป็น username ของตัวเอง
-    image: registry.lab.local:5000/YOUR-USERNAME/todo-backend:v1.0
+    # เปลี่ยน YOUR_USERNAME เป็น Docker Hub username ของตัวเอง
+    image: YOUR_USERNAME/stockpro-backend:latest
     restart: unless-stopped
+    ports:
+      - "3001:3001"
     environment:
-      DB_HOST:     db
-      DB_PORT:     5432
-      DB_NAME:     tododb
-      DB_USER:     todouser
-      DB_PASSWORD: todopass123
-      PORT:        3001
+      DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
     depends_on:
       db:
         condition: service_healthy
 
+  # ── Frontend — Pull จาก Docker Hub ───────────────────────────
   frontend:
-    image: registry.lab.local:5000/YOUR-USERNAME/todo-frontend:v1.0
+    # เปลี่ยน YOUR_USERNAME เป็น Docker Hub username ของตัวเอง
+    image: YOUR_USERNAME/stockpro-frontend:latest
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - backend
 
 volumes:
-  pg_data:
+  pgdata:

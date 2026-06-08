@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lab Week 3 — StockPro: Vue 3 + Docker | DevOps 30901-2008</title>
+  <title>Lab Week 3 — StockPro: Vue 3 + Docker + Docker Hub | DevOps 30901-2008</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -189,7 +189,7 @@
 <div class="hero">
   <div class="badge">สัปดาห์ที่ 3 · DevOps 30901-2008</div>
   <h1>📦 StockPro — ระบบจัดการสินค้า</h1>
-  <p class="subtitle">Vue 3 + Express + PostgreSQL + Docker Compose + Private Registry</p>
+  <p class="subtitle">Vue 3 + Express + PostgreSQL + Docker Compose + Docker Hub</p>
   <div class="meta-cards">
     <div class="meta-card"><div class="mc-label">เวลา</div><div class="mc-val">5 ชม.</div></div>
     <div class="meta-card"><div class="mc-label">ขั้นตอน</div><div class="mc-val">15</div></div>
@@ -220,7 +220,7 @@
       <a class="toc-link" href="#s11" id="toc-11"><span class="dot"></span>11. Dockerfiles</a>
       <a class="toc-link" href="#s12" id="toc-12"><span class="dot"></span>12. Docker Compose</a>
       <a class="toc-link" href="#s13" id="toc-13"><span class="dot"></span>13. ทดสอบ Full Stack</a>
-      <a class="toc-link" href="#s14" id="toc-14"><span class="dot"></span>14. Push สู่ Registry</a>
+      <a class="toc-link" href="#s14" id="toc-14"><span class="dot"></span>14. Push สู่ Docker Hub</a>
       <a class="toc-link" href="#s15" id="toc-15"><span class="dot"></span>15. ส่งงาน</a>
     </div>
   </nav>
@@ -236,7 +236,7 @@
         <li><div class="goal-icon">02</div><span>เปลี่ยน Frontend จาก Vanilla JS เป็น <strong>Vue 3 + Vite</strong> พร้อม Components, Computed, และ Reactive State</span></li>
         <li><div class="goal-icon">03</div><span>เขียน <strong>Dockerfile แบบ Multi-stage</strong> สำหรับ Frontend และ Backend</span></li>
         <li><div class="goal-icon">04</div><span>รัน 3 Services พร้อมกันด้วย <strong>Docker Compose</strong> (Frontend + Backend + Database)</span></li>
-        <li><div class="goal-icon">05</div><span>Push Docker Images สู่ <strong>Private Registry</strong> ของโรงเรียน</span></li>
+        <li><div class="goal-icon">05</div><span>Push Docker Images ขึ้น <strong>Docker Hub</strong> — public registry ที่เข้าถึงได้จากทุกที่ทั่วโลก</span></li>
       </ul>
     </div>
 
@@ -277,7 +277,7 @@
       </div>
       <div style="text-align:center;margin-top:1.2rem;">
         <div class="arch-arrow" style="transform:rotate(90deg);display:inline-block">↑</div>
-        <div class="arch-node registry" style="display:inline-flex;margin:0 auto;margin-top:.5rem;">🐳 Private Registry<br><small>Push images ขึ้นที่นี่</small></div>
+        <div class="arch-node registry" style="display:inline-flex;margin:0 auto;margin-top:.5rem;">🐳 Docker Hub<br><small>hub.docker.com</small></div>
       </div>
     </div>
 
@@ -1047,66 +1047,133 @@ docker compose exec backend sh</code></pre>
     <div class="step-card" id="s14">
       <div class="step-header">
         <div class="step-num">14</div>
-        <div class="step-title">Push Images สู่ Private Registry</div>
-        <div class="step-badge docker">Registry</div>
+        <div class="step-title">Push Images สู่ Docker Hub</div>
+        <div class="step-badge docker">Docker Hub</div>
       </div>
       <div class="step-body">
-        <p>Push images ขึ้น Private Registry เพื่อให้ server อื่น (หรือ classmate) สามารถ pull และรัน StockPro ได้โดยไม่ต้อง build เอง</p>
+        <p>Docker Hub คือ public container registry อย่างเป็นทางการของ Docker — ฟรีสำหรับ public repository ทำให้ classmate หรือ server ใดก็ pull image ของเราได้ทันทีโดยไม่ต้อง build เอง</p>
 
-        <div class="code-wrap">
-          <div class="code-label"><span>terminal — tag & push images</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code># แทน REGISTRY_IP ด้วย IP ของ Private Registry โรงเรียน
-export REGISTRY=192.168.x.x:5000
-
-# Login (ถ้า Registry มี authentication)
-docker login $REGISTRY
-
-# Build images พร้อม tag สำหรับ registry
-docker build -t $REGISTRY/stockpro-backend:latest ./backend
-docker build -t $REGISTRY/stockpro-frontend:latest ./frontend
-
-# Push ขึ้น registry
-docker push $REGISTRY/stockpro-backend:latest
-docker push $REGISTRY/stockpro-frontend:latest
-
-# ยืนยัน: ทดลอง pull กลับมาดู
-docker pull $REGISTRY/stockpro-backend:latest</code></pre>
+        <div class="alert info">
+          <span class="alert-icon">📋</span>
+          <div>
+            <strong>ก่อนเริ่ม — สิ่งที่ต้องมี</strong>
+            สมัครบัญชีที่ <strong>hub.docker.com</strong> (ฟรี) และจำ <strong>Docker Hub Username</strong> ของตัวเองไว้
+            ชื่อ image บน Docker Hub จะเป็น: <code>USERNAME/stockpro-backend:latest</code>
+          </div>
         </div>
 
+        <p><strong>ขั้นตอนที่ 1 — Login เข้า Docker Hub:</strong></p>
         <div class="code-wrap">
-          <div class="code-label"><span>docker-compose.prod.yml — ใช้ image จาก Registry</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="code-label"><span>terminal — docker login</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># Login เข้า Docker Hub (กรอก username + password หรือ Access Token)
+docker login
+
+# ระบบถามว่า:
+# Username: your-dockerhub-username
+# Password: ********
+# → Login Succeeded</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔐</span>
+          <div>
+            <strong>แนะนำ: ใช้ Access Token แทน Password</strong>
+            ไปที่ hub.docker.com → Account Settings → Personal Access Tokens → สร้าง token
+            แล้วใช้ token นั้นแทน password — ปลอดภัยกว่าและสามารถ revoke ได้ทีหลัง
+          </div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 2 — Build & Tag images ด้วยชื่อที่ถูกต้อง:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — build & tag (แทน YOUR_USERNAME ด้วย username ของตัวเอง)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># กำหนด username เป็น variable (สะดวกไม่ต้องพิมพ์ซ้ำ)
+export HUB_USER=YOUR_USERNAME
+
+# Build พร้อม tag ในรูปแบบ username/image-name:tag
+docker build -t $HUB_USER/stockpro-backend:latest ./backend
+docker build -t $HUB_USER/stockpro-frontend:latest ./frontend
+
+# ตรวจสอบ images ที่สร้างได้
+docker images | grep stockpro</code></pre>
+        </div>
+
+        <div class="alert docker">
+          <span class="alert-icon">🐳</span>
+          <div>
+            <strong>ทำไมต้องมี username นำหน้า?</strong>
+            Docker Hub ใช้รูปแบบ <code>username/repo-name:tag</code> เพื่อแยก namespace ของแต่ละคน
+            ต่างจาก Private Registry ที่ใช้ IP:port นำหน้า — Docker Hub ไม่ต้องระบุ URL เพราะเป็น default registry
+          </div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 3 — Push ขึ้น Docker Hub:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — docker push</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># Push backend image
+docker push $HUB_USER/stockpro-backend:latest
+
+# Push frontend image
+docker push $HUB_USER/stockpro-frontend:latest
+
+# ตรวจสอบผล: เปิด https://hub.docker.com/r/YOUR_USERNAME/stockpro-backend</code></pre>
+        </div>
+
+        <p><strong>docker-compose.prod.yml — Pull และรันจาก Docker Hub:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>docker-compose.prod.yml — ใช้ image จาก Docker Hub</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-yaml"><code>services:
+  # ── Database ─────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       stockpro
+      POSTGRES_USER:     dev
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (Pull จาก Docker Hub) ────────────────────────────
   backend:
-    image: 192.168.x.x:5000/stockpro-backend:latest   # ดึงจาก Registry
-    # ไม่มี build: — ใช้ image ที่ build ไว้แล้ว
-    ports: ["3001:3001"]
+    image: YOUR_USERNAME/stockpro-backend:latest   # ← เปลี่ยน YOUR_USERNAME
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
     environment:
       DATABASE_URL: postgresql://dev:secret@db:5432/stockpro
     depends_on:
       db:
         condition: service_healthy
 
+  # ── Frontend (Pull จาก Docker Hub) ───────────────────────────
   frontend:
-    image: 192.168.x.x:5000/stockpro-frontend:latest
-    ports: ["5173:80"]
-    depends_on: [backend]
-
-  db:
-    image: postgres:15-alpine
-    environment: { POSTGRES_DB: stockpro, POSTGRES_USER: dev, POSTGRES_PASSWORD: secret }
-    volumes: [pgdata:/var/lib/postgresql/data]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d stockpro"]
-      interval: 10s; timeout: 5s; retries: 5
+    image: YOUR_USERNAME/stockpro-frontend:latest  # ← เปลี่ยน YOUR_USERNAME
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:</code></pre>
         </div>
 
+        <p><strong>ขั้นตอนที่ 4 — รัน Production จาก Docker Hub (ทดสอบบนเครื่อง classmate):</strong></p>
         <div class="code-wrap">
-          <div class="code-label"><span>terminal — รัน Production บน server อื่น</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code># บน server อื่น (ไม่มี source code)
-docker compose -f docker-compose.prod.yml up -d</code></pre>
+          <div class="code-label"><span>terminal — รัน Production (ไม่ต้องมี source code)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># บนเครื่องใดก็ได้ที่มี Docker — ไม่ต้อง clone repo
+# แค่มีไฟล์ docker-compose.prod.yml ก็รันได้เลย
+docker compose -f docker-compose.prod.yml pull   # ดึง images ล่าสุดจาก Hub
+docker compose -f docker-compose.prod.yml up -d  # รัน
+
+# อัพเดต image เวอร์ชันใหม่
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d  # replace container ด้วย image ใหม่</code></pre>
         </div>
 
         <div class="verify">
@@ -1114,8 +1181,10 @@ docker compose -f docker-compose.prod.yml up -d</code></pre>
           <div>
             <div class="verify-title">ตรวจสอบ</div>
             <ul>
-              <li>ทั้ง stockpro-backend และ stockpro-frontend ปรากฏใน Registry UI</li>
-              <li>ลอง pull image บนเครื่องอื่น → docker compose up สำเร็จ</li>
+              <li>เข้า https://hub.docker.com/r/YOUR_USERNAME/stockpro-backend → เห็น repository และ tag "latest"</li>
+              <li>เข้า https://hub.docker.com/r/YOUR_USERNAME/stockpro-frontend → เห็น repository เหมือนกัน</li>
+              <li>ทดสอบ pull บนเครื่องอื่น: <code>docker pull YOUR_USERNAME/stockpro-backend:latest</code> สำเร็จ</li>
+              <li>classmate รัน docker-compose.prod.yml ได้โดยไม่ต้อง build เอง</li>
             </ul>
           </div>
         </div>
@@ -1141,7 +1210,8 @@ docker compose -f docker-compose.prod.yml up -d</code></pre>
             <li>docker-compose.yml รัน 3 services ได้ด้วยคำสั่งเดียว</li>
             <li>docker compose ps → ทุก service status เป็น running</li>
             <li>http://localhost:5173 → เห็น StockPro UI ทำงานได้</li>
-            <li>Push backend + frontend images ขึ้น Private Registry สำเร็จ</li>
+            <li>Push backend + frontend images ขึ้น Docker Hub สำเร็จ (<code>hub.docker.com/r/USERNAME/stockpro-*</code>)</li>
+            <li>classmate pull image จาก Docker Hub ได้โดยใช้ docker-compose.prod.yml เท่านั้น</li>
           </ul>
         </div>
       </div>
