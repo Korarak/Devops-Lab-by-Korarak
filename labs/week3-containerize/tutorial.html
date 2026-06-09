@@ -74,10 +74,18 @@
     /* FILE TREE */
     .tree-box { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
     .tree-box h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
-    .file-tree { background: #1e293b; border-radius: 10px; padding: 1.2rem; font-family: 'JetBrains Mono', monospace; font-size: .84rem; line-height: 2; color: #e2e8f0; overflow-x: auto; }
-    .file-tree .dir  { color: #93c5fd; }
+    .file-tree {
+      background: #1e293b; border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: .83rem;
+      line-height: 1.85; color: #e2e8f0;
+      overflow-x: auto; white-space: pre;
+      margin: 0;
+    }
+    .file-tree .dir  { color: #7dd3fc; font-weight: 600; }
     .file-tree .file { color: #86efac; }
     .file-tree .desc { color: #64748b; }
+    .file-tree .tree { color: #475569; }
 
     /* PART CARDS */
     .parts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
@@ -153,31 +161,29 @@
   <!-- FILE TREE -->
   <div class="tree-box">
     <h2>📁 โครงสร้างไฟล์ทั้งหมดของ Lab นี้</h2>
-    <div class="file-tree">
-<span class="dir">week3-containerize/</span>
-├── <span class="dir">backend/</span>              <span class="desc">← Express.js API Server</span>
-│   ├── <span class="file">index.js</span>          <span class="desc">← Routes ทั้งหมด + initDb() + seed data</span>
-│   ├── <span class="file">db.js</span>             <span class="desc">← PostgreSQL connection pool</span>
-│   ├── <span class="file">package.json</span>      <span class="desc">← dependencies: express, cors, pg, dotenv</span>
-│   ├── <span class="file">.env.example</span>      <span class="desc">← template สำหรับ environment variables</span>
-│   ├── <span class="file">Dockerfile</span>        <span class="desc">← build backend image</span>
-│   └── <span class="file">.dockerignore</span>
-│
-├── <span class="dir">frontend/</span>             <span class="desc">← Vue 3 + Vite SPA</span>
-│   ├── <span class="dir">src/</span>
-│   │   ├── <span class="file">App.vue</span>       <span class="desc">← Component เดียว — UI ทั้งหมดอยู่ที่นี่</span>
-│   │   └── <span class="file">main.js</span>       <span class="desc">← entry point: mount App เข้า #app</span>
-│   ├── <span class="file">index.html</span>        <span class="desc">← HTML template หลัก (Vite inject script ที่นี่)</span>
-│   ├── <span class="file">vite.config.js</span>    <span class="desc">← proxy /api → backend + plugin vue</span>
-│   ├── <span class="file">package.json</span>      <span class="desc">← dependencies: vue, vite, @vitejs/plugin-vue</span>
-│   ├── <span class="file">nginx.conf</span>        <span class="desc">← Nginx config สำหรับ production container</span>
-│   ├── <span class="file">Dockerfile</span>        <span class="desc">← multi-stage: build Vue → serve with Nginx</span>
-│   └── <span class="file">.dockerignore</span>
-│
-├── <span class="file">docker-compose.yml</span>    <span class="desc">← รัน 3 services พร้อมกัน (build จาก source)</span>
-├── <span class="file">docker-compose.prod.yml</span> <span class="desc">← รันจาก Docker Hub images (ไม่ต้องมี source code)</span>
-└── <span class="file">.gitignore</span>
-    </div>
+    <pre class="file-tree"><span class="dir">week3-containerize/</span>
+<span class="tree">├──</span> <span class="dir">backend/</span>                <span class="desc"># Express.js API Server</span>
+<span class="tree">│   ├──</span> <span class="file">index.js</span>            <span class="desc"># routes, initDb(), seed data</span>
+<span class="tree">│   ├──</span> <span class="file">db.js</span>               <span class="desc"># PostgreSQL connection pool</span>
+<span class="tree">│   ├──</span> <span class="file">package.json</span>        <span class="desc"># express, cors, pg, dotenv</span>
+<span class="tree">│   ├──</span> <span class="file">.env.example</span>        <span class="desc"># template สำหรับ env vars</span>
+<span class="tree">│   ├──</span> <span class="file">Dockerfile</span>          <span class="desc"># build backend image</span>
+<span class="tree">│   └──</span> <span class="file">.dockerignore</span>
+<span class="tree">│</span>
+<span class="tree">├──</span> <span class="dir">frontend/</span>               <span class="desc"># Vue 3 + Vite SPA</span>
+<span class="tree">│   ├──</span> <span class="dir">src/</span>
+<span class="tree">│   │   ├──</span> <span class="file">App.vue</span>         <span class="desc"># UI ทั้งหมดอยู่ที่นี่ (template+script+style)</span>
+<span class="tree">│   │   └──</span> <span class="file">main.js</span>         <span class="desc"># entry point: mount App เข้า #app</span>
+<span class="tree">│   ├──</span> <span class="file">index.html</span>          <span class="desc"># HTML template (Vite inject script ที่นี่)</span>
+<span class="tree">│   ├──</span> <span class="file">vite.config.js</span>      <span class="desc"># proxy /api → backend:3001</span>
+<span class="tree">│   ├──</span> <span class="file">package.json</span>        <span class="desc"># vue, vite, @vitejs/plugin-vue</span>
+<span class="tree">│   ├──</span> <span class="file">nginx.conf</span>          <span class="desc"># Nginx config (production proxy)</span>
+<span class="tree">│   ├──</span> <span class="file">Dockerfile</span>          <span class="desc"># multi-stage: build Vue → serve Nginx</span>
+<span class="tree">│   └──</span> <span class="file">.dockerignore</span>
+<span class="tree">│</span>
+<span class="tree">├──</span> <span class="file">docker-compose.yml</span>      <span class="desc"># dev: build จาก source code</span>
+<span class="tree">├──</span> <span class="file">docker-compose.prod.yml</span> <span class="desc"># prod: pull จาก Docker Hub</span>
+<span class="tree">└──</span> <span class="file">.gitignore</span></pre>
   </div>
 
   <!-- PREREQUISITES -->

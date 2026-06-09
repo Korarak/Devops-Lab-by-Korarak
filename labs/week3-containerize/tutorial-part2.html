@@ -156,16 +156,71 @@
         <div class="step-badge setup">Setup</div>
       </div>
       <div class="step-body">
-        <p>Frontend ใช้ <strong>Vue 3 + Vite</strong> — ไฟล์ทุกอย่างอยู่ใน <code>frontend/</code> แล้ว มาดูไฟล์ config ก่อน</p>
+        <p>Frontend ใช้ <strong>Vue 3 + Vite</strong> — ไฟล์ทุกอย่างอยู่ใน <code>frontend/</code> แล้ว มาดูโครงสร้างและติดตั้ง dependencies ก่อน</p>
 
-        <p><strong>ติดตั้ง dependencies ก่อน:</strong></p>
+        <p><strong>ดู package.json ก่อน — รู้ว่าจะติดตั้งอะไร:</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/package.json</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/package.json</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-json"><code>{
+  "name": "todo-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}</code></pre>
+        </div>
+
+        <p><strong>แต่ละ package ทำหน้าที่อะไร:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">vue</span><span class="le-desc"><strong>Vue 3 framework</strong> — ตัว library หลักที่ใช้สร้าง UI, reactive state, component system ทั้งหมด</span></div>
+          <div class="le-row"><span class="le-code">vite</span><span class="le-desc"><strong>Build tool + Dev server</strong> — รัน dev server ด้วย <code>npm run dev</code>, build production ด้วย <code>npm run build</code> ทำงานเร็วกว่า webpack มาก</span></div>
+          <div class="le-row"><span class="le-code">@vitejs/plugin-vue</span><span class="le-desc"><strong>Vue plugin สำหรับ Vite</strong> — ทำให้ Vite เข้าใจไฟล์ .vue (Single-File Component) ได้ ถ้าไม่มีตัวนี้ Vite จะ error เพราะไม่รู้จัก syntax .vue</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📦</span>
+          <div>
+            <strong>dependencies vs devDependencies ต่างกันอย่างไร?</strong>
+            <code>dependencies</code> (vue) — ต้องการตอน runtime ด้วย, ถูก bundle เข้า production build<br>
+            <code>devDependencies</code> (vite, plugin-vue) — ใช้แค่ตอน develop/build เท่านั้น, ไม่ถูก bundle เข้า production
+          </div>
+        </div>
+
+        <p><strong>ติดตั้ง dependencies:</strong></p>
         <div class="code-wrap">
           <div class="code-label"><span>terminal — อยู่ใน week3-containerize/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-bash"><code>cd frontend
-npm install</code></pre>
+npm install
+
+# npm จะสร้าง node_modules/ และติดตั้ง 3 packages หลัก + dependencies ของมัน
+# ใช้เวลาไม่กี่วินาที — เห็น "added X packages" แสดงว่าสำเร็จ</code></pre>
         </div>
 
-        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/vite.config.js</div>
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบหลัง npm install</div>
+            <ul>
+              <li>มีโฟลเดอร์ <code>frontend/node_modules/</code> ถูกสร้างขึ้น</li>
+              <li>มีไฟล์ <code>frontend/package-lock.json</code> ถูกสร้างขึ้น (lock versions)</li>
+              <li>ใน <code>node_modules/</code> จะเห็นโฟลเดอร์ <code>vue/</code>, <code>vite/</code>, <code>@vitejs/</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="file-path" style="margin-top:.75rem;"><span class="fp-label">เปิดไฟล์:</span> frontend/vite.config.js</div>
         <div class="code-wrap">
           <div class="code-label"><span>frontend/vite.config.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-javascript"><code>import { defineConfig } from 'vite'
