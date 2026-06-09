@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 1: Setup & Backend — Week 3 StockPro | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --vue: #42b883; --docker: #2496ed; --docker-light: #eff6ff;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 260px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--vue)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    .hero {
+      background: linear-gradient(135deg,#1e1b4b 0%,#6d28d9 100%);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center;
+    }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    .main { flex: 1; min-width: 0; }
+
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),var(--vue)); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.setup    { background: #f1f5f9; color: #475569; }
+    .step-badge.db       { background: var(--green-light); color: #065f46; }
+    .step-badge.backend  { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.test     { background: var(--amber-light); color: #92400e; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    /* FILE PATH */
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    /* CODE */
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    /* ALERTS */
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    /* VERIFY */
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* LINE EXPLAIN */
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .8rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; }
+
+    /* NAV BUTTONS */
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.next { background: var(--green); color: #fff; }
+    .nav-btn.next:hover { background: #047857; }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="tutorial.html">← Overview</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<div class="hero">
+  <div class="badge">Part 1 of 3 · Steps 1–5</div>
+  <h1>⚙️ Setup & Backend</h1>
+  <p class="subtitle">เตรียม environment · db.js · index.js · ทดสอบ API</p>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 1: Setup & Backend</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s1" id="toc-1"><span class="dot"></span>1. โครงสร้างโปรเจกต์</a>
+      <a class="toc-link" href="#s2" id="toc-2"><span class="dot"></span>2. เตรียม Environment</a>
+      <a class="toc-link" href="#s3" id="toc-3"><span class="dot"></span>3. backend/db.js</a>
+      <a class="toc-link" href="#s4" id="toc-4"><span class="dot"></span>4. backend/index.js</a>
+      <a class="toc-link" href="#s5" id="toc-5"><span class="dot"></span>5. ทดสอบ Backend API</a>
+      <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);">
+        <a href="tutorial-part2.html" style="display:block;background:var(--green);color:#fff;text-align:center;padding:.5rem;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none;">Part 2: Vue Frontend →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">โครงสร้างโปรเจกต์ StockPro</div>
+        <div class="step-badge setup">Overview</div>
+      </div>
+      <div class="step-body">
+        <p>Lab นี้มีไฟล์ทุกอย่างอยู่แล้ว เราจะ<strong>เปิดทีละไฟล์</strong> ทำความเข้าใจ แล้วรันให้ทำงานได้</p>
+
+        <div class="alert info">
+          <span class="alert-icon">📂</span>
+          <div>
+            <strong>เปิด folder นี้ใน VS Code</strong>
+            <code style="display:block;margin-top:.4rem;font-family:'JetBrains Mono',monospace;font-size:.85rem;">code week3-containerize/</code>
+            หรือเปิด VS Code แล้ว File → Open Folder → เลือก <code>week3-containerize/</code>
+          </div>
+        </div>
+
+        <p><strong>ไฟล์หลักที่จะเรียนใน Lab นี้:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">backend/db.js</span><span class="le-desc">เชื่อมต่อ PostgreSQL ด้วย connection pool — อ่านค่า env vars</span></div>
+          <div class="le-row"><span class="le-code">backend/index.js</span><span class="le-desc">Express server — routes ทั้งหมด, auto-create table, seed data</span></div>
+          <div class="le-row"><span class="le-code">backend/.env.example</span><span class="le-desc">template ค่า environment — ต้อง copy เป็น .env ก่อนรัน local</span></div>
+          <div class="le-row"><span class="le-code">frontend/src/App.vue</span><span class="le-desc">Vue 3 component เดียว — template + script setup + style ทั้งหมดอยู่นี่</span></div>
+          <div class="le-row"><span class="le-code">frontend/vite.config.js</span><span class="le-desc">proxy /api → backend:3001 เวลา dev</span></div>
+          <div class="le-row"><span class="le-code">backend/Dockerfile</span><span class="le-desc">build backend เป็น Docker image</span></div>
+          <div class="le-row"><span class="le-code">frontend/Dockerfile</span><span class="le-desc">multi-stage build: build Vue → serve ด้วย Nginx</span></div>
+          <div class="le-row"><span class="le-code">docker-compose.yml</span><span class="le-desc">รัน 3 services (db + backend + frontend) พร้อมกัน</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">เตรียม Environment สำหรับทดสอบ Local</div>
+        <div class="step-badge setup">Setup</div>
+      </div>
+      <div class="step-body">
+        <p>ก่อน containerize เราจะทดสอบ backend รันได้จริงก่อน — ต้องมี PostgreSQL และไฟล์ <code>.env</code></p>
+
+        <p><strong>ขั้นตอนที่ 1 — สร้างไฟล์ .env จาก .env.example:</strong></p>
+        <div class="file-path"><span class="fp-label">สร้างไฟล์:</span> backend/.env</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal (อยู่ใน week3-containerize/)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># Windows PowerShell
+copy backend\.env.example backend\.env
+
+# Mac / Linux / Git Bash
+cp backend/.env.example backend/.env</code></pre>
+        </div>
+
+        <p>เปิดไฟล์ <code>backend/.env</code> ที่สร้างขึ้น — จะมีเนื้อหานี้:</p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> backend/.env.example (ดูตัวอย่าง)</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/.env.example</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=stockpro
+DB_USER=dev
+DB_PASSWORD=secret
+PORT=3001</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ค่าใน .env ใช้กับ local development เท่านั้น</strong>
+            เวลารันด้วย Docker Compose ค่าเหล่านี้จะถูกกำหนดใน <code>docker-compose.yml</code> แทน
+            ไม่ต้องแก้ค่าใน .env ถ้าไม่ได้รัน local
+          </div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 2 — รัน PostgreSQL ด้วย Docker (สำหรับทดสอบ local):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — start postgres container</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>docker run -d --name pg-dev \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_USER=dev \
+  -e POSTGRES_DB=stockpro \
+  -p 5432:5432 \
+  postgres:15-alpine</code></pre>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 3 — ติดตั้ง dependencies:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>cd backend
+npm install</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li>ไฟล์ <code>backend/.env</code> มีอยู่แล้ว (ไม่ใช่ .env.example)</li>
+              <li><code>docker ps</code> เห็น container ชื่อ <code>pg-dev</code> สถานะ Up</li>
+              <li>ไฟล์ <code>backend/node_modules/</code> มีอยู่แล้วหลัง npm install</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">backend/db.js — PostgreSQL Connection Pool</div>
+        <div class="step-badge db">Database</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>backend/db.js</code> — ไฟล์นี้สร้าง connection pool ไปยัง PostgreSQL และ export ออกให้ <code>index.js</code> ใช้</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/db.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/db.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  host:     process.env.DB_HOST,
+  port:     process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) console.error('❌ DB connection failed:', err.message);
+  else     console.log('✅ DB connected at:', res.rows[0].now);
+});
+
+module.exports = pool;</code></pre>
+        </div>
+
+        <p><strong>อธิบายแต่ละส่วน:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">require('pg')</span><span class="le-desc">โหลด library pg (node-postgres) — ใช้สำหรับเชื่อมต่อ PostgreSQL จาก Node.js</span></div>
+          <div class="le-row"><span class="le-code">require('dotenv').config()</span><span class="le-desc">โหลดค่าจาก .env เข้า process.env — ทำให้ DB_HOST, DB_PORT ฯลฯ พร้อมใช้</span></div>
+          <div class="le-row"><span class="le-code">new Pool({...})</span><span class="le-desc">สร้าง connection pool — Pool จัดการ connections หลายอันพร้อมกัน (ต่างจาก Client เดี่ยว)</span></div>
+          <div class="le-row"><span class="le-code">process.env.DB_HOST</span><span class="le-desc">ค่ามาจาก .env ตอน local, มาจาก environment ใน docker-compose ตอน containerize</span></div>
+          <div class="le-row"><span class="le-code">pool.query('SELECT NOW()')</span><span class="le-desc">ทดสอบการเชื่อมต่อตอน startup — ถ้า error จะ log ออกมาให้รู้ทันที</span></div>
+          <div class="le-row"><span class="le-code">module.exports = pool</span><span class="le-desc">export pool ออกให้ index.js ใช้ได้ด้วย require('./db')</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🔌</span>
+          <div>
+            <strong>Pool vs Client</strong>
+            <code>Pool</code> รองรับ concurrent requests — แต่ละ request ดึง connection จาก pool มาใช้แล้วคืน
+            ต่างจาก <code>Client</code> ที่มี connection เดียว ซึ่งจะติด bottleneck ถ้ามีหลาย request พร้อมกัน
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🏗️</span>
+          <div>
+            <strong>ทำไม DB_HOST เป็น "db" ใน Docker แต่ "localhost" ตอน local?</strong>
+            ใน Docker Compose แต่ละ service คุยกันผ่านชื่อ service — Docker DNS resolve ชื่อ "db" เป็น IP ของ container อัตโนมัติ
+            ตอน local ต้องใช้ "localhost" เพราะ postgres รันบนเครื่องเดียวกัน
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">backend/index.js — Express API ทั้งหมด</div>
+        <div class="step-badge backend">Express</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>backend/index.js</code> — ไฟล์นี้มี Express routes ทั้งหมด, สร้างตาราง products อัตโนมัติ, และใส่ seed data</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/index.js</div>
+
+        <p><strong>ส่วนที่ 1 — Setup:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — บรรทัด 1-11</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const express = require('express');
+const cors    = require('cors');
+const pool    = require('./db');
+require('dotenv').config();
+
+const app  = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">require('./db')</span><span class="le-desc">import pool จาก db.js — connection pool พร้อมใช้งาน</span></div>
+          <div class="le-row"><span class="le-code">app.use(cors())</span><span class="le-desc">อนุญาต cross-origin requests — ทำให้ frontend ที่ต่าง port เรียก API ได้</span></div>
+          <div class="le-row"><span class="le-code">app.use(express.json())</span><span class="le-desc">parse JSON body — ทำให้ req.body มีข้อมูลจาก POST/PUT request</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 2 — Health Check:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — Health Check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', service: 'StockPro API', timestamp: new Date() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: err.message });
+  }
+});</code></pre>
+        </div>
+
+        <p><strong>ส่วนที่ 3 — GET /api/products (พร้อม search + filter):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — GET products</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.get('/api/products', async (req, res) => {
+  try {
+    const { search = '', category = '' } = req.query;
+    const params = [];
+    let where = 'WHERE 1=1';
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (name ILIKE $${params.length} OR description ILIKE $${params.length})`;
+    }
+    if (category) {
+      params.push(category);
+      where += ` AND category = $${params.length}`;
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM products ${where} ORDER BY created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">WHERE 1=1</span><span class="le-desc">เริ่มด้วย condition ที่เป็น true เสมอ — ทำให้ append AND ... ต่อท้ายได้ง่ายโดยไม่ต้องเช็คว่าเป็น WHERE แรกหรือเปล่า</span></div>
+          <div class="le-row"><span class="le-code">ILIKE $1</span><span class="le-desc">ILIKE = case-insensitive LIKE, $1 = parameterized query ป้องกัน SQL Injection</span></div>
+          <div class="le-row"><span class="le-code">params.push()</span><span class="le-desc">เพิ่มค่าลง array params แล้วใช้ $1, $2 แทน — pg library inject ให้อัตโนมัติ</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 4 — POST / PUT / DELETE:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — CRUD endpoints</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// POST /api/products — เพิ่มสินค้าใหม่
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, category, price, stock, description = '' } = req.body;
+    if (!name || !category || price == null || stock == null) {
+      return res.status(400).json({ error: 'กรุณาระบุ name, category, price, stock' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO products (name, category, price, stock, description)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [name.trim(), category.trim(), parseFloat(price), parseInt(stock), description.trim()]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/products/:id — แก้ไขสินค้า
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { name, category, price, stock, description = '' } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE products
+       SET name=$1, category=$2, price=$3, stock=$4, description=$5, updated_at=NOW()
+       WHERE id=$6 RETURNING *`,
+      [name, category, parseFloat(price), parseInt(stock), description, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/products/:id — ลบสินค้า
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'DELETE FROM products WHERE id=$1 RETURNING *', [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    res.json({ message: 'ลบสินค้าสำเร็จ', deleted: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});</code></pre>
+        </div>
+
+        <p><strong>ส่วนที่ 5 — initDb() สร้างตารางและ seed data:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/index.js — initDb() + app.listen()</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>async function initDb() {
+  // สร้างตาราง products ถ้ายังไม่มี
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id          SERIAL PRIMARY KEY,
+      name        VARCHAR(150) NOT NULL,
+      category    VARCHAR(80)  NOT NULL,
+      price       NUMERIC(12,2) NOT NULL DEFAULT 0,
+      stock       INTEGER      NOT NULL DEFAULT 0,
+      description TEXT         DEFAULT '',
+      created_at  TIMESTAMPTZ  DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ  DEFAULT NOW()
+    )
+  `);
+  console.log('✅ Table products ready');
+
+  // Seed data ถ้า table ยังว่าง
+  const { rows } = await pool.query('SELECT COUNT(*) FROM products');
+  if (parseInt(rows[0].count) === 0) {
+    await pool.query(`
+      INSERT INTO products (name, category, price, stock, description) VALUES
+      ('MacBook Air M3',        'Electronics', 44900, 15, 'Apple MacBook Air chip M3 RAM 8GB'),
+      ('iPhone 16 Pro',         'Electronics', 42900,  8, 'Apple iPhone 16 Pro 256GB'),
+      ('Nike Air Max 270',      'Footwear',     4590, 32, 'รองเท้าวิ่ง Nike ไซส์ 38-45'),
+      ('เสื้อยืด Uniqlo Dry-Ex','Clothing',      390, 87, 'เสื้อยืดระบายอากาศ สีขาว'),
+      ('กล้อง Sony ZV-E10 II',  'Electronics', 24990,  4, 'กล้อง Mirrorless สำหรับ Vlogger'),
+      ('หูฟัง AirPods Pro 2',   'Electronics',  9490, 20, 'หูฟัง True Wireless ANC'),
+      ('โต๊ะทำงาน Flexispot E7','Furniture',   18900,  3, 'โต๊ะปรับระดับไฟฟ้า 140x70 cm'),
+      ('กระเป๋า Anello',        'Bags',         1290, 45, 'กระเป๋าเป้ผ้า Canvas ทรงสี่เหลี่ยม'),
+      ('หนังสือ Clean Code',    'Books',          650, 12, 'โดย Robert C. Martin'),
+      ('สายชาร์จ USB-C 100W',   'Accessories',    390,  6, 'สายชาร์จ 2 เมตร รองรับ PD 100W')
+    `);
+    console.log('🌱 Seed data inserted (10 products)');
+  }
+}
+
+// รัน initDb ก่อน start server
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 StockPro API running at http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ DB init failed:', err.message);
+    process.exit(1);
+  });</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🌱</span>
+          <div>
+            <strong>Seed data ทำงานยังไง?</strong>
+            <code>initDb()</code> ตรวจ <code>COUNT(*)</code> ก่อน — ถ้าตาราง <strong>ว่างเปล่า</strong> ถึงจะ insert seed data
+            ดังนั้นครั้งแรกที่รันจะได้ 10 สินค้า ครั้งถัดไปไม่ insert ซ้ำ
+          </div>
+        </div>
+
+        <p><strong>สรุป API Endpoints ทั้งหมด:</strong></p>
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+          <tr style="background:#1e293b;color:#fff;">
+            <th style="padding:.5rem 1rem;text-align:left;">Method</th>
+            <th style="padding:.5rem 1rem;text-align:left;">URL</th>
+            <th style="padding:.5rem 1rem;text-align:left;">ทำอะไร</th>
+          </tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/health</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">ตรวจสอบ API + DB</td></tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/api/products?search=&amp;category=</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงสินค้า + filter</td></tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/api/categories</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">ดึง category ที่มีทั้งหมด</td></tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#d1fae5;color:#065f46;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">GET</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/api/products/:id</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">ดึงสินค้าตาม id</td></tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#dbeafe;color:#1e40af;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">POST</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/api/products</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">เพิ่มสินค้าใหม่</td></tr>
+          <tr><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;"><span style="background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">PUT</span></td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;font-family:monospace;font-size:.82rem;">/api/products/:id</td><td style="padding:.45rem 1rem;border-bottom:1px solid #e2e8f0;">แก้ไขสินค้า</td></tr>
+          <tr><td style="padding:.45rem 1rem;"><span style="background:#fee2e2;color:#991b1b;padding:.15rem .5rem;border-radius:4px;font-weight:700;font-family:monospace;font-size:.82rem;">DELETE</span></td><td style="padding:.45rem 1rem;font-family:monospace;font-size:.82rem;">/api/products/:id</td><td style="padding:.45rem 1rem;">ลบสินค้า</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">ทดสอบ Backend API</div>
+        <div class="step-badge test">Test</div>
+      </div>
+      <div class="step-body">
+        <p>ตรวจสอบว่า backend ทำงานได้จริงก่อนไปขั้นตอน containerize</p>
+
+        <p><strong>รัน backend server:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — อยู่ใน backend/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>node index.js
+
+# ควรเห็น output:
+# ✅ DB connected at: 2025-xx-xxTxx:xx:xx...
+# ✅ Table products ready
+# 🌱 Seed data inserted (10 products)   ← ครั้งแรกเท่านั้น
+# 🚀 StockPro API running at http://localhost:3001</code></pre>
+        </div>
+
+        <p><strong>ทดสอบ API ด้วย curl (เปิด terminal ใหม่):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — ทดสอบ endpoints</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code># Health check
+curl http://localhost:3001/health
+
+# ดูสินค้าทั้งหมด
+curl http://localhost:3001/api/products
+
+# ค้นหาสินค้า
+curl "http://localhost:3001/api/products?search=mac"
+
+# กรองตาม category
+curl "http://localhost:3001/api/products?category=Electronics"
+
+# เพิ่มสินค้าใหม่
+curl -X POST http://localhost:3001/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Product","category":"Electronics","price":999,"stock":10}'</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li><code>GET /health</code> คืน <code>{"status":"ok","service":"StockPro API",...}</code></li>
+              <li><code>GET /api/products</code> คืน array มี 10 สินค้า (seed data)</li>
+              <li><code>?search=mac</code> คืนเฉพาะ MacBook Air M3</li>
+              <li><code>?category=Electronics</code> คืนเฉพาะสินค้าหมวด Electronics</li>
+              <li>POST สำเร็จคืน <code>{"id":11,"name":"Test Product",...}</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ทดสอบเสร็จแล้ว — หยุด container pg-dev ก่อนไปต่อ</strong>
+            <code style="display:block;margin-top:.35rem;font-family:'JetBrains Mono',monospace;font-size:.84rem;">docker stop pg-dev && docker rm pg-dev</code>
+            ใน Part 3 เราจะรัน PostgreSQL ผ่าน Docker Compose แทน ไม่ต้องการ pg-dev อีก
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="part-nav">
+      <a href="tutorial.html" class="nav-btn prev">← Overview</a>
+      <a href="tutorial-part2.html" class="nav-btn next">Part 2: Vue Frontend →</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 3 Part 1/3
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 5;
+  const KEY = 'w3p1-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 1; i <= TOTAL; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

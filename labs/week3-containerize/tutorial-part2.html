@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 2: Vue 3 Frontend — Week 3 StockPro | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --vue: #42b883; --vue-light: #f0fdf4;
+      --docker: #2496ed; --docker-light: #eff6ff;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f0fdf4; --sidebar-width: 260px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--green); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--vue),var(--green)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    .hero {
+      background: linear-gradient(135deg,#064e3b 0%,#059669 50%,#42b883 100%);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center;
+    }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#064e3b,var(--green)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--vue-light); border-left-color: var(--green); color: var(--green); }
+    .toc-link.active { background: var(--vue-light); border-left-color: var(--green); color: var(--green); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    .main { flex: 1; min-width: 0; }
+
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--vue),var(--green)); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.setup    { background: #f1f5f9; color: #475569; }
+    .step-badge.vue      { background: var(--vue-light); color: #065f46; }
+    .step-badge.test     { background: var(--amber-light); color: #92400e; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--green); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.vue     { background: var(--vue-light); border-left: 4px solid var(--vue); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; padding-top: .1rem; }
+
+    /* Diff box */
+    .diff-box { background: #1e293b; border-radius: 10px; overflow: hidden; }
+    .diff-header { background: #0f172a; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .5rem 1rem; }
+    .diff-body { padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .83rem; line-height: 1.9; }
+    .diff-add { color: #86efac; }
+    .diff-rem { color: #fca5a5; }
+    .diff-ctx { color: #64748b; }
+
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.next { background: var(--docker); color: #fff; }
+    .nav-btn.next:hover { background: #1d4ed8; }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="tutorial-part1.html">← Part 1</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<div class="hero">
+  <div class="badge">Part 2 of 3 · Steps 6–10</div>
+  <h1>🌿 Vue 3 Frontend</h1>
+  <p class="subtitle">main.js · vite.config.js · App.vue (State → Computed → Methods → Template)</p>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 2: Vue 3 Frontend</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s6" id="toc-6"><span class="dot"></span>6. โครงสร้าง + Config</a>
+      <a class="toc-link" href="#s7" id="toc-7"><span class="dot"></span>7. App.vue — State (ref)</a>
+      <a class="toc-link" href="#s8" id="toc-8"><span class="dot"></span>8. App.vue — Computed</a>
+      <a class="toc-link" href="#s9" id="toc-9"><span class="dot"></span>9. App.vue — Methods</a>
+      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. ทดสอบ Frontend</a>
+      <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);display:grid;gap:.5rem;">
+        <a href="tutorial-part1.html" style="display:block;background:#f1f5f9;color:#334155;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">← Part 1: Backend</a>
+        <a href="tutorial-part3.html" style="display:block;background:var(--docker);color:#fff;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">Part 3: Docker →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div class="step-title">โครงสร้าง Frontend + vite.config.js + main.js</div>
+        <div class="step-badge setup">Setup</div>
+      </div>
+      <div class="step-body">
+        <p>Frontend ใช้ <strong>Vue 3 + Vite</strong> — ไฟล์ทุกอย่างอยู่ใน <code>frontend/</code> แล้ว มาดูไฟล์ config ก่อน</p>
+
+        <p><strong>ติดตั้ง dependencies ก่อน:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — อยู่ใน week3-containerize/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>cd frontend
+npm install</code></pre>
+        </div>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/vite.config.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/vite.config.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001'
+    }
+  }
+})</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">plugins: [vue()]</span><span class="le-desc">เปิดใช้งาน Vue 3 plugin — ทำให้ Vite เข้าใจ .vue files ได้</span></div>
+          <div class="le-row"><span class="le-code">proxy: {'/api': ...}</span><span class="le-desc">เมื่อ dev server เห็น request ไป /api/* → ส่งต่อไปที่ localhost:3001 แทน (ป้องกัน CORS)</span></div>
+        </div>
+
+        <div class="file-path" style="margin-top:.75rem;"><span class="fp-label">เปิดไฟล์:</span> frontend/src/main.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/src/main.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { createApp } from 'vue'
+import App from './App.vue'
+
+createApp(App).mount('#app')</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">createApp(App)</span><span class="le-desc">สร้าง Vue application instance โดยใช้ App.vue เป็น root component</span></div>
+          <div class="le-row"><span class="le-code">.mount('#app')</span><span class="le-desc">แนบ app เข้ากับ element id="app" ใน index.html — ทุกอย่างใน App.vue จะ render ตรงนี้</span></div>
+        </div>
+
+        <div class="alert vue">
+          <span class="alert-icon">⚡</span>
+          <div>
+            <strong>ทำไม Frontend มีแค่ App.vue ไฟล์เดียว?</strong>
+            Lab นี้ใช้ Single-File Component (SFC) แบบ single component — App.vue มีทุกอย่าง: template, script, style
+            เหมาะสำหรับโปรเจกต์ขนาดเล็ก ถ้าใหญ่ขึ้นจะแยก component ออกเป็นหลายไฟล์
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div class="step-title">App.vue — Script Setup: State ด้วย ref()</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>frontend/src/App.vue</code> — เลื่อนไปที่ส่วน <code>&lt;script setup&gt;</code> บรรทัด 195</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/App.vue → <span style="color:#fbbf24;">บรรทัด 195–208</span></div>
+
+        <div class="diff-box">
+          <div class="diff-header">Vue 3 Vanilla JS เปรียบเทียบ — การเก็บ state</div>
+          <div class="diff-body">
+<span class="diff-rem">// ❌ Vanilla JS — ต้องเก็บใน variable ธรรมดา DOM ไม่อัพเดตอัตโนมัติ</span>
+<span class="diff-rem">let products = []</span>
+<span class="diff-rem">products = await res.json()</span>
+<span class="diff-rem">// ต้อง rebuild DOM เอง...</span>
+<span class="diff-ctx"> </span>
+<span class="diff-add">// ✓ Vue 3 — ref() สร้าง reactive state, DOM อัพเดตอัตโนมัติ</span>
+<span class="diff-add">const products = ref([])           // array ว่าง</span>
+<span class="diff-add">products.value = await res.json()  // เปลี่ยนค่าผ่าน .value</span>
+<span class="diff-add">// Vue detect การเปลี่ยนแปลง → re-render เฉพาะส่วนที่ใช้ products</span>
+          </div>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — &lt;script setup&gt; บรรทัด 195-208</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { ref, computed, onMounted } from 'vue'
+
+// ── State ────────────────────────────────────────────────────────
+const products      = ref([])       // รายการสินค้าทั้งหมดจาก API
+const loading       = ref(true)     // แสดง loading spinner
+const search        = ref('')       // ข้อความค้นหา
+const catFilter     = ref('')       // category ที่กำลัง filter
+const showModal     = ref(false)    // แสดง/ซ่อน modal เพิ่ม/แก้ไข
+const editingId     = ref(null)     // null = กำลัง add, มีค่า = กำลัง edit
+const confirmDelete = ref(null)     // เก็บ product ที่จะลบ (ใช้ confirm dialog)
+
+// ข้อมูลในฟอร์ม modal
+const form = ref({ name: '', category: '', price: '', stock: 0, description: '' })
+
+let debounceTimer = null            // สำหรับ debounce search input</code></pre>
+        </div>
+
+        <p><strong>อธิบาย State แต่ละตัว:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">products</span><span class="le-desc">เก็บ array ของสินค้าจาก API — เมื่อเปลี่ยน Vue จะ re-render product grid อัตโนมัติ</span></div>
+          <div class="le-row"><span class="le-code">loading</span><span class="le-desc">ควบคุมการแสดง spinner "กำลังโหลด..." — true ตอนเริ่ม, false หลัง fetch เสร็จ</span></div>
+          <div class="le-row"><span class="le-code">search</span><span class="le-desc">ผูกกับ input field ด้วย v-model — เมื่อ user พิมพ์ ค่านี้จะอัพเดตทันที</span></div>
+          <div class="le-row"><span class="le-code">catFilter</span><span class="le-desc">ผูกกับ select dropdown — ใช้กรองสินค้าตาม category</span></div>
+          <div class="le-row"><span class="le-code">showModal</span><span class="le-desc">ควบคุมการแสดง modal form — v-if="showModal" ใน template</span></div>
+          <div class="le-row"><span class="le-code">editingId</span><span class="le-desc">null = mode Add, มีค่า id = mode Edit — ใช้ตัดสินใจว่าจะ POST หรือ PUT</span></div>
+          <div class="le-row"><span class="le-code">confirmDelete</span><span class="le-desc">เก็บ product object ที่กำลังจะลบ — ใช้แสดง confirm dialog</span></div>
+          <div class="le-row"><span class="le-code">form</span><span class="le-desc">เก็บข้อมูลที่กรอกในฟอร์ม modal ทุก field ผูกด้วย v-model</span></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">📌</span>
+          <div>
+            <strong>การอ่าน/เขียนค่า ref() ต้องใช้ .value เสมอ</strong>
+            ใน script: <code>products.value = [...]</code> / <code>loading.value = false</code><br>
+            ใน template: Vue ทำให้อัตโนมัติ ไม่ต้อง .value — <code>{{ products.length }}</code> ก็พอ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div class="step-title">App.vue — Script Setup: Computed</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p><code>computed()</code> คือค่าที่คำนวณจาก state — Vue จะ recalculate เฉพาะเมื่อ dependencies เปลี่ยน และ cache ผลไว้</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/App.vue → <span style="color:#fbbf24;">บรรทัด 210–229</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — Computed properties</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// ── Computed ─────────────────────────────────────────────────────
+
+// กรองสินค้าตาม search + catFilter พร้อมกัน
+const filtered = computed(() => {
+  const s = search.value.toLowerCase()
+  return products.value.filter(p => {
+    // ตรงกับ search text? (เช็คทั้ง name และ description)
+    const matchS = !s ||
+      p.name.toLowerCase().includes(s) ||
+      (p.description || '').toLowerCase().includes(s)
+    // ตรงกับ category filter?
+    const matchC = !catFilter.value || p.category === catFilter.value
+    return matchS && matchC
+  })
+})
+
+// สร้าง list ของ categories จาก products ที่มีอยู่ (unique + sort)
+const categories = computed(() =>
+  [...new Set(products.value.map(p => p.category))].sort()
+)
+
+// คำนวณ 4 ตัวเลข dashboard stats
+const stats = computed(() => ({
+  total:      products.value.length,
+  lowStock:   products.value.filter(p => p.stock < 10).length,
+  totalItems: products.value.reduce((s, p) => s + p.stock, 0),
+  totalValue: products.value.reduce((s, p) => s + parseFloat(p.price) * p.stock, 0)
+}))</code></pre>
+        </div>
+
+        <p><strong>อธิบายแต่ละ computed:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">filtered</span><span class="le-desc">อัพเดตทันทีเมื่อ search หรือ catFilter เปลี่ยน — template ใช้ v-for="p in filtered" ไม่ใช่ products โดยตรง</span></div>
+          <div class="le-row"><span class="le-code">categories</span><span class="le-desc">ดึง category ที่ unique จาก products ทั้งหมด — ใช้ Set เพื่อตัดซ้ำ, sort() เรียงตัวอักษร</span></div>
+          <div class="le-row"><span class="le-code">stats.total</span><span class="le-desc">จำนวนสินค้าทั้งหมด</span></div>
+          <div class="le-row"><span class="le-code">stats.lowStock</span><span class="le-desc">สินค้าที่ stock &lt; 10 ชิ้น — ใช้แสดง alert banner</span></div>
+          <div class="le-row"><span class="le-code">stats.totalItems</span><span class="le-desc">รวมจำนวน stock ทั้งหมดทุกสินค้า (reduce)</span></div>
+          <div class="le-row"><span class="le-code">stats.totalValue</span><span class="le-desc">มูลค่ารวม = ราคา × stock ทุกสินค้า</span></div>
+        </div>
+
+        <div class="alert vue">
+          <span class="alert-icon">🧮</span>
+          <div>
+            <strong>computed() vs methods() — ทำไมถึงใช้ computed?</strong>
+            <strong>computed()</strong> มี cache — ถ้า products ไม่เปลี่ยน Vue ใช้ค่าเดิม ไม่คำนวณใหม่<br>
+            <strong>methods()</strong> รันทุกครั้งที่ template re-render — สิ้นเปลืองกว่าสำหรับ stats ที่ต้องแสดงตลอด
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📋</span>
+          <div>
+            <strong>categories ไม่ได้มาจาก /api/categories</strong>
+            App.vue คำนวณ categories จาก products ที่ดึงมาแล้ว — ไม่ต้องเรียก API เพิ่ม
+            (backend มี <code>/api/categories</code> route ไว้ แต่ frontend ไม่ได้ใช้งานจริง)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div class="step-title">App.vue — Script Setup: Methods + Template</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>ส่วน methods ทำงานกับ API (fetch, add, edit, delete) และส่วน template ใช้ Vue directives ผูกทุกอย่างเข้าด้วยกัน</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/App.vue → <span style="color:#fbbf24;">บรรทัด 231–303</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — Methods ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// ── Methods ───────────────────────────────────────────────────────
+
+// debounce: รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch
+// (ป้องกัน API ถูกเรียกทุก keystroke)
+function debounceFetch() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(fetchProducts, 280)
+}
+
+// ดึงสินค้าจาก API (ส่ง search + catFilter เป็น query params)
+async function fetchProducts() {
+  loading.value = true
+  const q = new URLSearchParams()
+  if (search.value)    q.set('search',   search.value)
+  if (catFilter.value) q.set('category', catFilter.value)
+  try {
+    const res = await fetch(`/api/products?${q}`)
+    products.value = await res.json()
+  } catch {
+    products.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// เปิด modal แบบ Add (clear form)
+function openAdd() {
+  editingId.value = null
+  form.value = { name: '', category: '', price: '', stock: 0, description: '' }
+  showModal.value = true
+}
+
+// เปิด modal แบบ Edit (copy ข้อมูลจาก product เข้า form)
+function openEdit(p) {
+  editingId.value = p.id
+  form.value = {
+    name: p.name, category: p.category,
+    price: p.price, stock: p.stock,
+    description: p.description || ''
+  }
+  showModal.value = true
+}
+
+// บันทึก (ถ้า editingId มีค่า = PUT, ถ้าเป็น null = POST)
+async function saveProduct() {
+  const body = {
+    name:        form.value.name,
+    category:    form.value.category,
+    price:       parseFloat(form.value.price),
+    stock:       parseInt(form.value.stock),
+    description: form.value.description
+  }
+  const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
+  const method = editingId.value ? 'PUT' : 'POST'
+  await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  showModal.value = false
+  fetchProducts()   // reload สินค้าใหม่
+}
+
+// ลบสินค้า
+async function deleteProduct(id) {
+  await fetch(`/api/products/${id}`, { method: 'DELETE' })
+  confirmDelete.value = null
+  fetchProducts()
+}
+
+// คืน CSS class ตาม stock level (ใช้กับ stock bar และตัวเลข)
+function stockClass(s) {
+  if (s <= 0) return 'out'    // หมด
+  if (s < 10) return 'low'    // ใกล้หมด
+  if (s < 30) return 'mid'    // ปานกลาง
+  return 'high'               // เพียงพอ
+}
+
+// คืน CSS class ตาม category (ใช้กับ badge สี)
+function catClass(cat) {
+  const m = {
+    Electronics: 'c-elec', Clothing: 'c-cloth',
+    Footwear:    'c-foot',  Food:     'c-food',
+    Sports:      'c-sport', Books:    'c-book',
+    Furniture:   'c-furn',  Bags:     'c-bag',
+    Accessories: 'c-acc',   Tools:    'c-tool'
+  }
+  return m[cat] || 'c-other'
+}
+
+// โหลดสินค้าทันทีเมื่อ component mount ครั้งแรก
+onMounted(fetchProducts)</code></pre>
+        </div>
+
+        <p><strong>Vue Directives ที่ใช้ใน Template:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">v-for="p in filtered"</span><span class="le-desc">วน loop ผ่าน filtered computed (ไม่ใช่ products โดยตรง) — search/filter มีผลทันที</span></div>
+          <div class="le-row"><span class="le-code">:key="p.id"</span><span class="le-desc">Vue ใช้ key track ว่า element ไหนคือ element ไหน — ลดการ re-render ที่ไม่จำเป็น</span></div>
+          <div class="le-row"><span class="le-code">v-model="search"</span><span class="le-desc">two-way binding — input เปลี่ยน search เปลี่ยน, search เปลี่ยน input แสดงค่าใหม่</span></div>
+          <div class="le-row"><span class="le-code">v-if="showModal"</span><span class="le-desc">สร้าง/ทำลาย DOM element ตามเงื่อนไข — ต่างจาก v-show ที่แค่ toggle display:none</span></div>
+          <div class="le-row"><span class="le-code">@click.self="..."</span><span class="le-desc">.self modifier — event trigger เฉพาะ element นั้นเอง ไม่ใช่ child — คลิก overlay ปิด modal แต่คลิกใน modal ไม่ปิด</span></div>
+          <div class="le-row"><span class="le-code">:class="stockClass(p.stock)"</span><span class="le-desc">dynamic class — ผูก CSS class ตามผลลัพธ์ function</span></div>
+          <div class="le-row"><span class="le-code">:style="{ width: ... + '%' }"</span><span class="le-desc">dynamic style — stock bar width คำนวณจาก stock / 80 * 100</span></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔀</span>
+          <div>
+            <strong>ทำไม proxy ใน vite.config.js ทำงานได้ตอน dev แต่ใน production ใช้ nginx.conf?</strong>
+            ตอน dev: Vite dev server รัน proxy ให้<br>
+            ตอน production (Docker): ไม่มี Vite dev server — Nginx ทำหน้าที่ proxy แทนตาม nginx.conf
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="step-card" id="s10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div class="step-title">ทดสอบ Frontend Dev Server</div>
+        <div class="step-badge test">Test</div>
+      </div>
+      <div class="step-body">
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ต้องรัน Backend ก่อน</strong>
+            เปิด terminal แรก รัน <code>cd backend && node index.js</code> ค้างไว้
+            แล้วเปิด terminal ใหม่สำหรับ frontend
+          </div>
+        </div>
+
+        <p><strong>รัน Frontend Dev Server:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal — อยู่ใน frontend/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>npm run dev
+
+# จะเห็น:
+#   VITE v5.x  ready in xxx ms
+#   ➜  Local:   http://localhost:5173/
+#   ➜  Network: use --host to expose</code></pre>
+        </div>
+
+        <p>เปิด browser ไปที่ <strong>http://localhost:5173</strong></p>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li>เห็น Header "📦 StockPro" + ปุ่ม "+ เพิ่มสินค้า"</li>
+              <li>เห็น Stats Dashboard 4 card (สินค้าทั้งหมด, สต็อกใกล้หมด, จำนวนรวม, มูลค่ารวม)</li>
+              <li>เห็น product card 10 ใบ (seed data จาก backend)</li>
+              <li>พิมพ์ "mac" ในช่องค้นหา → เห็นเฉพาะ MacBook Air M3 ทันที</li>
+              <li>กรอง "Electronics" → เห็นเฉพาะสินค้าหมวด Electronics</li>
+              <li>กด "+ เพิ่มสินค้า" → เห็น Modal form ขึ้นมา</li>
+              <li>เพิ่มสินค้าใหม่ → เห็นสินค้าปรากฏใน grid ทันที</li>
+              <li>กด ✏️ แก้ไข → Modal เปิดพร้อมข้อมูลเดิม</li>
+              <li>กด 🗑️ ลบ → เห็น confirm dialog ถามก่อนลบ</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎉</span>
+          <div>
+            <strong>Part 2 เสร็จสมบูรณ์!</strong>
+            ตอนนี้ frontend ทำงานได้เต็มรูปแบบแล้ว — ไปต่อ Part 3 เพื่อ Containerize ด้วย Docker
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="part-nav">
+      <a href="tutorial-part1.html" class="nav-btn prev">← Part 1: Backend</a>
+      <a href="tutorial-part3.html" class="nav-btn next">Part 3: Containerize →</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 3 Part 2/3
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 5;
+  const KEY = 'w3p2-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 6; i <= 10; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
