@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 1 of 3 — Backend TaskFlow · Steps 1–5 | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 260px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),#a78bfa); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    .hero {
+      background: linear-gradient(135deg,#1e1b4b 0%,#6d28d9 100%);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center;
+    }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    .main { flex: 1; min-width: 0; }
+
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),#a78bfa); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.overview  { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.setup     { background: #f1f5f9; color: #475569; }
+    .step-badge.db        { background: var(--green-light); color: #065f46; }
+    .step-badge.backend   { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.test      { background: var(--amber-light); color: #92400e; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .8rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; }
+
+    /* Pipeline diagram */
+    .pipeline { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: .5rem 0; }
+    .pipe-step { background: var(--primary-light); border: 2px solid var(--primary); border-radius: 10px; padding: .6rem 1rem; font-size: .85rem; font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
+    .pipe-arrow { color: var(--primary); font-size: 1.2rem; padding: 0 .4rem; font-weight: 700; }
+    .pipe-ok { background: var(--green-light); border-color: var(--green); color: #065f46; }
+    .pipe-fail { background: var(--danger-light); border-color: var(--danger); color: #991b1b; }
+
+    /* File tree */
+    .file-tree { background: #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 2; color: #e2e8f0; overflow-x: auto; white-space: pre; }
+    .ft-dir   { color: #7dd3fc; font-weight: 600; }
+    .ft-file  { color: #86efac; }
+    .ft-arrow { color: #7c3aed; font-weight: 700; }
+    .ft-note  { color: #64748b; }
+    .ft-tree  { color: #475569; }
+
+    /* API table */
+    .api-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .api-table th { background: #1e293b; color: #fff; padding: .5rem 1rem; text-align: left; }
+    .api-table td { padding: .45rem 1rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .api-table tr:last-child td { border-bottom: none; }
+    .m-get    { background: #d1fae5; color: #065f46; padding: .15rem .5rem; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: .82rem; }
+    .m-post   { background: #dbeafe; color: #1e40af; padding: .15rem .5rem; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: .82rem; }
+    .m-put    { background: #fef3c7; color: #92400e; padding: .15rem .5rem; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: .82rem; }
+    .m-del    { background: #fee2e2; color: #991b1b; padding: .15rem .5rem; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: .82rem; }
+
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.next { background: var(--primary); color: #fff; }
+    .nav-btn.next:hover { background: var(--primary-dark); }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="tutorial.html">← Overview</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<div class="hero">
+  <div class="badge">Part 1 of 3 · Steps 1–5</div>
+  <h1>📋 Backend TaskFlow</h1>
+  <p class="subtitle">CI Pipeline · Database Schema · REST API · ทดสอบ Endpoints</p>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 1: Backend</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s1" id="toc-1"><span class="dot"></span>1. Week 5 Overview</a>
+      <a class="toc-link" href="#s2" id="toc-2"><span class="dot"></span>2. โครงสร้าง + Docker Compose</a>
+      <a class="toc-link" href="#s3" id="toc-3"><span class="dot"></span>3. Database Schema + Seed</a>
+      <a class="toc-link" href="#s4" id="toc-4"><span class="dot"></span>4. Backend API (index.js)</a>
+      <a class="toc-link" href="#s5" id="toc-5"><span class="dot"></span>5. รัน Backend + ทดสอบ</a>
+      <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);">
+        <a href="tutorial-part2.html" style="display:block;background:var(--primary);color:#fff;text-align:center;padding:.5rem;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none;">Part 2: Vue Frontend →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">Week 5 Overview — TaskFlow System &amp; CI Pipeline</div>
+        <div class="step-badge overview">Overview</div>
+      </div>
+      <div class="step-body">
+        <p>Week 5 เน้น <strong>3 เรื่องหลัก</strong>: เขียน Unit Tests ด้วย Jest, ตั้งค่า ESLint สำหรับ code quality และสร้าง CI Pipeline ด้วย GitHub Actions ที่รัน 3 jobs อัตโนมัติ</p>
+
+        <div class="alert tip">
+          <span class="alert-icon">📋</span>
+          <div>
+            <strong>TaskFlow — ระบบจัดการงาน</strong>
+            แทนที่ StockPro (สินค้า) ด้วย TaskFlow (งาน) — แต่ละงานมี: <code>title</code>, <code>status</code> (todo / in-progress / done), <code>priority</code> (low / medium / high), <code>assignee</code> (ผู้รับผิดชอบ), <code>due_date</code> (วันกำหนดส่ง)
+          </div>
+        </div>
+
+        <p><strong>CI Pipeline ที่จะสร้างใน Week 5:</strong></p>
+        <div class="pipeline">
+          <div class="pipe-step">📤 code push</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">🔍 lint<br><small style="font-weight:400">ESLint check</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">🧪 test<br><small style="font-weight:400">Jest + coverage</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">🐳 docker build<br><small style="font-weight:400">image build</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step pipe-ok">✅ success</div>
+          <div class="pipe-arrow">/</div>
+          <div class="pipe-step pipe-fail">❌ fail</div>
+        </div>
+
+        <p><strong>สิ่งที่จะเรียนรู้ใน Week 5:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">Jest</span><span class="le-desc">Unit testing framework สำหรับ Node.js — เขียน test ที่ครอบคลุม API endpoints</span></div>
+          <div class="le-row"><span class="le-code">coverage threshold</span><span class="le-desc">บังคับให้ test ครอบคลุม code ≥ 60% ก่อน pass — ถ้าไม่ถึง pipeline fail</span></div>
+          <div class="le-row"><span class="le-code">ESLint</span><span class="le-desc">Static analysis — ตรวจ code style และ bug patterns ก่อน commit</span></div>
+          <div class="le-row"><span class="le-code">GitHub Actions</span><span class="le-desc">รัน lint → test → build อัตโนมัติทุกครั้งที่ push code</span></div>
+          <div class="le-row"><span class="le-code">jest.config.js</span><span class="le-desc">กำหนด test environment, coverage files และ threshold ขั้นต่ำ</span></div>
+          <div class="le-row"><span class="le-code">.eslintrc.json</span><span class="le-desc">rules สำหรับ enforce coding style ที่สม่ำเสมอ</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">✅</span>
+          <div>
+            <strong>Prerequisites — ตรวจสอบก่อนเริ่ม</strong>
+            <div style="display:grid;gap:.3rem;margin-top:.4rem;">
+              <code style="font-family:'JetBrains Mono',monospace;font-size:.85rem;">git --version</code>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:.85rem;">docker --version</code>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:.85rem;">node --version   # ต้องเป็น v20+</code>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:.85rem;">npm --version</code>
+            </div>
+            ต้องมี GitHub account สำหรับ Part 3 (CI Pipeline)
+          </div>
+        </div>
+
+        <p><strong>โครงสร้างสิ่งที่เปลี่ยนจาก Week 3 (StockPro):</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">products → tasks</span><span class="le-desc">เปลี่ยน entity หลักจากสินค้าเป็นงาน มี status/priority แทน price/stock</span></div>
+          <div class="le-row"><span class="le-code">category filter → status + priority filter</span><span class="le-desc">มี 2 dropdown filters แทน 1 — ทำให้ composable ซับซ้อนขึ้นเล็กน้อย</span></div>
+          <div class="le-row"><span class="le-code">health check ไม่ query DB</span><span class="le-desc">สำคัญมากสำหรับ testing — ช่วยให้ test /health ได้โดยไม่ต้องมี database จริง</span></div>
+          <div class="le-row"><span class="le-code">module.exports = app</span><span class="le-desc">export app ออกมาให้ Jest import ได้ โดยไม่ start server จริง</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">โครงสร้างไฟล์ + Docker Compose</div>
+        <div class="step-badge setup">Setup</div>
+      </div>
+      <div class="step-body">
+        <p>เปิด folder <code>week5-ci-pipeline/</code> ใน VS Code แล้วดูโครงสร้างไฟล์ทั้งหมด</p>
+
+        <p><strong>โครงสร้างไฟล์ทั้งหมด:</strong></p>
+        <pre class="file-tree"><span class="ft-dir">week5-ci-pipeline/</span>
+<span class="ft-tree">├──</span> <span class="ft-file">.github/workflows/</span>
+<span class="ft-tree">│   └──</span> <span class="ft-file">ci.yml</span>               <span class="ft-arrow">← 3-job pipeline (Part 3)</span>
+<span class="ft-tree">├──</span> <span class="ft-dir">backend/</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">index.js</span>              <span class="ft-arrow">← TaskFlow REST API</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">db.js</span>                 <span class="ft-arrow">← PostgreSQL pool</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">jest.config.js</span>        <span class="ft-arrow">← test config + coverage threshold</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">.eslintrc.json</span>        <span class="ft-arrow">← linting rules</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">package.json</span>
+<span class="ft-tree">│   └──</span> <span class="ft-dir">tests/</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">health.test.js</span>        <span class="ft-note"># test /health endpoint</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">tasks.test.js</span>         <span class="ft-note"># test CRUD operations</span>
+<span class="ft-tree">│       └──</span> <span class="ft-file">validation.test.js</span>    <span class="ft-note"># test input validation</span>
+<span class="ft-tree">├──</span> <span class="ft-dir">frontend/src/</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-file">App.vue</span>
+<span class="ft-tree">│   ├──</span> <span class="ft-dir">composables/</span>
+<span class="ft-tree">│   │   └──</span> <span class="ft-file">useTasks.js</span>
+<span class="ft-tree">│   └──</span> <span class="ft-dir">components/</span>  <span class="ft-note">(7 files)</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">AppHeader.vue</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">StatsGrid.vue</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">TaskToolbar.vue</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">TaskGrid.vue</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">TaskCard.vue</span>
+<span class="ft-tree">│       ├──</span> <span class="ft-file">TaskModal.vue</span>
+<span class="ft-tree">│       └──</span> <span class="ft-file">DeleteConfirm.vue</span>
+<span class="ft-tree">└──</span> <span class="ft-file">docker-compose.yml</span></pre>
+
+        <p><strong>docker-compose.yml — 3 services:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> docker-compose.yml</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>docker-compose.yml — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       taskflow
+      POSTGRES_USER:     dev
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     taskflow
+      DB_USER:     dev
+      DB_PASSWORD: secret
+      PORT:        3001
+      APP_VERSION: 1.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">postgres:16-alpine</span><span class="le-desc">PostgreSQL 16 (image เล็ก) — ชื่อ service คือ "db" ซึ่ง backend ใช้เป็น DB_HOST</span></div>
+          <div class="le-row"><span class="le-code">healthcheck</span><span class="le-desc">รอ postgres พร้อมก่อน start backend — ป้องกัน "connection refused" ตอน init</span></div>
+          <div class="le-row"><span class="le-code">condition: service_healthy</span><span class="le-desc">backend จะ start เฉพาะเมื่อ db ผ่าน healthcheck แล้ว</span></div>
+          <div class="le-row"><span class="le-code">APP_VERSION: 1.0.0</span><span class="le-desc">ส่งเป็น env var ให้ /health endpoint ตอบกลับ — ใช้ track version ใน production</span></div>
+        </div>
+
+        <p><strong>ไฟล์ .env.example — สำหรับ local development:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> backend/.env.example</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/.env.example</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=taskflow
+DB_USER=dev
+DB_PASSWORD=secret
+PORT=3001
+APP_VERSION=1.0.0</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ทำไม DB_HOST=localhost ตอน local แต่ db ใน Docker Compose?</strong>
+            ตอนรัน local: PostgreSQL อยู่บนเครื่องเดียวกัน → ใช้ <code>localhost</code><br>
+            ตอนรัน Docker Compose: backend คุยกับ db ผ่าน Docker internal network → ใช้ชื่อ service <code>db</code>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🗂️</span>
+          <div>
+            <strong>ไฟล์ test ใน tests/ คืออะไร?</strong>
+            <code>health.test.js</code> — ทดสอบว่า /health ตอบกลับถูกต้อง, ไม่ query DB<br>
+            <code>tasks.test.js</code> — ทดสอบ CRUD: GET, POST, PUT, DELETE tasks<br>
+            <code>validation.test.js</code> — ทดสอบ input validation: missing title, invalid status/priority
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">Database Schema + Seed Data</div>
+        <div class="step-badge db">Database</div>
+      </div>
+      <div class="step-body">
+        <p>ตาราง <code>tasks</code> ออกแบบมาให้เก็บงานได้ครบทุก attribute — <strong>สร้างอัตโนมัติ</strong>ตอน backend start ครั้งแรก</p>
+
+        <div class="file-path"><span class="fp-label">SQL Schema:</span> backend/index.js → initDb()</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>CREATE TABLE tasks</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-sql"><code>CREATE TABLE IF NOT EXISTS tasks (
+  id          SERIAL PRIMARY KEY,
+  title       VARCHAR(200) NOT NULL,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'todo',
+  priority    VARCHAR(10)  NOT NULL DEFAULT 'medium',
+  assignee    VARCHAR(100) DEFAULT '',
+  due_date    DATE,
+  description TEXT         DEFAULT '',
+  created_at  TIMESTAMPTZ  DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ  DEFAULT NOW()
+)</code></pre>
+        </div>
+
+        <p><strong>อธิบายแต่ละ column:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">id SERIAL PRIMARY KEY</span><span class="le-desc">auto-increment integer — ทำหน้าที่เป็น unique identifier ของแต่ละงาน</span></div>
+          <div class="le-row"><span class="le-code">title VARCHAR(200) NOT NULL</span><span class="le-desc">ชื่องาน — บังคับต้องมี, ยาวสูงสุด 200 ตัวอักษร</span></div>
+          <div class="le-row"><span class="le-code">status VARCHAR(20) DEFAULT 'todo'</span><span class="le-desc">สถานะงาน — ค่าที่ถูกต้อง: todo / in-progress / done (validate ใน API)</span></div>
+          <div class="le-row"><span class="le-code">priority VARCHAR(10) DEFAULT 'medium'</span><span class="le-desc">ระดับความสำคัญ — ค่าที่ถูกต้อง: low / medium / high (validate ใน API)</span></div>
+          <div class="le-row"><span class="le-code">assignee VARCHAR(100)</span><span class="le-desc">ชื่อผู้รับผิดชอบ — optional, default ว่าง</span></div>
+          <div class="le-row"><span class="le-code">due_date DATE</span><span class="le-desc">วันกำหนดส่ง — NULL ได้ถ้าไม่ระบุ, ใช้เปรียบเทียบใน isOverdue</span></div>
+          <div class="le-row"><span class="le-code">description TEXT</span><span class="le-desc">รายละเอียดงาน — TEXT รองรับข้อความยาวได้ไม่จำกัด</span></div>
+          <div class="le-row"><span class="le-code">created_at / updated_at TIMESTAMPTZ</span><span class="le-desc">timestamp พร้อม timezone — DEFAULT NOW() กำหนดอัตโนมัติ</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📊</span>
+          <div>
+            <strong>Status Enum: todo → in-progress → done</strong>
+            <div style="display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap;">
+              <span style="background:#fef3c7;color:#92400e;padding:.2rem .7rem;border-radius:6px;font-size:.85rem;font-weight:700;">todo</span>
+              <span style="color:#64748b;font-size:1.2rem;">→</span>
+              <span style="background:#dbeafe;color:#1e40af;padding:.2rem .7rem;border-radius:6px;font-size:.85rem;font-weight:700;">in-progress</span>
+              <span style="color:#64748b;font-size:1.2rem;">→</span>
+              <span style="background:#d1fae5;color:#065f46;padding:.2rem .7rem;border-radius:6px;font-size:.85rem;font-weight:700;">done</span>
+            </div>
+            Priority: <span style="background:#f1f5f9;color:#475569;padding:.15rem .6rem;border-radius:5px;font-size:.84rem;font-weight:700;">low</span> / <span style="background:#ede9fe;color:#5b21b6;padding:.15rem .6rem;border-radius:5px;font-size:.84rem;font-weight:700;">medium</span> / <span style="background:#fee2e2;color:#991b1b;padding:.15rem .6rem;border-radius:5px;font-size:.84rem;font-weight:700;">high</span>
+          </div>
+        </div>
+
+        <p><strong>ตัวอย่าง Seed Data (5 จาก 10 งาน):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>seed data — ตัวอย่าง 5 รายการ</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// seed data ที่จะถูก insert ครั้งแรกที่รัน backend
+('ออกแบบ UI สำหรับ Dashboard',   'in-progress', 'high',   'ปิยะ',   '2026-06-30', ...)
+('เขียน API endpoint /tasks',     'done',        'high',   'สมชาย', '2026-06-10', ...)
+('เขียน Unit Test (Jest)',         'todo',        'high',   'ปิยะ',   '2026-07-05', ...)
+('ติดตั้ง Docker Compose',        'done',        'medium', 'มานะ',   '2026-06-08', ...)
+('สร้าง CI Pipeline',             'in-progress', 'high',   'สมชาย', '2026-07-03', ...)</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧪</span>
+          <div>
+            <strong>ทำไม validate status/priority ใน API ไม่ใช้ DB constraint?</strong>
+            ถ้า validate ด้วย DB CHECK constraint เวลา insert ค่าผิด → ได้ error จาก PostgreSQL (ภาษา DB)<br>
+            ถ้า validate ใน API (application layer) → control error message เองได้ เช่น <code>"status ต้องเป็น: todo, in-progress, done"</code><br>
+            สำคัญกว่า: <strong>Jest สามารถ test validation logic ได้โดยไม่ต้องมี DB จริง</strong> — นี่คือเหตุผลหลักใน Week 5
+          </div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>Seed data มีงานที่ due_date ผ่านมาแล้ว</strong>
+            งาน "เขียน API endpoint /tasks" มี due_date 2026-06-10 และ status = done → ไม่นับว่า overdue<br>
+            งาน "ออกแบบ UI สำหรับ Dashboard" มี due_date 2026-06-30 และ status = in-progress → นับว่า overdue ถ้ารันหลังวันนั้น<br>
+            Frontend จะแสดง overdue warning ถ้ามีงานเกินกำหนด
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">Backend API — index.js Walkthrough</div>
+        <div class="step-badge backend">Express</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>backend/index.js</code> — มี 6 endpoints และ validation logic ที่ Jest จะ test</p>
+
+        <p><strong>สรุป API Endpoints ทั้งหมด:</strong></p>
+        <table class="api-table">
+          <tr>
+            <th>Method</th>
+            <th>URL</th>
+            <th>ทำอะไร</th>
+            <th>Notes</th>
+          </tr>
+          <tr>
+            <td><span class="m-get">GET</span></td>
+            <td><code style="font-size:.82rem;">/health</code></td>
+            <td>status, version, uptime</td>
+            <td style="font-size:.82rem;color:#64748b;">ไม่ query DB</td>
+          </tr>
+          <tr>
+            <td><span class="m-get">GET</span></td>
+            <td><code style="font-size:.82rem;">/api/stats</code></td>
+            <td>สถิติ Dashboard</td>
+            <td style="font-size:.82rem;color:#64748b;">FILTER aggregate</td>
+          </tr>
+          <tr>
+            <td><span class="m-get">GET</span></td>
+            <td><code style="font-size:.82rem;">/api/tasks?search=&amp;status=&amp;priority=</code></td>
+            <td>ดึงงาน + filter</td>
+            <td style="font-size:.82rem;color:#64748b;">dynamic WHERE</td>
+          </tr>
+          <tr>
+            <td><span class="m-post">POST</span></td>
+            <td><code style="font-size:.82rem;">/api/tasks</code></td>
+            <td>เพิ่มงานใหม่</td>
+            <td style="font-size:.82rem;color:#64748b;">validate title/status/priority</td>
+          </tr>
+          <tr>
+            <td><span class="m-put">PUT</span></td>
+            <td><code style="font-size:.82rem;">/api/tasks/:id</code></td>
+            <td>แก้ไขงาน</td>
+            <td style="font-size:.82rem;color:#64748b;">updated_at=NOW()</td>
+          </tr>
+          <tr>
+            <td><span class="m-del">DELETE</span></td>
+            <td><code style="font-size:.82rem;">/api/tasks/:id</code></td>
+            <td>ลบงาน</td>
+            <td style="font-size:.82rem;color:#64748b;">404 ถ้าไม่พบ</td>
+          </tr>
+        </table>
+
+        <p><strong>GET /health — ไม่ query DB (สำคัญสำหรับ testing):</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/index.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>index.js — Health Check endpoint</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const START_AT = Date.now();
+
+app.get('/health', (req, res) => {
+  res.json({
+    status:    'ok',
+    service:   'TaskFlow API',
+    version:   process.env.APP_VERSION || '1.0.0',
+    uptime:    Math.floor((Date.now() - START_AT) / 1000),
+    timestamp: new Date(),
+  });
+});</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">ไม่มี async / await pool.query</span><span class="le-desc">ไม่แตะ DB เลย — Jest test /health ได้โดย mock แค่ app ไม่ต้อง mock database</span></div>
+          <div class="le-row"><span class="le-code">START_AT = Date.now()</span><span class="le-desc">เก็บเวลา start server ไว้ — คำนวณ uptime เป็นวินาทีตอน request มา</span></div>
+          <div class="le-row"><span class="le-code">APP_VERSION || '1.0.0'</span><span class="le-desc">อ่านจาก env var — ใน Docker Compose กำหนดเป็น 1.0.0, ใน local ใช้ default</span></div>
+        </div>
+
+        <p><strong>GET /api/stats — FILTER aggregate query:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>index.js — Stats endpoint (single query)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.get('/api/stats', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        COUNT(*)                                                       AS total,
+        COUNT(*) FILTER (WHERE status = 'todo')                        AS todo,
+        COUNT(*) FILTER (WHERE status = 'in-progress')                 AS in_progress,
+        COUNT(*) FILTER (WHERE status = 'done')                        AS done,
+        COUNT(*) FILTER (WHERE due_date &lt; NOW() AND status != 'done')  AS overdue,
+        COUNT(*) FILTER (WHERE priority = 'high' AND status != 'done') AS high_priority
+      FROM tasks
+    `);
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">FILTER (WHERE ...)</span><span class="le-desc">PostgreSQL aggregate filter — นับเฉพาะ rows ที่ match condition โดยไม่ต้องทำหลาย query</span></div>
+          <div class="le-row"><span class="le-code">single query</span><span class="le-desc">ได้ stats ทั้งหมด 6 ค่าใน 1 round trip แทนที่จะ query 6 ครั้ง — ประสิทธิภาพดีกว่ามาก</span></div>
+          <div class="le-row"><span class="le-code">due_date &lt; NOW() AND status != 'done'</span><span class="le-desc">งาน overdue = ผ่านวันกำหนดส่งแล้ว แต่ยังไม่ done</span></div>
+        </div>
+
+        <p><strong>GET /api/tasks — Dynamic WHERE builder:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>index.js — Tasks list (3 filters)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.get('/api/tasks', async (req, res) => {
+  try {
+    const { search = '', status = '', priority = '' } = req.query;
+    const params = [];
+    let where = 'WHERE 1=1';
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`;
+    }
+    if (status) {
+      params.push(status);
+      where += ` AND status = $${params.length}`;
+    }
+    if (priority) {
+      params.push(priority);
+      where += ` AND priority = $${params.length}`;
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM tasks ${where} ORDER BY created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">WHERE 1=1</span><span class="le-desc">เริ่มต้น condition ที่เป็น true เสมอ — ทำให้ append AND ต่อท้ายได้ทุก filter</span></div>
+          <div class="le-row"><span class="le-code">ILIKE $1</span><span class="le-desc">case-insensitive LIKE ค้นหาใน title หรือ description — $1 คือ parameterized query ป้องกัน SQL Injection</span></div>
+          <div class="le-row"><span class="le-code">3 filters</span><span class="le-desc">search + status + priority — ซับซ้อนกว่า StockPro ที่มีแค่ search + category</span></div>
+        </div>
+
+        <p><strong>POST /api/tasks — Validation Logic (สำคัญสำหรับ Jest test):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>index.js — POST validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>app.post('/api/tasks', async (req, res) => {
+  try {
+    const { title, status = 'todo', priority = 'medium',
+            assignee = '', due_date = null, description = '' } = req.body;
+
+    // Validation 1: title ต้องมีค่า
+    if (!title || !title.toString().trim()) {
+      return res.status(400).json({ error: 'กรุณาระบุ title' });
+    }
+
+    const VALID_STATUS   = ['todo', 'in-progress', 'done'];
+    const VALID_PRIORITY = ['low', 'medium', 'high'];
+
+    // Validation 2: status ต้องเป็นค่าที่กำหนด (ถ้าส่งมา)
+    if (req.body.status !== undefined && !VALID_STATUS.includes(status)) {
+      return res.status(400).json({ error: `status ต้องเป็น ${VALID_STATUS.join(', ')}` });
+    }
+
+    // Validation 3: priority ต้องเป็นค่าที่กำหนด (ถ้าส่งมา)
+    if (req.body.priority !== undefined && !VALID_PRIORITY.includes(priority)) {
+      return res.status(400).json({ error: `priority ต้องเป็น ${VALID_PRIORITY.join(', ')}` });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO tasks (title, status, priority, assignee, due_date, description)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title.toString().trim(), status, priority, assignee, due_date || null, description]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">!title || !title.toString().trim()</span><span class="le-desc">ตรวจทั้ง null/undefined และ empty string หลัง trim — ป้องกัน title ที่เป็น spaces</span></div>
+          <div class="le-row"><span class="le-code">req.body.status !== undefined</span><span class="le-desc">ตรวจว่า client ส่ง status มาจริงๆ — ถ้าไม่ส่ง ใช้ default 'todo' โดยไม่ validate</span></div>
+          <div class="le-row"><span class="le-code">VALID_STATUS.includes(status)</span><span class="le-desc">whitelist validation — ค่าที่ไม่อยู่ใน array จะ return 400 พร้อม error message ภาษาไทย</span></div>
+          <div class="le-row"><span class="le-code">res.status(400)</span><span class="le-desc">HTTP 400 Bad Request — validation.test.js ใน Jest จะ assert ว่าได้ 400 กลับมา</span></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧪</span>
+          <div>
+            <strong>ทำไม Validation ถึงสำคัญสำหรับ Testing?</strong>
+            Jest ใน <code>validation.test.js</code> จะส่ง request ที่ผิดแล้วตรวจว่าได้ response 400 กลับมา<br>
+            ถ้า validation logic ชัดเจน → เขียน test ได้ง่าย → coverage ผ่าน threshold 60%
+          </div>
+        </div>
+
+        <p><strong>module.exports = app — สำคัญสำหรับ Jest:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>index.js — ท้ายไฟล์</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// รัน server เฉพาะเมื่อ execute โดยตรง (ไม่ใช่ require จาก test)
+if (require.main === module) {
+  initDb()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 TaskFlow API running at http://localhost:${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('❌ DB init failed:', err.message);
+      process.exit(1);
+    });
+}
+
+module.exports = app;  // Jest import ได้โดยไม่ start server</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">require.main === module</span><span class="le-desc">เป็น true เฉพาะตอนรัน <code>node index.js</code> โดยตรง — false ตอน Jest require('./index')</span></div>
+          <div class="le-row"><span class="le-code">module.exports = app</span><span class="le-desc">export express app — Jest ใช้ supertest import แล้ว test ได้โดยไม่ต้องเปิด port จริง</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">รัน Backend + ทดสอบ API</div>
+        <div class="step-badge test">Test</div>
+      </div>
+      <div class="step-body">
+        <p>ตรวจสอบว่า backend ทำงานได้จริงก่อนไปทำ Frontend และ CI Pipeline</p>
+
+        <p><strong>ขั้นตอนที่ 1 — สร้าง PostgreSQL container สำหรับ local:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — start postgres</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code>docker run -d --name pg-dev `
+  -e POSTGRES_PASSWORD=secret `
+  -e POSTGRES_USER=dev `
+  -e POSTGRES_DB=taskflow `
+  -p 5432:5432 `
+  postgres:15-alpine</code></pre>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 2 — สร้างไฟล์ .env และ start backend:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — setup และ start</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code># copy env file
+copy backend\.env.example backend\.env
+
+# install dependencies
+cd backend
+npm install
+
+# start server
+node index.js</code></pre>
+        </div>
+
+        <p>ควรเห็น output นี้:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>expected output</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>✅ DB connected at: 2026-xx-xxTxx:xx:xx...
+✅ Table tasks ready
+🌱 Seed data inserted (10 tasks)   ← ครั้งแรกเท่านั้น
+🚀 TaskFlow API v1.0.0 running at http://localhost:3001</code></pre>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 3 — ทดสอบ API ด้วย curl (เปิด terminal ใหม่):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — ทดสอบ GET endpoints</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code># GET tasks ทั้งหมด
+curl http://localhost:3001/api/tasks
+
+# GET stats dashboard
+curl http://localhost:3001/api/stats
+
+# GET health check
+curl http://localhost:3001/health</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — ทดสอบ POST + Validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code># POST เพิ่มงานใหม่
+curl -X POST http://localhost:3001/api/tasks `
+  -H "Content-Type: application/json" `
+  -d '{"title":"งานทดสอบ","status":"todo","priority":"high","assignee":"ปิยะ"}'
+
+# POST ที่ขาด title (ควรได้ 400)
+curl -X POST http://localhost:3001/api/tasks `
+  -H "Content-Type: application/json" `
+  -d '{"status":"todo"}'
+
+# POST ที่ใส่ status ผิด (ควรได้ 400)
+curl -X POST http://localhost:3001/api/tasks `
+  -H "Content-Type: application/json" `
+  -d '{"title":"งาน","status":"invalid-status"}'</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ — ก่อนไปต่อ Part 2</div>
+            <ul>
+              <li><code>GET /api/tasks</code> คืน JSON array มี 10 งาน (seed data)</li>
+              <li><code>GET /api/stats</code> คืน object มี <code>total, todo, in_progress, done, overdue</code></li>
+              <li><code>GET /health</code> คืน <code>{"status":"ok","service":"TaskFlow API",...}</code></li>
+              <li>POST ที่ขาด title คืน <code>{"error":"กรุณาระบุ title"}</code> พร้อม status 400</li>
+              <li>POST status ผิด คืน <code>{"error":"status ต้องเป็น todo, in-progress, done"}</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ทดสอบ filter parameters</strong>
+            <div class="code-wrap" style="margin-top:.5rem;">
+              <div class="code-label"><span>PowerShell — filter tests</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre class="language-powershell"><code># ค้นหางานที่มีคำว่า "ออกแบบ"
+curl "http://localhost:3001/api/tasks?search=ออกแบบ"
+
+# filter เฉพาะงาน todo
+curl "http://localhost:3001/api/tasks?status=todo"
+
+# filter เฉพาะงาน high priority
+curl "http://localhost:3001/api/tasks?priority=high"
+
+# filter หลายตัวพร้อมกัน
+curl "http://localhost:3001/api/tasks?status=todo&priority=high"</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎉</span>
+          <div>
+            <strong>Part 1 เสร็จสมบูรณ์!</strong>
+            Backend TaskFlow API ทำงานได้แล้ว — validation logic พร้อมให้ Jest test ใน Part 3<br>
+            ไปต่อ Part 2 เพื่อสร้าง Vue 3 Frontend
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="part-nav">
+      <a href="tutorial.html" class="nav-btn prev">← Overview</a>
+      <a href="tutorial-part2.html" class="nav-btn next">Part 2: Vue Frontend →</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 5 Part 1/3
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 5;
+  const KEY = 'w5p1-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 1; i <= TOTAL; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

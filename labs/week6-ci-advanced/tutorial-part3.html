@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 3: Docker Build &amp; Push + Image Strategy — Week 6 CI Advanced | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 265px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .top-bar a:hover { color: var(--primary-dark); }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1e1b4b, #3b0764, #5b21b6, #7c3aed);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner { position: relative; z-index: 1; }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    /* ── Layout ── */
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg, #1e1b4b, var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary-dark); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary-dark); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    /* ── Main ── */
+    .main { flex: 1; min-width: 0; }
+
+    /* ── Step cards ── */
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.docker   { background: #dbeafe; color: #1e40af; }
+    .step-badge.registry { background: #fef3c7; color: #92400e; }
+    .step-badge.tag      { background: #d1fae5; color: #065f46; }
+    .step-badge.summary  { background: #ede9fe; color: #5b21b6; }
+    .step-badge.ci       { background: #dbeafe; color: #1e40af; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    /* ── File path label ── */
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    /* ── Code blocks ── */
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    /* ── Alert boxes ── */
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.danger  { background: var(--danger-light); border-left: 4px solid var(--danger); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    /* ── Verify checklist ── */
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* ── Line-explain table ── */
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; padding-top: .1rem; }
+
+    /* ── Concept table ── */
+    .concept-table { width: 100%; border-collapse: collapse; font-size: .88rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .concept-table th { background: linear-gradient(135deg, #1e1b4b, #5b21b6); color: #fff; padding: .6rem 1rem; text-align: left; font-weight: 700; }
+    .concept-table td { padding: .55rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .concept-table tr:last-child td { border-bottom: none; }
+    .concept-table tr:nth-child(even) td { background: #faf5ff; }
+    .concept-table td:first-child { font-weight: 600; color: var(--primary-dark); }
+
+    /* ── Pipeline flow ── */
+    .pipeline-flow {
+      background: #1e293b; color: #e2e8f0; border-radius: 12px;
+      padding: 1.75rem 1.5rem; font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem; line-height: 1.9;
+    }
+    .pf-branches { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: .75rem; }
+    .pf-branch-label { font-size: .72rem; color: #94a3b8; display: block; margin-bottom: .4rem; text-align: center; }
+    .pf-col { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+    .pf-box { display: inline-block; border-radius: 8px; padding: .35rem 1.25rem; margin: .1rem 0; text-align: center; }
+    .pf-box.lint   { background: #1e3a5f; border: 1px solid #3b82f6; color: #93c5fd; }
+    .pf-box.test   { background: #2d1b69; border: 1px solid #7c3aed; color: #c4b5fd; }
+    .pf-box.sonar  { background: #1e3a2f; border: 1px solid #059669; color: #6ee7b7; }
+    .pf-box.build  { background: #1e3048; border: 1px solid #0ea5e9; color: #7dd3fc; }
+    .pf-box.dim    { background: #2d2d2d; border: 1px solid #475569; color: #64748b; opacity: .55; }
+    .pf-arrow      { color: #475569; line-height: 1.3; font-size: .9rem; }
+    .pf-note       { font-size: .7rem; color: #64748b; margin-top: .1rem; }
+    .pf-divider    { border: none; border-top: 1px dashed #334155; margin: .9rem 0; }
+
+    /* ── Secrets box ── */
+    .secrets-box { background: #fff; border: 1.5px solid #f59e0b; border-radius: 10px; padding: 1rem 1.1rem; }
+    .secrets-title { font-weight: 700; color: #92400e; margin-bottom: .65rem; font-size: .95rem; display: flex; align-items: center; gap: .45rem; }
+    .secrets-grid { display: grid; gap: .45rem; }
+    .secret-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .secret-key { background: #1e293b; color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .secret-desc { color: #475569; padding-top: .1rem; }
+
+    /* ── Debug challenge ── */
+    .debug-card { background: #fff5f5; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .debug-title { font-size: 1rem; font-weight: 800; color: var(--danger); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+    .debug-list { list-style: none; display: grid; gap: .85rem; }
+    .debug-item { font-size: .88rem; padding: .8rem 1rem; background: #fff; border-radius: 8px; border-left: 3px solid #fca5a5; }
+    .debug-item .debug-q { font-weight: 700; color: var(--danger); margin-bottom: .25rem; }
+    .debug-item .debug-hint { color: var(--muted); font-size: .85rem; }
+    .debug-item .debug-hint::before { content: '💡 Hint: '; font-weight: 700; color: #d97706; }
+
+    /* ── Completion card ── */
+    .completion-card {
+      background: linear-gradient(135deg, #1e1b4b, #3b0764, #5b21b6, #7c3aed);
+      color: #fff; border-radius: 20px; padding: 2.5rem 2rem;
+      text-align: center; margin-top: 2rem; position: relative; overflow: hidden;
+    }
+    .completion-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .completion-inner { position: relative; z-index: 1; }
+    .completion-card .emoji-big { font-size: 3rem; margin-bottom: .75rem; display: block; }
+    .completion-card h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: .5rem; }
+    .completion-card .subtitle { font-size: 1rem; opacity: .88; margin-bottom: 1.75rem; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .85rem; margin-bottom: 2rem; }
+    .skill-badge {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+      border-radius: 10px; padding: .75rem 1rem; text-align: left;
+    }
+    .skill-badge .skill-icon { font-size: 1.3rem; margin-bottom: .3rem; display: block; }
+    .skill-badge .skill-name { font-weight: 700; font-size: .9rem; display: block; }
+    .skill-badge .skill-sub { font-size: .78rem; opacity: .78; margin-top: .15rem; }
+    .back-overview {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+      color: #fff; text-decoration: none; border-radius: 10px;
+      padding: .7rem 1.6rem; font-size: .95rem; font-weight: 700;
+      transition: background .2s;
+    }
+    .back-overview:hover { background: rgba(255,255,255,.28); }
+
+    /* ── Part nav ── */
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.overview { background: var(--primary); color: #fff; }
+    .nav-btn.overview:hover { background: var(--primary-dark); }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; position: static; max-height: none; }
+      .pf-branches { grid-template-columns: 1fr; gap: .5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sticky top bar ── -->
+<div class="top-bar">
+  <a href="tutorial-part2.html">← Part 2</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<!-- ── Hero banner ── -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="badge">Week 6 · Part 3/3 · Steps 11–15</div>
+    <h1>🐳 Docker Build &amp; Push + Image Tagging Strategy</h1>
+    <p class="subtitle">TaskFlow — ระบบจัดการงาน · Job 4 (Conditional) · BuildKit Cache · sha + latest tags · $GITHUB_STEP_SUMMARY</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── Sidebar TOC ── -->
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 3: Docker Build &amp; Push</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#step-11" id="toc-11"><span class="dot"></span>11. Job 4 Overview</a>
+      <a class="toc-link" href="#step-12" id="toc-12"><span class="dot"></span>12. Docker Buildx + Login</a>
+      <a class="toc-link" href="#step-13" id="toc-13"><span class="dot"></span>13. build-push-action@v5</a>
+      <a class="toc-link" href="#step-14" id="toc-14"><span class="dot"></span>14. Image Tagging Strategy</a>
+      <a class="toc-link" href="#step-15" id="toc-15"><span class="dot"></span>15. Summary + Debug + Checklist</a>
+      <div style="padding:.9rem 1.2rem; border-top:1px solid var(--border); display:grid; gap:.5rem;">
+        <a href="tutorial-part2.html" style="display:block;background:#f1f5f9;color:#334155;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">← Part 2: Jobs 1–3</a>
+        <a href="tutorial.html" style="display:block;background:var(--primary-light);color:var(--primary-dark);text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">🏠 Overview Week 6</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <main class="main">
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 11: Job 4 Overview
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="step-11">
+      <div class="step-header">
+        <div class="step-num">11</div>
+        <div class="step-title">Job 4 Overview — ทำไม Conditional? ทำไมรอ Sonar?</div>
+        <div class="step-badge ci">Conditional Job</div>
+      </div>
+      <div class="step-body">
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>Job 4 คือขั้นตอนสุดท้ายของ pipeline</strong>
+            จะ build Docker image และ push ขึ้น registry — แต่ทำงานเฉพาะ <code>main</code> และ <code>develop</code> branch เท่านั้น
+            และต้องผ่าน Job 1, 2, 3 ทุกตัวก่อน
+          </div>
+        </div>
+
+        <p><strong>ภาพรวม 4-Job Pipeline:</strong></p>
+
+        <div class="pipeline-flow">
+          <div class="pf-branches">
+            <div>
+              <span class="pf-branch-label">push to any branch (feature/*, hotfix/*)</span>
+              <div class="pf-col">
+                <span class="pf-box lint">🔍 Job 1: Lint</span>
+                <span class="pf-arrow">↓ needs: lint</span>
+                <span class="pf-box test">🧪 Job 2: Test &amp; Coverage</span>
+                <span class="pf-arrow">↓ needs: test</span>
+                <span class="pf-box sonar">🔬 Job 3: SonarQube Quality Gate</span>
+                <span class="pf-arrow">↓ needs: sonar</span>
+                <span class="pf-box dim">🐳 Job 4: Build &amp; Push</span>
+                <span class="pf-note">⛔ ไม่รัน (if condition false)</span>
+              </div>
+            </div>
+            <div>
+              <span class="pf-branch-label">push to main / develop</span>
+              <div class="pf-col">
+                <span class="pf-box lint">🔍 Job 1: Lint</span>
+                <span class="pf-arrow">↓ needs: lint</span>
+                <span class="pf-box test">🧪 Job 2: Test &amp; Coverage</span>
+                <span class="pf-arrow">↓ needs: test</span>
+                <span class="pf-box sonar">🔬 Job 3: SonarQube Quality Gate</span>
+                <span class="pf-arrow">↓ needs: sonar</span>
+                <span class="pf-box build">🐳 Job 4: Build &amp; Push</span>
+                <span class="pf-note">✅ รัน (if condition true)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p><strong>Conditional ใน ci.yml — Job 4 มี 2 เงื่อนไข:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>.github/workflows/ci.yml — Job 4 header</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>  build-push:
+    name: 🐳 Build & Push Image
+    runs-on: ubuntu-latest
+    needs: sonar
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'</code></pre>
+        </div>
+
+        <p><strong>อธิบายแต่ละส่วน:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">needs: sonar</span>
+            <span class="le-desc">Job 4 รอให้ Job 3 (sonar) ผ่านก่อน — และเพราะ sonar ต้องการ test ก็รอ test, test ต้องการ lint ก็รอ lint — ดังนั้น <strong>ต้องผ่านทั้ง 3 jobs</strong></span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">if: github.ref == 'refs/heads/main'</span>
+            <span class="le-desc">ตรวจว่า branch ที่ push คือ <code>main</code> — ถ้าใช่ → รัน Job 4</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">|| github.ref == 'refs/heads/develop'</span>
+            <span class="le-desc">หรือเป็น <code>develop</code> — branch staging ก็รัน Job 4 ด้วย</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">refs/heads/main</span>
+            <span class="le-desc">รูปแบบเต็มของ branch reference ใน Git — ต้องใส่ <code>refs/heads/</code> นำหน้าเสมอใน if condition</span>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🎯</span>
+          <div>
+            <strong>ทำไมต้อง Conditional?</strong>
+            <strong>ประหยัดค่าใช้จ่าย:</strong> Feature branch มีการ push บ่อยมาก ถ้า build + push ทุกครั้งจะเปลือง registry storage และ CI minutes โดยไม่จำเป็น
+            <br><br>
+            <strong>ความปลอดภัย:</strong> image ใน registry ควรมาจาก branch ที่ผ่าน review แล้วเท่านั้น ไม่ใช่จาก experiment branch ของนักพัฒนา
+          </div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ถ้าโค้ดไม่ผ่าน Quality Gate → จะไม่มีการ build image เด็ดขาด</strong>
+            เพราะ <code>needs: sonar</code> ทำให้ Job 4 รอ Job 3 — ถ้า Job 3 fail (Quality Gate ไม่ผ่าน) Job 4 จะถูก skip ไปอัตโนมัติ
+            ระบบนี้รับประกันว่า image ทุกตัวที่อยู่ใน registry ผ่าน code quality check มาแล้ว
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 12: Docker Buildx + Login
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="step-12">
+      <div class="step-header">
+        <div class="step-num">12</div>
+        <div class="step-title">Docker Buildx + Login to Registry</div>
+        <div class="step-badge registry">Setup Steps</div>
+      </div>
+      <div class="step-body">
+
+        <p>ก่อนจะ build และ push image ต้องตั้งค่า 3 ส่วนก่อน: รับ commit SHA, เปิดใช้ BuildKit, และ login เข้า registry</p>
+
+        <div class="file-path"><span class="fp-label">ส่วนนี้อยู่ใน:</span> .github/workflows/ci.yml — Job 4 steps</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Setup steps ใน Job 4</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}</code></pre>
+        </div>
+
+        <p><strong>อธิบายทีละบรรทัด:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">git rev-parse --short HEAD</span>
+            <span class="le-desc">ดึง commit hash ปัจจุบันมาแบบสั้น 7 ตัวอักษร เช่น <code>abc1234</code> — ใช้เป็น image tag เพื่อ traceability</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">&gt;&gt; $GITHUB_OUTPUT</span>
+            <span class="le-desc">เขียนค่าลงใน special file ของ GitHub Actions เพื่อให้ step อื่น อ่านได้ผ่าน <code>steps.vars.outputs.sha_short</code></span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">id: vars</span>
+            <span class="le-desc">ตั้งชื่อ step นี้ว่า <code>vars</code> — ทำให้ step ถัดไปอ้างถึงได้ว่า <code>steps.vars.outputs.sha_short</code></span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">setup-buildx-action@v3</span>
+            <span class="le-desc">เปิดใช้ Docker BuildKit — เป็น build engine รุ่นใหม่ที่รองรับ parallel layer build, advanced caching, และ multi-platform builds</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">login-action@v3</span>
+            <span class="le-desc">ทำ <code>docker login</code> โดยใช้ 3 secrets — credentials จะถูกเก็บใน runner memory ชั่วคราวสำหรับ session นี้เท่านั้น</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">registry: REGISTRY_URL</span>
+            <span class="le-desc">endpoint ของ registry ที่จะ login — Docker Hub: <code>docker.io</code>, GitHub Container Registry: <code>ghcr.io</code>, หรือ IP ของ private registry</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">username / password</span>
+            <span class="le-desc">credentials สำหรับ login — ควรใช้ access token แทน password ตรงๆ เพราะสามารถ revoke ได้โดยไม่ต้องเปลี่ยน password</span>
+          </div>
+        </div>
+
+        <div class="secrets-box">
+          <div class="secrets-title">🔐 Secrets ที่ต้องตั้งค่าใน GitHub Repository</div>
+          <p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;">ไปที่ GitHub repo → Settings → Secrets and variables → Actions → New repository secret</p>
+          <div class="secrets-grid">
+            <div class="secret-row">
+              <span class="secret-key">REGISTRY_URL</span>
+              <span class="secret-desc">Docker Hub: <code>docker.io</code> · GitHub Container Registry: <code>ghcr.io</code> · private registry: <code>registry.example.com</code> หรือ IP:port</span>
+            </div>
+            <div class="secret-row">
+              <span class="secret-key">REGISTRY_USER</span>
+              <span class="secret-desc">username สำหรับ login เข้า registry — สำหรับ Docker Hub คือ Docker Hub username ของคุณ</span>
+            </div>
+            <div class="secret-row">
+              <span class="secret-key">REGISTRY_PASS</span>
+              <span class="secret-desc">password หรือ access token — <strong>แนะนำ token</strong> (Docker Hub: Account Settings → Security → Access Tokens) เพราะ revoke ได้ไม่กระทบ account</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>เหตุใด BuildKit ถึงเร็วกว่า Docker build ปกติ?</strong>
+            Docker build แบบเดิมสร้าง layer ทีละชั้นตามลำดับ BuildKit วิเคราะห์ Dockerfile แล้วรัน step ที่ไม่พึ่งพากัน <em>พร้อมกัน</em>
+            นอกจากนี้ยังรองรับ <code>--mount=type=cache</code> และ cache export/import ที่ใช้ใน step ถัดไป
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 13: build-push-action@v5 Deep Dive
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="step-13">
+      <div class="step-header">
+        <div class="step-num">13</div>
+        <div class="step-title">build-push-action@v5 — อธิบายทุก Field</div>
+        <div class="step-badge docker">Docker BuildKit</div>
+      </div>
+      <div class="step-body">
+
+        <p><code>docker/build-push-action@v5</code> คือ action หลักที่ build image และ push ขึ้น registry ในคำสั่งเดียว รองรับ BuildKit, cache, และ multi-tag อย่างสมบูรณ์</p>
+
+        <div class="file-path"><span class="fp-label">ส่วนนี้อยู่ใน:</span> .github/workflows/ci.yml — Job 4</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Build &amp; Push backend + frontend</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/taskflow-backend:sha-${{ steps.vars.outputs.sha_short }}
+            ${{ secrets.REGISTRY_URL }}/taskflow-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/taskflow-frontend:sha-${{ steps.vars.outputs.sha_short }}
+            ${{ secrets.REGISTRY_URL }}/taskflow-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max</code></pre>
+        </div>
+
+        <p><strong>อธิบายทุก field อย่างละเอียด:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">context: ./backend</span>
+            <span class="le-desc">โฟลเดอร์ที่ส่งให้ Docker daemon เป็น <em>build context</em> — Docker จะส่งไฟล์ทั้งหมดในโฟลเดอร์นี้ไปยัง build daemon และหา <code>Dockerfile</code> ใน path นี้</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">push: true</span>
+            <span class="le-desc">สั่ง push image ขึ้น registry หลัง build เสร็จ — ถ้าตั้ง <code>push: false</code> จะ build แต่ไม่ push (ใช้สำหรับทดสอบว่า Dockerfile ใช้ได้โดยไม่ต้องการ credentials)</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">tags: | (multi-line)</span>
+            <span class="le-desc">ใช้ YAML literal block (<code>|</code>) เพื่อใส่หลาย tag — action จะ push image เดียวกัน แต่ tag ด้วยทุก tag ที่ระบุ โดย build แค่ครั้งเดียว</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">REGISTRY_URL/taskflow-backend:sha-abc1234</span>
+            <span class="le-desc">tag แบบ immutable — ผูกกับ commit hash เพื่อ traceability: รู้ว่า image นี้มาจาก commit ไหน ใช้สำหรับ rollback และ audit</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">REGISTRY_URL/taskflow-backend:latest</span>
+            <span class="le-desc">tag แบบ mutable — ชี้ไปที่ image ล่าสุดที่ผ่าน CI เสมอ สะดวกสำหรับ <code>docker pull</code> ง่ายๆ และ CD pipeline ที่ต้องการ "เวอร์ชันล่าสุด"</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">cache-from: type=gha</span>
+            <span class="le-desc">ดึง cached layers จาก GitHub Actions Cache — ถ้า run นี้มี cache จาก run ก่อน Docker จะ skip การ build layers ที่ไม่เปลี่ยน ทำให้เร็วขึ้นมาก</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">cache-to: type=gha,mode=max</span>
+            <span class="le-desc">บันทึก layers ลง GitHub Actions Cache หลัง build เสร็จ เพื่อให้ run ถัดไปใช้ได้ — ต้องรัน <code>cache-to</code> อย่างน้อย 1 ครั้งก่อน <code>cache-from</code> ถึงจะได้ประโยชน์</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">mode=max vs mode=min</span>
+            <span class="le-desc"><code>mode=max</code> cache ทุก layer รวมถึง intermediate layers → hit rate สูงกว่า แต่ใช้ storage มากกว่า | <code>mode=min</code> cache เฉพาะ final image layers → ประหยัด storage แต่ cache hit น้อยกว่า</span>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">⚡</span>
+          <div>
+            <strong>ผลลัพธ์ที่เห็นได้จากการใช้ Cache</strong>
+            Build ครั้งแรก (ไม่มี cache): ประมาณ 3–5 นาที<br>
+            Build ครั้งถัดไป (มี cache, โค้ดเปลี่ยนนิดหน่อย): ประมาณ 30–60 วินาที<br>
+            เพราะ layer ที่ไม่เปลี่ยน เช่น <code>npm install</code> จะถูก pull จาก cache แทนการรันใหม่
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🏗️</span>
+          <div>
+            <strong>ทำไมต้อง build ทั้ง backend และ frontend แยกกัน?</strong>
+            แต่ละส่วนมี Dockerfile ของตัวเอง และ deploy บน container คนละตัว — backend เป็น Node.js API, frontend เป็น Nginx serve static files จาก Vue build
+            การแยก image ทำให้ scale แต่ละส่วนได้อิสระ และ deploy บางส่วนโดยไม่ต้อง redeploy ทั้งระบบ
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 14: Image Tagging Strategy
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="step-14">
+      <div class="step-header">
+        <div class="step-num">14</div>
+        <div class="step-title">Image Tagging Strategy — sha vs latest</div>
+        <div class="step-badge tag">Tagging Strategy</div>
+      </div>
+      <div class="step-body">
+
+        <div class="alert tip">
+          <span class="alert-icon">🏷️</span>
+          <div>
+            <strong>ทำไมต้องมี 2 tags?</strong>
+            แต่ละ tag ตอบโจทย์คนละ use case — <code>sha</code> สำหรับ precision และ traceability, <code>latest</code> สำหรับ convenience
+            การใช้แค่ tag เดียวจะเสียประโยชน์ของอีกแบบไป
+          </div>
+        </div>
+
+        <p><strong>เปรียบเทียบ 2 tagging strategy:</strong></p>
+        <table class="concept-table">
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>ตัวอย่าง</th>
+              <th>ใช้ทำอะไร</th>
+              <th>ข้อดี</th>
+              <th>ข้อเสีย</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>sha</td>
+              <td><code>taskflow-backend:sha-abc1234</code></td>
+              <td>Traceable deploy, rollback</td>
+              <td>ย้อนกลับได้แม่นยำ รู้ว่าเป็น commit ไหน</td>
+              <td>tag สะสมเยอะขึ้นเรื่อยๆ ต้องมี cleanup policy</td>
+            </tr>
+            <tr>
+              <td>latest</td>
+              <td><code>taskflow-backend:latest</code></td>
+              <td>docker pull ล่าสุด, CD pipeline</td>
+              <td>ง่าย ไม่ต้องจำ hash ใช้ได้ทันที</td>
+              <td>ไม่รู้ว่าเป็น commit ไหน ถ้า image มีปัญหา rollback ยาก</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top:.5rem;"><strong>ความหมายในเชิง immutability:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">sha-abc1234 (immutable)</span>
+            <span class="le-desc">"โค้ด commit <code>abc1234</code> อยู่ใน image นี้แน่ๆ" — tag นี้จะไม่ถูก overwrite เพราะ sha ของแต่ละ commit ไม่ซ้ำกัน ใช้ใน production deploy และ audit trail</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">latest (mutable)</span>
+            <span class="le-desc">"เป็น image ล่าสุดที่ผ่าน CI" — tag นี้ถูก overwrite ทุกครั้งที่มี build ใหม่ ใช้สำหรับ development/staging หรือ CD pipeline ที่ต้องการ pull ล่าสุดเสมอ</span>
+          </div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>Best Practice: อย่าใช้ <code>:latest</code> ใน Production!</strong>
+            ใน production environment ควร deploy ด้วย sha tag เสมอ — เพราะถ้า deploy ด้วย <code>:latest</code> แล้วมีปัญหา
+            คุณจะไม่รู้ว่า <code>latest</code> ณ เวลานั้นคือ commit ไหน และ rollback ไปเวอร์ชันที่ stable ทำได้ยาก
+          </div>
+        </div>
+
+        <p><strong>ตัวอย่าง Rollback ด้วย sha tag:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — Rollback workflow</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code># ดูว่า container ไหนกำลังรันอยู่และใช้ image อะไร
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+
+# ตัวอย่าง output:
+# NAMES               IMAGE                                          STATUS
+# taskflow-backend    registry.example.com/taskflow-backend:sha-abc1234   Up 2 hours
+
+# Rollback ไปเวอร์ชันก่อนหน้า (สมมติ sha ก่อนหน้าคือ def5678)
+docker pull registry.example.com/taskflow-backend:sha-def5678
+
+docker stop taskflow-backend
+docker rm taskflow-backend
+
+docker run -d \
+  --name taskflow-backend \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  registry.example.com/taskflow-backend:sha-def5678</code></pre>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">✅</span>
+          <div>
+            <strong>ทำไม sha tag ถึง rollback ได้แม่นยำกว่า?</strong>
+            เพราะ <code>sha-def5678</code> คือ image ที่ build มาจาก commit <code>def5678</code> พอดี — คุณรู้แน่ว่าโค้ดนั้นเป็นอะไร
+            ต่างจาก <code>latest</code> ที่อาจชี้ไป image คนละตัวกับตอนที่คุณ deploy
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 15: Summary + Debug + Final Checklist
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="step-15">
+      <div class="step-header">
+        <div class="step-num">15</div>
+        <div class="step-title">GitHub Actions Summary + Debug Challenges + Final Checklist</div>
+        <div class="step-badge summary">Wrap-up</div>
+      </div>
+      <div class="step-body">
+
+        <p><strong>Summary Step — แสดงผลใน GitHub Actions UI:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Summary step ท้าย Job 4</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>      - name: Summary
+        run: |
+          echo "## 🐳 Images Pushed" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Tag |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| taskflow-backend | sha-${{ steps.vars.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| taskflow-backend | latest |" >> $GITHUB_STEP_SUMMARY
+          echo "| taskflow-frontend | sha-${{ steps.vars.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| taskflow-frontend | latest |" >> $GITHUB_STEP_SUMMARY</code></pre>
+        </div>
+
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">$GITHUB_STEP_SUMMARY</span>
+            <span class="le-desc">special environment variable ที่ชี้ไปยังไฟล์ Markdown ชั่วคราว — ทุกอย่างที่ <code>echo</code> ลงไปจะถูก render เป็น Markdown table ใน GitHub Actions run page (ไปดูได้ที่ Actions tab → เลือก run → Summary)</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">&gt;&gt; $GITHUB_STEP_SUMMARY</span>
+            <span class="le-desc">ใช้ <code>&gt;&gt;</code> (append) ไม่ใช่ <code>&gt;</code> (overwrite) เพราะต้องเพิ่มหลายบรรทัดต่อเนื่องกัน ถ้าใช้ <code>&gt;</code> จะลบของเดิมทุกครั้ง</span>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📊</span>
+          <div>
+            <strong>ผลลัพธ์ที่เห็นใน GitHub Actions Summary tab:</strong><br><br>
+            <strong>🐳 Images Pushed</strong>
+            <table style="margin-top:.5rem;border-collapse:collapse;font-size:.85rem;font-family:'JetBrains Mono',monospace;background:#f8fafc;border-radius:6px;overflow:hidden;width:100%;">
+              <thead><tr style="background:#e2e8f0;"><th style="padding:.4rem .75rem;text-align:left;">Image</th><th style="padding:.4rem .75rem;text-align:left;">Tag</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">taskflow-backend</td><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">sha-abc1234</td></tr>
+                <tr style="background:#faf5ff;"><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">taskflow-backend</td><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">latest</td></tr>
+                <tr><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">taskflow-frontend</td><td style="padding:.35rem .75rem;border-bottom:1px solid #e2e8f0;">sha-abc1234</td></tr>
+                <tr style="background:#faf5ff;"><td style="padding:.35rem .75rem;">taskflow-frontend</td><td style="padding:.35rem .75rem;">latest</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Debug challenges -->
+        <div class="debug-card">
+          <div class="debug-title">❓ Debug Challenges — ลองคิดก่อนดูเฉลย</div>
+          <p style="font-size:.88rem;color:#7f1d1d;margin-bottom:1rem;">สถานการณ์จริงที่เกิดขึ้นบ่อยใน CI/CD — ลองวิเคราะห์ก่อนดู hint</p>
+          <ul class="debug-list">
+            <li class="debug-item">
+              <div class="debug-q">1. Job 4 ไม่รัน ทั้งที่ push ไป main branch แล้ว?</div>
+              <div class="debug-hint">ตรวจสอบ <code>if</code> condition ใน ci.yml — ต้องเป็น <code>refs/heads/main</code> (มี <code>refs/heads/</code> นำหน้า) ไม่ใช่แค่ <code>main</code> เปล่าๆ และตรวจว่า Job 3 (sonar) ผ่านแล้วหรือยัง เพราะ Job 4 ใช้ <code>needs: sonar</code></div>
+            </li>
+            <li class="debug-item">
+              <div class="debug-q">2. Build สำเร็จ แต่ push ล้มเหลวด้วย error "unauthorized: authentication required"?</div>
+              <div class="debug-hint">ตรวจสอบ <code>REGISTRY_USER</code> และ <code>REGISTRY_PASS</code> ใน GitHub Secrets ว่าถูกต้อง — สังเกตว่า secret name ตรงกับที่ใช้ใน ci.yml หรือไม่ (case-sensitive) และ login step ทำงานสำเร็จหรือเปล่า (ดูใน Actions log)</div>
+            </li>
+            <li class="debug-item">
+              <div class="debug-q">3. cache-from ไม่ work — build ช้าเท่าเดิมทุก run ราวกับไม่มี cache?</div>
+              <div class="debug-hint"><code>cache-from</code> จะดึง cache ได้ก็ต่อเมื่อมีการ save cache ไว้แล้ว — ต้องให้ <code>cache-to</code> ทำงานสำเร็จอย่างน้อย 1 ครั้งก่อน นอกจากนี้ cache key ขึ้นกับ runner OS และ repository ถ้าเปลี่ยน runner จะไม่ hit cache เดิม</div>
+            </li>
+            <li class="debug-item">
+              <div class="debug-q">4. SonarQube แสดง coverage 0% ทั้งที่ test ผ่านใน Job 2 แล้ว?</div>
+              <div class="debug-hint">Job 3 (sonar) ต้อง <strong>รัน tests ใหม่อีกครั้ง</strong> ในตัวมันเองเพื่อสร้าง <code>lcov.info</code> file — ตรวจว่า step <code>Run tests to generate lcov coverage</code> อยู่ก่อน <code>SonarQube Scan</code> และไฟล์ <code>sonar-project.properties</code> ชี้ path coverage ถูกต้อง</div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Final verify checklist -->
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">Final Checklist — ครบ Week 6 CI Advanced</div>
+            <ul>
+              <li>ตั้งค่า 5 secrets ใน GitHub: <code>SONAR_TOKEN</code>, <code>SONAR_HOST_URL</code>, <code>REGISTRY_URL</code>, <code>REGISTRY_USER</code>, <code>REGISTRY_PASS</code></li>
+              <li>push ไป feature branch → 3 jobs รัน (lint, test, sonar) — Job 4 ไม่รัน (skip)</li>
+              <li>push ไป main/develop → 4 jobs รันครบ ทุกตัวผ่าน</li>
+              <li>SonarQube dashboard แสดง TaskFlow project พร้อมค่า metrics</li>
+              <li>Quality Gate status = Passed (สีเขียว) หรือปรับ threshold ให้ตรงกับค่าจริง</li>
+              <li>Registry มี image: <code>taskflow-backend:sha-xxxx</code> และ <code>taskflow-backend:latest</code></li>
+              <li>Registry มี image: <code>taskflow-frontend:sha-xxxx</code> และ <code>taskflow-frontend:latest</code></li>
+              <li>GitHub Actions Summary tab แสดงตาราง "Images Pushed" หลัง Job 4 เสร็จ</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Completion card ── -->
+    <div class="completion-card">
+      <div class="completion-inner">
+        <span class="emoji-big">🎉</span>
+        <h2>ยินดีด้วย! คุณเรียน Week 6 — CI Advanced ครบแล้ว!</h2>
+        <p class="subtitle">คุณผ่านการเรียนรู้ทั้ง 3 Parts และ 15 Steps ของ Week 6 ครบสมบูรณ์<br>เสร็จสิ้น Week 6!</p>
+
+        <div class="skills-grid">
+          <div class="skill-badge">
+            <span class="skill-icon">🔬</span>
+            <span class="skill-name">SonarQube Analysis</span>
+            <div class="skill-sub">Static code analysis, sonar-project.properties, scan action</div>
+          </div>
+          <div class="skill-badge">
+            <span class="skill-icon">🚦</span>
+            <span class="skill-name">Quality Gate</span>
+            <div class="skill-sub">Threshold configuration, block merge on fail, sonarqube-quality-gate-action</div>
+          </div>
+          <div class="skill-badge">
+            <span class="skill-icon">🐳</span>
+            <span class="skill-name">Docker Build &amp; Push</span>
+            <div class="skill-sub">BuildKit, build-push-action@v5, GHA cache type=gha</div>
+          </div>
+          <div class="skill-badge">
+            <span class="skill-icon">🏷️</span>
+            <span class="skill-name">Image Tagging Strategy</span>
+            <div class="skill-sub">sha tag (immutable), latest tag (mutable), rollback workflow</div>
+          </div>
+        </div>
+
+        <a href="tutorial.html" class="back-overview">🏠 กลับ Overview Week 6</a>
+      </div>
+    </div>
+
+    <!-- ── Navigation ── -->
+    <div class="part-nav">
+      <a href="tutorial-part2.html" class="nav-btn prev">← Part 2: Jobs 1–3</a>
+      <a href="tutorial.html" class="nav-btn overview">🏠 Overview Week 6</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 6 Part 3/3 · Docker Build &amp; Push + Image Tagging Strategy
+</div>
+
+<!-- Prism.js -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+<script>
+  const TOTAL = 5;
+  const KEY   = 'w6p3-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 11; i <= 15; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^step-(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) {
+            done.push(n);
+            localStorage.setItem(KEY, JSON.stringify(done));
+            updateProgress();
+          }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="step-"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

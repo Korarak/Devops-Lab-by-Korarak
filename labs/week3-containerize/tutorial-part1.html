@@ -169,7 +169,9 @@
           <div class="le-row"><span class="le-code">backend/db.js</span><span class="le-desc">เชื่อมต่อ PostgreSQL ด้วย connection pool — อ่านค่า env vars</span></div>
           <div class="le-row"><span class="le-code">backend/index.js</span><span class="le-desc">Express server — routes ทั้งหมด, auto-create table, seed data</span></div>
           <div class="le-row"><span class="le-code">backend/.env.example</span><span class="le-desc">template ค่า environment — ต้อง copy เป็น .env ก่อนรัน local</span></div>
-          <div class="le-row"><span class="le-code">frontend/src/App.vue</span><span class="le-desc">Vue 3 component เดียว — template + script setup + style ทั้งหมดอยู่นี่</span></div>
+          <div class="le-row"><span class="le-code">frontend/src/composables/useProducts.js</span><span class="le-desc">state ทั้งหมด + computed + methods สำหรับ API — composable ที่ App.vue เรียกใช้</span></div>
+          <div class="le-row"><span class="le-code">frontend/src/components/*.vue</span><span class="le-desc">8 components เล็กๆ แต่ละไฟล์มีหน้าที่เดียว (Header, Stats, Toolbar, Card, Grid, Modal, Confirm)</span></div>
+          <div class="le-row"><span class="le-code">frontend/src/App.vue</span><span class="le-desc">root component — import + ประกอบ components ทั้งหมดเข้าด้วยกัน</span></div>
           <div class="le-row"><span class="le-code">frontend/vite.config.js</span><span class="le-desc">proxy /api → backend:3001 เวลา dev</span></div>
           <div class="le-row"><span class="le-code">backend/Dockerfile</span><span class="le-desc">build backend เป็น Docker image</span></div>
           <div class="le-row"><span class="le-code">frontend/Dockerfile</span><span class="le-desc">multi-stage build: build Vue → serve ด้วย Nginx</span></div>
@@ -223,11 +225,11 @@ PORT=3001</code></pre>
         <p><strong>ขั้นตอนที่ 2 — รัน PostgreSQL ด้วย Docker (สำหรับทดสอบ local):</strong></p>
         <div class="code-wrap">
           <div class="code-label"><span>terminal — start postgres container</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code>docker run -d --name pg-dev \
-  -e POSTGRES_PASSWORD=secret \
-  -e POSTGRES_USER=dev \
-  -e POSTGRES_DB=stockpro \
-  -p 5432:5432 \
+          <pre class="language-bash"><code>docker run -d --name pg-dev `
+  -e POSTGRES_PASSWORD=secret `
+  -e POSTGRES_USER=dev `
+  -e POSTGRES_DB=stockpro `
+  -p 5432:5432 `
   postgres:15-alpine</code></pre>
         </div>
 
@@ -556,8 +558,8 @@ curl "http://localhost:3001/api/products?search=mac"
 curl "http://localhost:3001/api/products?category=Electronics"
 
 # เพิ่มสินค้าใหม่
-curl -X POST http://localhost:3001/api/products \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:3001/api/products `
+  -H "Content-Type: application/json" `
   -d '{"name":"Test Product","category":"Electronics","price":999,"stock":10}'</code></pre>
         </div>
 

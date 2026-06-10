@@ -10,68 +10,58 @@ const START_AT = Date.now();
 app.use(cors());
 app.use(express.json());
 
-// ── Health Check ──────────────────────────────────────────────
+// ── Health Check (ไม่ query DB เพื่อให้ test ได้ง่าย) ─────────────
 app.get('/health', (req, res) => {
   res.json({
-    status:  'ok',
-    service: 'StockPro API',
-    version: process.env.APP_VERSION || '1.0.0',
-    uptime:  Math.floor((Date.now() - START_AT) / 1000),
+    status:    'ok',
+    service:   'TaskFlow API',
+    version:   process.env.APP_VERSION || '1.0.0',
+    uptime:    Math.floor((Date.now() - START_AT) / 1000),
     timestamp: new Date(),
   });
 });
 
-// ── GET /api/stats ─────────────────────────────────────────────
+// ── GET /api/stats (สรุปข้อมูล Dashboard) ─────────────────────────
 app.get('/api/stats', async (req, res) => {
   try {
-    const [overview, byCategory] = await Promise.all([
-      pool.query(`
-        SELECT
-          COUNT(*)                                          AS total_products,
-          SUM(stock)                                        AS total_stock,
-          ROUND(SUM(price * stock), 2)                      AS total_value,
-          COUNT(*) FILTER (WHERE stock = 0)                 AS out_of_stock,
-          COUNT(*) FILTER (WHERE stock > 0 AND stock < 10)  AS low_stock
-        FROM products
-      `),
-      pool.query(`
-        SELECT
-          category,
-          COUNT(*)             AS products,
-          SUM(stock)           AS total_stock,
-          ROUND(SUM(price * stock), 2) AS total_value
-        FROM products
-        GROUP BY category
-        ORDER BY total_value DESC
-      `),
-    ]);
-    res.json({
-      overview:    overview.rows[0],
-      by_category: byCategory.rows,
-    });
+    const { rows } = await pool.query(`
+      SELECT
+        COUNT(*)                                                       AS total,
+        COUNT(*) FILTER (WHERE status = 'todo')                        AS todo,
+        COUNT(*) FILTER (WHERE status = 'in-progress')                 AS in_progress,
+        COUNT(*) FILTER (WHERE status = 'done')                        AS done,
+        COUNT(*) FILTER (WHERE due_date < NOW() AND status != 'done')  AS overdue,
+        COUNT(*) FILTER (WHERE priority = 'high' AND status != 'done') AS high_priority
+      FROM tasks
+    `);
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── GET /api/products?search=&category= ───────────────────────
-app.get('/api/products', async (req, res) => {
+// ── GET /api/tasks?search=&status=&priority= ───────────────────────
+app.get('/api/tasks', async (req, res) => {
   try {
-    const { search = '', category = '' } = req.query;
+    const { search = '', status = '', priority = '' } = req.query;
     const params = [];
     let where = 'WHERE 1=1';
 
     if (search) {
       params.push(`%${search}%`);
-      where += ` AND (name ILIKE $${params.length} OR description ILIKE $${params.length})`;
+      where += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`;
     }
-    if (category) {
-      params.push(category);
-      where += ` AND category = $${params.length}`;
+    if (status) {
+      params.push(status);
+      where += ` AND status = $${params.length}`;
+    }
+    if (priority) {
+      params.push(priority);
+      where += ` AND priority = $${params.length}`;
     }
 
     const { rows } = await pool.query(
-      `SELECT * FROM products ${where} ORDER BY created_at DESC`,
+      `SELECT * FROM tasks ${where} ORDER BY created_at DESC`,
       params
     );
     res.json(rows);
@@ -80,45 +70,42 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// ── GET /api/categories ────────────────────────────────────────
-app.get('/api/categories', async (req, res) => {
+// ── GET /api/tasks/:id ─────────────────────────────────────────────
+app.get('/api/tasks/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT DISTINCT category FROM products ORDER BY category'
+      'SELECT * FROM tasks WHERE id = $1', [req.params.id]
     );
-    res.json(rows.map(r => r.category));
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── GET /api/products/:id ──────────────────────────────────────
-app.get('/api/products/:id', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT * FROM products WHERE id = $1', [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงาน' });
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── POST /api/products ─────────────────────────────────────────
-app.post('/api/products', async (req, res) => {
+// ── POST /api/tasks ────────────────────────────────────────────────
+app.post('/api/tasks', async (req, res) => {
   try {
-    const { name, category, price, stock, description = '' } = req.body;
-    if (!name || !category || price == null || stock == null) {
-      return res.status(400).json({ error: 'กรุณาระบุ name, category, price, stock' });
+    const { title, status = 'todo', priority = 'medium', assignee = '', due_date = null, description = '' } = req.body;
+
+    if (!title || !title.toString().trim()) {
+      return res.status(400).json({ error: 'กรุณาระบุ title' });
     }
-    if (isNaN(price) || isNaN(stock)) {
-      return res.status(400).json({ error: 'price และ stock ต้องเป็นตัวเลข' });
+
+    const validStatuses  = ['todo', 'in-progress', 'done'];
+    const validPriorities = ['low', 'medium', 'high'];
+
+    if (req.body.status !== undefined && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: `status ต้องเป็น ${validStatuses.join(', ')}` });
     }
+    if (req.body.priority !== undefined && !validPriorities.includes(priority)) {
+      return res.status(400).json({ error: `priority ต้องเป็น ${validPriorities.join(', ')}` });
+    }
+
     const { rows } = await pool.query(
-      `INSERT INTO products (name, category, price, stock, description)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name.trim(), category.trim(), parseFloat(price), parseInt(stock), description.trim()]
+      `INSERT INTO tasks (title, status, priority, assignee, due_date, description)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title.toString().trim(), status, priority, assignee, due_date || null, description]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -126,76 +113,78 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-// ── PUT /api/products/:id ──────────────────────────────────────
-app.put('/api/products/:id', async (req, res) => {
+// ── PUT /api/tasks/:id ─────────────────────────────────────────────
+app.put('/api/tasks/:id', async (req, res) => {
   try {
-    const { name, category, price, stock, description = '' } = req.body;
+    const { title, status, priority, assignee = '', due_date = null, description = '' } = req.body;
     const { rows } = await pool.query(
-      `UPDATE products
-       SET name=$1, category=$2, price=$3, stock=$4, description=$5, updated_at=NOW()
-       WHERE id=$6 RETURNING *`,
-      [name, category, parseFloat(price), parseInt(stock), description, req.params.id]
+      `UPDATE tasks
+       SET title=$1, status=$2, priority=$3, assignee=$4, due_date=$5, description=$6, updated_at=NOW()
+       WHERE id=$7 RETURNING *`,
+      [title, status, priority, assignee, due_date || null, description, req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงาน' });
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── DELETE /api/products/:id ───────────────────────────────────
-app.delete('/api/products/:id', async (req, res) => {
+// ── DELETE /api/tasks/:id ──────────────────────────────────────────
+app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'DELETE FROM products WHERE id=$1 RETURNING *', [req.params.id]
+      'DELETE FROM tasks WHERE id=$1 RETURNING *', [req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบสินค้า' });
-    res.json({ message: 'ลบสินค้าสำเร็จ', deleted: rows[0] });
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงาน' });
+    res.json({ message: 'ลบงานสำเร็จ', deleted: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── Auto-create table + seed ──────────────────────────────────
+// ── Auto-create table + seed ──────────────────────────────────────
 async function initDb() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS products (
+    CREATE TABLE IF NOT EXISTS tasks (
       id          SERIAL PRIMARY KEY,
-      name        VARCHAR(150) NOT NULL,
-      category    VARCHAR(80)  NOT NULL,
-      price       NUMERIC(12,2) NOT NULL DEFAULT 0,
-      stock       INTEGER      NOT NULL DEFAULT 0,
+      title       VARCHAR(200) NOT NULL,
+      status      VARCHAR(20)  NOT NULL DEFAULT 'todo',
+      priority    VARCHAR(10)  NOT NULL DEFAULT 'medium',
+      assignee    VARCHAR(100) DEFAULT '',
+      due_date    DATE,
       description TEXT         DEFAULT '',
       created_at  TIMESTAMPTZ  DEFAULT NOW(),
       updated_at  TIMESTAMPTZ  DEFAULT NOW()
     )
   `);
-  console.log('✅ Table products ready');
+  console.log('✅ Table tasks ready');
 
-  const { rows } = await pool.query('SELECT COUNT(*) FROM products');
+  const { rows } = await pool.query('SELECT COUNT(*) FROM tasks');
   if (parseInt(rows[0].count) === 0) {
     await pool.query(`
-      INSERT INTO products (name, category, price, stock, description) VALUES
-      ('MacBook Air M3',        'Electronics', 44900, 15, 'Apple MacBook Air chip M3 RAM 8GB'),
-      ('iPhone 16 Pro',         'Electronics', 42900,  8, 'Apple iPhone 16 Pro 256GB'),
-      ('Nike Air Max 270',      'Footwear',     4590, 32, 'รองเท้าวิ่ง Nike ไซส์ 38-45'),
-      ('เสื้อยืด Uniqlo Dry-Ex','Clothing',      390, 87, 'เสื้อยืดระบายอากาศ สีขาว'),
-      ('กล้อง Sony ZV-E10 II',  'Electronics', 24990,  4, 'กล้อง Mirrorless สำหรับ Vlogger'),
-      ('หูฟัง AirPods Pro 2',    'Electronics', 9490, 20, 'หูฟัง True Wireless ANC'),
-      ('โต๊ะทำงาน Flexispot E7','Furniture',   18900,  3, 'โต๊ะปรับระดับไฟฟ้า 140x70 cm'),
-      ('กระเป๋า Anello',        'Bags',         1290, 45, 'กระเป๋าเป้ผ้า Canvas ทรงสี่เหลี่ยม'),
-      ('หนังสือ Clean Code',    'Books',         650, 12, 'โดย Robert C. Martin — ฉบับภาษาอังกฤษ'),
-      ('สายชาร์จ USB-C 100W',   'Accessories',  390,  6, 'สายชาร์จ 2 เมตร รองรับ PD 100W')
+      INSERT INTO tasks (title, status, priority, assignee, due_date, description) VALUES
+      ('ออกแบบ UI สำหรับ Dashboard',   'in-progress', 'high',   'ปิยะ',   '2026-06-30', 'ออกแบบ layout หน้า Dashboard หลัก ให้แสดงสถิติงานได้ชัดเจน'),
+      ('เขียน API endpoint /tasks',     'done',        'high',   'สมชาย', '2026-06-10', 'RESTful API สำหรับจัดการ tasks ครบ CRUD'),
+      ('เขียน Unit Test (Jest)',         'todo',        'high',   'ปิยะ',   '2026-07-05', 'เขียน Jest test ให้ได้ coverage ≥ 60%'),
+      ('ติดตั้ง Docker Compose',        'done',        'medium', 'มานะ',   '2026-06-08', 'ตั้งค่า docker-compose.yml และ .env'),
+      ('สร้าง CI Pipeline',             'in-progress', 'high',   'สมชาย', '2026-07-03', 'สร้าง GitHub Actions workflow: lint → test → build'),
+      ('เขียน README.md',               'todo',        'low',    'มานะ',   '2026-07-10', 'เอกสารวิธีติดตั้งและใช้งานระบบ'),
+      ('Review PR: feature/auth-module','todo',        'medium', 'สมชาย', '2026-07-01', 'ตรวจสอบ code และ comment ใน PR'),
+      ('แก้ Bug: Token หมดอายุเร็ว',   'in-progress', 'high',   'ปิยะ',   '2026-06-28', 'Session timeout 5 นาทีทั้งที่ตั้งค่า 1 ชั่วโมง'),
+      ('อัปเดต Packages (npm audit)',   'todo',        'low',    'มานะ',   '2026-07-15', 'npm audit fix + upgrade major versions'),
+      ('Deploy ขึ้น Production Server', 'todo',        'medium', 'สมชาย', '2026-07-08', 'Deploy บน VPS ด้วย docker-compose.prod.yml')
     `);
-    console.log('🌱 Seed data inserted (10 products)');
+    console.log('🌱 Seed data inserted (10 tasks)');
   }
 }
 
+// รัน server เฉพาะเมื่อ execute โดยตรง (ไม่ใช่ require จาก test)
 if (require.main === module) {
   initDb()
     .then(() => {
       app.listen(PORT, () => {
-        console.log(`🚀 StockPro API v${process.env.APP_VERSION || '1.0.0'} running at http://localhost:${PORT}`);
+        console.log(`🚀 TaskFlow API v${process.env.APP_VERSION || '1.0.0'} running at http://localhost:${PORT}`);
       });
     })
     .catch(err => {

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 3: CI Pipeline (Jest + ESLint + GitHub Actions) — Week 5 TaskFlow | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 265px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .top-bar a:hover { color: var(--primary-dark); }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #3b0764, #5b21b6, #7c3aed);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner { position: relative; z-index: 1; }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    /* ── Layout ── */
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg, #3b0764, var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary-dark); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary-dark); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    /* ── Main ── */
+    .main { flex: 1; min-width: 0; }
+
+    /* ── Step cards ── */
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.jest     { background: #fef3c7; color: #92400e; }
+    .step-badge.mock     { background: #ede9fe; color: #5b21b6; }
+    .step-badge.coverage { background: #d1fae5; color: #065f46; }
+    .step-badge.ci       { background: #dbeafe; color: #1e40af; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    /* ── File path label ── */
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    /* ── Code blocks ── */
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    /* ── Alert boxes ── */
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.danger  { background: var(--danger-light); border-left: 4px solid var(--danger); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    /* ── Verify checklist ── */
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* ── Line-explain table ── */
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; padding-top: .1rem; }
+
+    /* ── Concept table ── */
+    .concept-table { width: 100%; border-collapse: collapse; font-size: .88rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .concept-table th { background: linear-gradient(135deg, #3b0764, #5b21b6); color: #fff; padding: .6rem 1rem; text-align: left; font-weight: 700; }
+    .concept-table td { padding: .55rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .concept-table tr:last-child td { border-bottom: none; }
+    .concept-table tr:nth-child(even) td { background: #faf5ff; }
+    .concept-table td:first-child { font-weight: 600; color: var(--primary-dark); }
+
+    /* ── Test file tree ── */
+    .test-tree { background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .83rem; line-height: 2; }
+    .tt-green { color: #86efac; font-weight: 600; }
+    .tt-purple { color: #c4b5fd; font-weight: 600; }
+    .tt-amber { color: #fbbf24; }
+    .tt-dim { color: #64748b; }
+
+    /* ── Pipeline flow ── */
+    .pipeline-flow { background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 1.9; text-align: center; }
+    .pf-box { display: inline-block; background: #334155; border: 1px solid #475569; border-radius: 8px; padding: .35rem 1.25rem; margin: .15rem 0; color: #e2e8f0; }
+    .pf-box.lint { border-color: #fbbf24; color: #fde68a; }
+    .pf-box.test { border-color: #a78bfa; color: #c4b5fd; }
+    .pf-box.build { border-color: #6ee7b7; color: #a7f3d0; }
+    .pf-arrow { color: #64748b; display: block; line-height: 1.4; }
+    .pf-label { font-size: .72rem; color: #64748b; display: block; margin-top: .1rem; margin-bottom: .5rem; }
+
+    /* ── Debug challenge ── */
+    .debug-card { background: #fff5f5; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .debug-title { font-size: 1rem; font-weight: 800; color: var(--danger); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+    .debug-steps { list-style: none; display: grid; gap: .4rem; counter-reset: dbstep; }
+    .debug-steps li { display: flex; gap: .75rem; font-size: .88rem; counter-increment: dbstep; }
+    .debug-steps li::before { content: counter(dbstep); background: var(--danger); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 800; flex-shrink: 0; margin-top: .15rem; }
+
+    /* ── Submit card ── */
+    .submit-card { background: linear-gradient(135deg, #3b0764, #5b21b6); color: #fff; border-radius: 16px; padding: 2rem; text-align: center; }
+    .submit-card h2 { font-size: 1.35rem; margin-bottom: .75rem; }
+    .submit-list { list-style: none; text-align: left; display: inline-grid; gap: .5rem; margin: 1.25rem auto; }
+    .submit-list li { display: flex; gap: .7rem; font-size: .9rem; }
+    .submit-list li::before { content: '☐'; font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Part nav ── */
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.overview { background: var(--primary); color: #fff; }
+    .nav-btn.overview:hover { background: var(--primary-dark); }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; position: static; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sticky top bar ── -->
+<div class="top-bar">
+  <a href="tutorial-part2.html">← Part 2</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<!-- ── Hero banner ── -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="badge">Part 3 of 3 · Steps 11–15</div>
+    <h1>🧪 CI Pipeline — Jest + ESLint + GitHub Actions</h1>
+    <p class="subtitle">TaskFlow — ระบบจัดการงาน · Unit Tests · Mock DB · Coverage · 3-Job Workflow</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── Sidebar TOC ── -->
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 3: CI Pipeline</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s11" id="toc-11"><span class="dot"></span>11. ทำไมต้อง Test?</a>
+      <a class="toc-link" href="#s12" id="toc-12"><span class="dot"></span>12. health.test.js</a>
+      <a class="toc-link" href="#s13" id="toc-13"><span class="dot"></span>13. tasks.test.js + Mock DB</a>
+      <a class="toc-link" href="#s14" id="toc-14"><span class="dot"></span>14. validation.test.js + Coverage</a>
+      <a class="toc-link" href="#s15" id="toc-15"><span class="dot"></span>15. GitHub Actions ci.yml</a>
+      <div style="padding:.9rem 1.2rem; border-top:1px solid var(--border);">
+        <a href="tutorial-part2.html" style="display:block;background:#f1f5f9;color:#334155;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">← Part 2: Frontend</a>
+        <a href="tutorial.html" style="display:block;background:var(--primary-light);color:var(--primary-dark);text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;margin-top:.5rem;">🏠 Overview</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <main class="main">
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 11: Unit Testing Concepts
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="s11">
+      <div class="step-header">
+        <div class="step-num">11</div>
+        <div class="step-title">ทำไมต้อง Test? — Unit Testing Concepts</div>
+        <div class="step-badge jest">Jest</div>
+      </div>
+      <div class="step-body">
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>Testing คืออะไร และทำไมต้องทำใน CI?</strong>
+            ก่อน push code ขึ้น production ทุกครั้ง เราต้องมั่นใจว่า API ยัง <em>ทำงานถูกต้อง</em>
+            Test อัตโนมัติทำให้ GitHub Actions ตรวจสอบทุก PR แทนเรา — ถ้า test fail → PR ถูก block
+          </div>
+        </div>
+
+        <p><strong>ประเภทของ Test ที่ควรรู้:</strong></p>
+
+        <table class="concept-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Unit Test</th>
+              <th>Integration Test</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>DB จริง</td>
+              <td>❌ Mock</td>
+              <td>✅ ใช้จริง</td>
+            </tr>
+            <tr>
+              <td>ความเร็ว</td>
+              <td>⚡ เร็วมาก</td>
+              <td>🐢 ช้า</td>
+            </tr>
+            <tr>
+              <td>ความน่าเชื่อถือ</td>
+              <td>✅ Stable</td>
+              <td>อาจ Flaky</td>
+            </tr>
+            <tr>
+              <td>ใช้ใน CI</td>
+              <td>✅ ทุก PR</td>
+              <td>บางครั้ง</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert info">
+          <span class="alert-icon">🎯</span>
+          <div>
+            <strong>สิ่งที่เราทำใน Week 5</strong>
+            เราใช้ <strong>unit test</strong> ที่ใช้ <code>supertest</code> (ส่ง request ไปยัง Express app โดยตรง — ไม่ต้อง listen() ก่อน)
+            บวกกับ <strong>mock DB</strong> ด้วย <code>jest.mock('../db')</code> เพื่อไม่ต้องมี PostgreSQL จริงๆ ใน CI
+          </div>
+        </div>
+
+        <p><strong>โครงสร้างไฟล์ test ที่มีอยู่แล้ว:</strong></p>
+        <div class="test-tree">
+backend/tests/<br>
+├── <span class="tt-green">health.test.js</span>       <span class="tt-dim">(4 tests)  — GET /health</span><br>
+├── <span class="tt-purple">tasks.test.js</span>        <span class="tt-dim">(7 tests)  — CRUD /api/tasks</span><br>
+└── <span class="tt-amber">validation.test.js</span>   <span class="tt-dim">(4 tests)  — POST validation</span>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">✅</span>
+          <div>
+            <strong>Total: 15 tests</strong>
+            ครอบคลุม logic ที่สำคัญที่สุดทั้งหมด — health check, CRUD operations, และ input validation
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 12: health.test.js
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="s12">
+      <div class="step-header">
+        <div class="step-num">12</div>
+        <div class="step-title">health.test.js — Test ที่ไม่ต้อง Mock</div>
+        <div class="step-badge jest">Jest + Supertest</div>
+      </div>
+      <div class="step-body">
+
+        <p>Test ที่ง่ายที่สุดคือ <code>GET /health</code> เพราะ endpoint นี้ <strong>ไม่ query DB เลย</strong> — ไม่ต้อง mock อะไรทั้งนั้น</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/tests/health.test.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/tests/health.test.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const request = require('supertest');
+const app = require('../index');
+
+describe('GET /health', () => {
+  test('returns 200 with status ok', async () => {
+    const res = await request(app).get('/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('status', 'ok');
+  });
+
+  test('returns version field', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body).toHaveProperty('version');
+    expect(typeof res.body.version).toBe('string');
+  });
+
+  test('returns uptime as a number', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body).toHaveProperty('uptime');
+    expect(typeof res.body.uptime).toBe('number');
+    expect(res.body.uptime).toBeGreaterThanOrEqual(0);
+  });
+
+  test('returns service containing TaskFlow', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body.service).toContain('TaskFlow');
+  });
+});</code></pre>
+        </div>
+
+        <p><strong>อธิบาย API ของ Jest + Supertest:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">request(app)</span>
+            <span class="le-desc">supertest สร้าง HTTP server จาก express app โดยตรง — ไม่ต้อง <code>app.listen()</code> ก่อน, Jest จัดการ lifecycle ให้</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">describe()</span>
+            <span class="le-desc">จัดกลุ่ม test ที่เกี่ยวข้องกัน — ช่วยให้ output อ่านง่ายและ test ถูก organise</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">test()</span>
+            <span class="le-desc">test case เดียว — แต่ละ test ควร test สิ่งเดียวเป็นหลัก (single responsibility)</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">expect().toBe()</span>
+            <span class="le-desc">assert ว่าค่า <strong>ตรงกันเป๊ะ</strong> (strict equality) — ใช้กับ primitive: number, string, boolean</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">expect().toHaveProperty()</span>
+            <span class="le-desc">assert ว่า object มี property นั้น — อาจส่ง argument ที่สองเพื่อตรวจค่าด้วย</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">expect().toContain()</span>
+            <span class="le-desc">assert ว่า string มี substring นั้นอยู่ — เหมาะเมื่อไม่ต้องการตรงทั้งหมด</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">toBeGreaterThanOrEqual(0)</span>
+            <span class="le-desc">assert ว่าตัวเลข ≥ 0 — ใช้ตรวจ uptime ที่ไม่รู้ค่าแน่นอน</span>
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧪</span>
+          <div>
+            <strong>รัน test เฉพาะไฟล์นี้:</strong>
+            <div class="code-wrap" style="margin-top:.6rem;">
+              <div class="code-label"><span>PowerShell — รัน health test</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre class="language-powershell"><code>cd backend
+npm test -- --testPathPattern=health</code></pre>
+            </div>
+            ควรเห็น: <code>Tests: 4 passed, 4 total</code>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 13: tasks.test.js + Mock DB
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="s13">
+      <div class="step-header">
+        <div class="step-num">13</div>
+        <div class="step-title">tasks.test.js — Mock Database</div>
+        <div class="step-badge mock">jest.mock()</div>
+      </div>
+      <div class="step-body">
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ทำไมต้อง Mock Database?</strong>
+            ถ้า <em>ไม่</em> mock → ต้องมี PostgreSQL จริงๆ รันอยู่ใน CI → ซับซ้อน, ช้า, อาจล้มเหลวเพราะ network latency
+            หรือ DB ไม่พร้อม — ทำให้ test ไม่ stable (<em>flaky</em>)
+          </div>
+        </div>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/tests/tasks.test.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/tests/tasks.test.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const request = require('supertest');
+
+jest.mock('../db', () => ({
+  query: jest.fn(),
+}));
+const db  = require('../db');
+const app = require('../index');
+
+describe('GET /api/tasks', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 200 with array of tasks', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { id: 1, title: 'เขียน Unit Test', status: 'todo', priority: 'high', assignee: 'ปิยะ' },
+        { id: 2, title: 'สร้าง CI Pipeline', status: 'in-progress', priority: 'high', assignee: 'สมชาย' },
+      ],
+    });
+    const res = await request(app).get('/api/tasks');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(2);
+  });
+
+  test('returns empty array when no tasks', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).get('/api/tasks');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+});
+
+describe('GET /api/tasks/:id', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 200 with single task', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 1, title: 'เขียน Unit Test', status: 'todo', priority: 'high' }],
+    });
+    const res = await request(app).get('/api/tasks/1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('id', 1);
+  });
+
+  test('returns 404 when task not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).get('/api/tasks/999');
+    expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('POST /api/tasks', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('creates task and returns 201', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 3, title: 'งานใหม่', status: 'todo', priority: 'medium', assignee: 'ปิยะ' }],
+    });
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'งานใหม่', status: 'todo', priority: 'medium', assignee: 'ปิยะ' });
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.title).toBe('งานใหม่');
+  });
+});
+
+describe('DELETE /api/tasks/:id', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 200 when deleted', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 1, title: 'งานทดสอบ' }],
+    });
+    const res = await request(app).delete('/api/tasks/1');
+    expect(res.statusCode).toBe(200);
+  });
+
+  test('returns 404 when task not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).delete('/api/tasks/999');
+    expect(res.statusCode).toBe(404);
+  });
+});</code></pre>
+        </div>
+
+        <p><strong>อธิบาย Mock Pattern ที่สำคัญ:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">jest.mock('../db', ...)</span>
+            <span class="le-desc"><strong>ต้องมาก่อน require('../index')</strong> — Jest intercept ก่อน module ถูก load เข้า memory เพื่อให้ app ได้รับ mock แทน DB จริง</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">query: jest.fn()</span>
+            <span class="le-desc">สร้าง mock function — จับ calls ได้ทั้งหมด, กำหนดค่า return ได้, reset ได้</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">mockResolvedValueOnce({rows:[...]})</span>
+            <span class="le-desc">กำหนดว่า <code>db.query()</code> จะ resolve ด้วยค่านี้ <strong>ครั้งเดียว</strong> (once) — การเรียกครั้งถัดไปจะ return undefined</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">beforeEach(() => jest.clearAllMocks())</span>
+            <span class="le-desc">reset mock state ก่อนแต่ละ test — ป้องกัน mock ที่ set ใน test ก่อนหน้า "ค้าง" มาส่งผลกับ test ถัดไป</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">mockResolvedValueOnce vs mockResolvedValue</span>
+            <span class="le-desc"><code>Once</code> = ใช้ได้รอบเดียวแล้วหมด, ไม่มี <code>Once</code> = ทุกครั้งที่เรียก query ได้ค่าเดิม</span>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🔍</span>
+          <div>
+            <strong>ลำดับที่สำคัญมาก: jest.mock → require db → require app</strong>
+            Jest hoist <code>jest.mock()</code> ขึ้นบนสุดของ file อัตโนมัติ ทำให้ทุก module ที่ require หลังจากนั้นได้รับ mock version
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 14: validation.test.js + Code Coverage
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="s14">
+      <div class="step-header">
+        <div class="step-num">14</div>
+        <div class="step-title">validation.test.js + Code Coverage</div>
+        <div class="step-badge coverage">Coverage ≥ 60%</div>
+      </div>
+      <div class="step-body">
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/tests/validation.test.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/tests/validation.test.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const request = require('supertest');
+
+jest.mock('../db', () => ({ query: jest.fn() }));
+const db  = require('../db');
+const app = require('../index');
+
+describe('POST /api/tasks — validation', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('returns 400 when title is missing', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ status: 'todo', priority: 'medium' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('returns 400 when status is invalid', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'งานทดสอบ', status: 'invalid-status' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('returns 400 when priority is invalid', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'งานทดสอบ', priority: 'urgent' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('returns 201 when only title provided', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 5, title: 'งานใหม่', status: 'todo', priority: 'medium' }],
+    });
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'งานใหม่' });
+    expect(res.statusCode).toBe(201);
+  });
+});</code></pre>
+        </div>
+
+        <p><strong>jest.config.js — กำหนด coverage threshold:</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/jest.config.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/jest.config.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  collectCoverageFrom: [
+    'index.js',
+    '!node_modules/**',
+  ],
+  coverageThreshold: {
+    global: {
+      lines:     60,
+      functions: 60,
+      branches:  50,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],
+};</code></pre>
+        </div>
+
+        <p><strong>รัน tests ทั้งหมด และดู coverage:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — รัน all tests</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code>npm test</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — รันพร้อม coverage report</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code>npm test -- --coverage</code></pre>
+        </div>
+
+        <p><strong>ตัวอย่าง output coverage ที่จะเห็น:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>terminal output — coverage summary</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>--------------------|---------|----------|---------|---------|
+File                | % Stmts | % Branch | % Funcs | % Lines |
+--------------------|---------|----------|---------|---------|
+index.js            |   72.31 |    64.29 |   87.50 |   72.31 |
+--------------------|---------|----------|---------|---------|</code></pre>
+        </div>
+
+        <p><strong>ความหมายของแต่ละ metric:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">% Lines</span>
+            <span class="le-desc">กี่ % ของบรรทัดทั้งหมดถูก execute ระหว่าง test — metric หลักที่ใช้วัด coverage</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">% Branch</span>
+            <span class="le-desc">กี่ % ของ if/else ถูก test ทั้งสองทาง — ต่ำกว่า Lines เสมอเพราะต้องครอบทุก condition</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">% Functions</span>
+            <span class="le-desc">กี่ % ของ function ถูกเรียกอย่างน้อยครั้งหนึ่ง</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">% Statements</span>
+            <span class="le-desc">กี่ % ของ statement (expression, declaration) ถูก execute — ใกล้เคียง Lines มาก</span>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📊</span>
+          <div>
+            <strong>HTML Coverage Report</strong>
+            หลังรัน <code>npm test -- --coverage</code> จะมีไฟล์ที่ <code>backend/coverage/lcov-report/index.html</code>
+            เปิดใน browser ได้ — เห็นบรรทัดไหนถูก/ไม่ถูก execute สีเขียว/แดงชัดเจน
+          </div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ถ้า coverage ต่ำกว่า threshold → CI fail!</strong>
+            <code>jest.config.js</code> กำหนด threshold ≥ 60% lines, ≥ 60% functions, ≥ 50% branches
+            ถ้า coverage ต่ำกว่านี้ <code>npm test -- --coverage</code> จะ exit ด้วย error code
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         STEP 15: GitHub Actions CI Workflow
+    ════════════════════════════════════════════════════ -->
+    <div class="step-card" id="s15">
+      <div class="step-header">
+        <div class="step-num">15</div>
+        <div class="step-title">GitHub Actions CI Workflow — ci.yml</div>
+        <div class="step-badge ci">GitHub Actions</div>
+      </div>
+      <div class="step-body">
+
+        <p>ไฟล์ <code>.github/workflows/ci.yml</code> คือหัวใจของ CI Pipeline — GitHub Actions จะอ่านไฟล์นี้และรัน 3 jobs อัตโนมัติทุกครั้งที่ push</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> .github/workflows/ci.yml</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>.github/workflows/ci.yml — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>name: CI — TaskFlow
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'hotfix/**'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ─── JOB 1: LINT ────────────────────────────────────────────
+  lint:
+    name: 🔍 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ─── JOB 2: TEST ────────────────────────────────────────────
+  test:
+    name: 🧪 Test &amp; Coverage
+    runs-on: ubuntu-latest
+    needs: lint
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 7
+
+  # ─── JOB 3: BUILD ───────────────────────────────────────────
+  build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image (smoke test)
+        run: |
+          docker build -t taskflow-backend:${{ github.sha }} ./backend
+          echo "✅ Build successful: taskflow-backend:${{ github.sha }}"</code></pre>
+        </div>
+
+        <p><strong>อธิบาย configuration ที่สำคัญ:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">on.push.paths</span>
+            <span class="le-desc">CI ทำงานเฉพาะเมื่อไฟล์ใน <code>backend/</code> หรือ <code>ci.yml</code> เปลี่ยน — ไม่ waste time ถ้าแก้แค่ frontend หรือ docs</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">needs: lint</span>
+            <span class="le-desc">test job รอให้ lint job ผ่านก่อน — ถ้า lint fail, test ไม่รัน ประหยัด CI minutes</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">needs: test</span>
+            <span class="le-desc">build job รอให้ test job ผ่านก่อน — Docker image จะ build เฉพาะเมื่อ tests ผ่านแล้วเท่านั้น</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">defaults.run.working-directory: backend</span>
+            <span class="le-desc">ทุก step ใน job นั้น cd เข้า backend อัตโนมัติ — ไม่ต้องพิมพ์ <code>cd backend</code> ทุก step</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">cache: 'npm' + cache-dependency-path</span>
+            <span class="le-desc">cache <code>node_modules</code> ระหว่าง runs โดยใช้ package-lock.json เป็น cache key — เร็วขึ้น ~70%</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">npm ci vs npm install</span>
+            <span class="le-desc"><code>npm ci</code> = clean install ตาม <code>package-lock.json</code> เป๊ะ, ไม่แก้ lock file — reproducible build ใน CI</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">if: always()</span>
+            <span class="le-desc">upload coverage artifact <strong>แม้ test fail</strong> — ทำให้ดู coverage report ได้เสมอเพื่อ debug</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">NODE_ENV: test</span>
+            <span class="le-desc">บอก app ว่าอยู่ใน test environment — ป้องกัน app พยายาม connect DB จริงระหว่าง test</span>
+          </div>
+        </div>
+
+        <p><strong>Pipeline flow ภาพรวม:</strong></p>
+        <div class="pipeline-flow">
+          Push to feature/* branch<br>
+          <span class="pf-arrow">↓</span>
+          <span class="pf-box lint">Job 1: 🔍 Lint</span><br>
+          <span class="pf-label">ESLint check — ตรวจ code style + rules</span>
+          <span class="pf-arrow">↓ (needs: lint)</span>
+          <span class="pf-box test">Job 2: 🧪 Test &amp; Coverage</span><br>
+          <span class="pf-label">15 tests + coverage report + upload artifact</span>
+          <span class="pf-arrow">↓ (needs: test)</span>
+          <span class="pf-box build">Job 3: 🐳 Docker Build</span><br>
+          <span class="pf-label">docker build smoke test — ตรวจ Dockerfile ใช้ได้</span>
+        </div>
+
+        <p><strong>ESLint Configuration — .eslintrc.json:</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> backend/.eslintrc.json</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>backend/.eslintrc.json</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-json"><code>{
+  "env": { "node": true, "es2021": true, "jest": true },
+  "extends": "eslint:recommended",
+  "parserOptions": { "ecmaVersion": 2021 },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single"],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "warn"
+  }
+}</code></pre>
+        </div>
+
+        <p><strong>อธิบาย ESLint rules ที่สำคัญ:</strong></p>
+        <div class="line-explain">
+          <div class="le-row">
+            <span class="le-code">"semi": ["error", "always"]</span>
+            <span class="le-desc">ต้องมี semicolon ทุก statement — CI fail ถ้าขาด (error = breaking)</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">"eqeqeq": ["error", "always"]</span>
+            <span class="le-desc">ต้องใช้ <code>===</code> ไม่ใช่ <code>==</code> — ป้องกัน type coercion bugs</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">"no-var": "error"</span>
+            <span class="le-desc">ห้ามใช้ <code>var</code> — ต้องใช้ <code>const</code> หรือ <code>let</code> เท่านั้น</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">"jest": true</span>
+            <span class="le-desc">บอก ESLint รู้จัก jest globals: <code>describe</code>, <code>test</code>, <code>expect</code>, <code>beforeEach</code> — ไม่ error ว่าไม่ได้ declare</span>
+          </div>
+          <div class="le-row">
+            <span class="le-code">"no-console": "off"</span>
+            <span class="le-desc">อนุญาต <code>console.log</code> — backend มักต้องการ log ข้อมูล</span>
+          </div>
+        </div>
+
+        <!-- Debug challenge -->
+        <div class="debug-card">
+          <div class="debug-title">🐛 Debug Challenge — อ่าน CI Log แล้วหาปัญหา</div>
+          <p style="font-size:.9rem;margin-bottom:.75rem;"><strong>Scenario:</strong> มี broken test ที่ CI fail — test expects status 200 แต่ได้ 500 เพราะ mock ไม่ได้ถูกตั้งค่า</p>
+          <p style="font-size:.88rem;margin-bottom:.5rem;"><strong>วิธีแก้ step by step:</strong></p>
+          <ol class="debug-steps">
+            <li>ดู error message ใน Actions tab — หา "Expected: 200, Received: 500" หรือ stack trace</li>
+            <li>เปิด test file ที่ fail — ดูว่า <code>mockResolvedValueOnce</code> ถูก set ก่อน request หรือไม่</li>
+            <li>ตรวจว่า <code>jest.mock('../db')</code> อยู่ก่อน <code>require('../index')</code> ในไฟล์</li>
+            <li>ตรวจ <code>beforeEach(() => jest.clearAllMocks())</code> — ถ้าขาดอาจ mock ค้างจาก test ก่อน</li>
+            <li>แก้ไข → <code>git push</code> → ดู CI run ใหม่ใน Actions tab</li>
+          </ol>
+        </div>
+
+        <!-- Final verify checklist -->
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">Checklist ก่อน submit</div>
+            <ul>
+              <li><code>npm test</code> รันผ่านทุก 15 tests — 0 failures</li>
+              <li><code>npm test -- --coverage</code> แสดง coverage ≥ 60% lines, ≥ 60% functions</li>
+              <li><code>npm run lint</code> ไม่มี errors (warnings ได้)</li>
+              <li>Push ไป feature branch → CI workflow ทำงานอัตโนมัติใน GitHub Actions</li>
+              <li>ทุก job ผ่าน: Lint ✅ → Test &amp; Coverage ✅ → Docker Build ✅</li>
+              <li>Download coverage artifact จาก Actions tab → เปิด HTML report ใน browser ได้</li>
+              <li>สร้าง PR → CI ต้องผ่านก่อน merge ได้ (Branch Protection Rules)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Submit card -->
+        <div class="submit-card">
+          <h2>🎉 Checklist ก่อนส่งงาน Week 5</h2>
+          <p>ตรวจสอบทุกข้อก่อน push Git และส่ง link</p>
+          <ul class="submit-list">
+            <li>Part 1 เสร็จ: backend TaskFlow API รันได้ local, ทุก endpoint ตอบสนองถูกต้อง</li>
+            <li>Part 2 เสร็จ: <code>npm run dev</code> frontend แสดง TaskFlow UI ครบ</li>
+            <li>Part 3: <code>npm test</code> ผ่านทุก 15 tests ใน 3 test files</li>
+            <li>Coverage ≥ 60% lines และ ≥ 60% functions (ตาม jest.config.js threshold)</li>
+            <li><code>npm run lint</code> ไม่มี ESLint errors</li>
+            <li>Push feature branch → ดู GitHub Actions → ทุก job ผ่าน (Lint → Test → Build)</li>
+            <li>Download coverage artifact จาก Actions tab → เห็น HTML report</li>
+            <li>สร้าง PR ไป main/develop → CI ผ่านก่อน merge</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Navigation ── -->
+    <div class="part-nav">
+      <a href="tutorial-part2.html" class="nav-btn prev">← Part 2: Frontend</a>
+      <a href="tutorial.html" class="nav-btn overview">🏠 กลับ Overview</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 5 Part 3/3 · CI Pipeline: Jest + ESLint + GitHub Actions
+</div>
+
+<!-- Prism.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+<script>
+  const TOTAL = 5;
+  const KEY   = 'w5p3-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 11; i <= 15; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) {
+            done.push(n);
+            localStorage.setItem(KEY, JSON.stringify(done));
+            updateProgress();
+          }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

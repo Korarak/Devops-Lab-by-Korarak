@@ -447,7 +447,7 @@
       <div class="rm-num">7</div>
       <div class="rm-body">
         <div class="rm-title">Continuous Deployment to VM (CD)</div>
-        <div class="rm-deliver">Tools: SSH Action · Staging+Prod VM · Approval Gate</div>
+        <div class="rm-deliver">Tools: SSH Action · deploy.sh · Staging VM · Environment Secrets</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
@@ -471,7 +471,7 @@
       <div class="rm-num">9</div>
       <div class="rm-body">
         <div class="rm-title">Kubernetes Fundamentals</div>
-        <div class="rm-deliver">Tools: k3s · kubectl · Deployment · Service · ConfigMap</div>
+        <div class="rm-deliver">Tools: k3s · kubectl · Deployment · Service · ConfigMap · Secret</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
@@ -479,15 +479,15 @@
       <div class="rm-num">10</div>
       <div class="rm-body">
         <div class="rm-title">K8s Operations: HPA + Rolling Update</div>
-        <div class="rm-deliver">Tools: HPA · k6 Load Test · Rollback · CD to k3s</div>
+        <div class="rm-deliver">Tools: HPA · k6 Load Test · Rolling Update · kubectl rollout undo</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
     <div class="rm-card upcoming">
       <div class="rm-num">11</div>
       <div class="rm-body">
-        <div class="rm-title">Deployment Strategies + Rollback Drill</div>
-        <div class="rm-deliver">Tools: Canary · Blue-Green · Argo Rollouts · Feature Flags</div>
+        <div class="rm-title">Deployment Strategies: Blue-Green + Canary</div>
+        <div class="rm-deliver">Tools: K8s Labels/Selectors · Blue-Green (2 Deployments) · Canary (replica weight)</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
@@ -519,7 +519,7 @@
       <div class="rm-num">14</div>
       <div class="rm-body">
         <div class="rm-title">Infrastructure as Code: Terraform</div>
-        <div class="rm-deliver">Tools: Terraform HCL · telmate/proxmox · Remote State</div>
+        <div class="rm-deliver">Tools: Terraform HCL · Plan/Apply · tfstate · Remote State (TF Cloud)</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
@@ -527,7 +527,7 @@
       <div class="rm-num">15</div>
       <div class="rm-body">
         <div class="rm-title">DevSecOps: Security ใน CI/CD</div>
-        <div class="rm-deliver">Tools: Semgrep · Trivy · Dependabot · Sealed Secrets</div>
+        <div class="rm-deliver">Tools: Trivy (image scan) · Dependabot (dependency alerts) · SBOM</div>
       </div>
       <div class="rm-badge soon">เร็วๆ นี้</div>
     </div>
@@ -576,7 +576,7 @@
         <li>Orchestration: Kubernetes (k3s) + Helm</li>
         <li>Monitoring: Prometheus + Grafana + Loki</li>
         <li>IaC: Terraform (Proxmox Provider)</li>
-        <li>Security: Semgrep + Trivy + Sealed Secrets</li>
+        <li>Security: Trivy + Dependabot + SBOM</li>
       </ul>
     </div>
     <div class="info-card">

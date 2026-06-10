@@ -3,1528 +3,225 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Week 5 — Continuous Integration: First Pipeline | DevOps 30901-2008</title>
+<title>Week 5 — CI Pipeline: TaskFlow | DevOps 30901-2008</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <style>
 :root{
-  --primary:#10b981;--primary-dark:#059669;--primary-light:#d1fae5;
-  --accent:#f59e0b;--accent-light:#fef3c7;
-  --blue:#3b82f6;--blue-light:#dbeafe;
-  --red:#ef4444;--red-light:#fee2e2;
-  --purple:#8b5cf6;--purple-light:#ede9fe;
-  --sky:#0ea5e9;--sky-light:#e0f2fe;
-  --bg:#f0fdf4;--surface:#fff;--border:#e2e8f0;
-  --text:#1e293b;--muted:#64748b;
+  --purple:#7c3aed;--purple-dark:#6d28d9;--purple-light:#ede9fe;
+  --green:#059669;--green-light:#d1fae5;
+  --amber:#d97706;--amber-light:#fef3c7;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --bg:#f5f3ff;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
-code,pre{font-family:'JetBrains Mono',monospace}
-.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;transition:width .3s}
-.back-link{position:absolute;top:1rem;left:1.25rem;color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s;z-index:10}
-.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
-.site-header{background:linear-gradient(135deg,#064e3b,#065f46,#059669);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
-.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.week-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
-.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
-.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
-.header-meta{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap}
-.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
-.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
-.sidebar{position:sticky;top:1.5rem;height:fit-content;max-height:calc(100vh - 3rem);overflow-y:auto}
-.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
-.toc-list{list-style:none}
-.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
-.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
-.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.toc-item a.active .toc-num{background:var(--primary);color:#fff}
-.progress-info{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--muted)}
-.progress-track{height:6px;background:#f1f5f9;border-radius:3px;margin-top:.4rem;overflow:hidden}
-.progress-track-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;border-radius:3px;transition:width .3s}
-.content{min-width:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.75}
+.hero{background:linear-gradient(135deg,#3b0764,#5b21b6,#7c3aed);color:#fff;padding:3rem 2rem;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1}
+.week-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:.4rem}
+.hero .subtitle{font-size:1rem;opacity:.85;margin-bottom:1.5rem}
+.chips{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .85rem;font-size:.82rem}
+.back-link{position:absolute;top:1rem;left:1.25rem;color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;z-index:10}
+.back-link:hover{background:rgba(255,255,255,.25)}
+.container{max-width:1100px;margin:2.5rem auto;padding:0 1.5rem;display:grid;gap:2rem}
 
-/* NEW IN WEEK 5 BOX */
-.new-in-week{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid var(--primary);border-radius:14px;padding:1.5rem;margin-bottom:2rem}
-.new-in-week h3{color:#065f46;font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
-.new-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-.new-item{background:#fff;border:1px solid #a7f3d0;border-radius:10px;padding:.75rem 1rem;display:flex;gap:.6rem;align-items:flex-start}
-.new-item .ni-icon{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
-.new-item .ni-title{font-size:.85rem;font-weight:700;color:#065f46}
-.new-item .ni-desc{font-size:.78rem;color:#059669;margin-top:.1rem}
+.new-box{background:#fff;border:2px solid var(--purple);border-radius:16px;padding:1.75rem}
+.new-box h2{color:var(--purple-dark);font-size:1rem;font-weight:800;margin-bottom:1.25rem}
+.new-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.85rem}
+.new-item{background:var(--purple-light);border:1px solid #c4b5fd;border-radius:10px;padding:.85rem 1rem;display:flex;gap:.6rem}
+.ni-icon{font-size:1.2rem;flex-shrink:0}
+.ni-title{font-size:.85rem;font-weight:700;color:var(--purple-dark)}
+.ni-desc{font-size:.78rem;color:#6d28d9;margin-top:.1rem}
 
-/* STEP CARDS */
-.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
-.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.step-title{font-size:1.15rem;font-weight:700}
-.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
-.step-body{padding:1.5rem}
-.step-body h4{font-size:1rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
-.step-body p{margin-bottom:1rem;line-height:1.8}
-.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
-.step-body li{margin-bottom:.35rem;line-height:1.75}
+.new-system{background:linear-gradient(135deg,#faf5ff,#ede9fe);border:2px solid #c4b5fd;border-radius:16px;padding:1.75rem}
+.new-system h2{color:#5b21b6;font-size:1rem;font-weight:800;margin-bottom:1rem}
+.sys-compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.sys-box{background:#fff;border-radius:10px;padding:1rem 1.25rem;border:1.5px solid}
+.sys-box.old{border-color:#e2e8f0}
+.sys-box.new-s{border-color:#c4b5fd}
+.sys-label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.sys-label.old{color:#94a3b8}
+.sys-label.new-s{color:var(--purple)}
+.sys-name{font-size:1.1rem;font-weight:800;margin-bottom:.2rem}
+.sys-name.old{color:#64748b;text-decoration:line-through}
+.sys-name.new-s{color:var(--purple-dark)}
+.sys-desc{font-size:.82rem;color:var(--muted)}
 
-/* CODE BLOCKS */
-.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
-.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
-.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
-.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
-.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
-pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
-.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
+.part-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;text-decoration:none;color:var(--text);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+.part-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.part-header{padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem}
+.part-num{width:44px;height:44px;border-radius:50%;color:#fff;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.part-num.p1{background:linear-gradient(135deg,#059669,#10b981)}
+.part-num.p2{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.part-num.p3{background:linear-gradient(135deg,#2563eb,#38bdf8)}
+.part-title{font-size:1rem;font-weight:700}
+.part-meta{font-size:.78rem;color:var(--muted);margin-top:.1rem}
+.part-body{padding:0 1.5rem 1.25rem;flex:1}
+.part-steps{list-style:none;display:grid;gap:.3rem;margin-bottom:1rem}
+.part-steps li{font-size:.83rem;color:#475569;display:flex;gap:.4rem}
+.part-steps li::before{content:'→';color:var(--purple);font-weight:700;flex-shrink:0}
+.part-btn{display:block;background:var(--purple-light);color:var(--purple-dark);text-align:center;padding:.55rem;border-radius:8px;font-weight:700;font-size:.88rem;border:1.5px solid #c4b5fd;transition:all .2s}
+.part-card:hover .part-btn{background:var(--purple);color:#fff;border-color:var(--purple)}
 
-/* ALERTS */
-.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
-.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
-.alert-body{flex:1}
-.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
-.alert.info{background:var(--sky-light);border-left:4px solid var(--sky)}
-.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
-.alert.success{background:#d1fae5;border-left:4px solid var(--primary)}
-.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
-.alert.danger{background:var(--red-light);border-left:4px solid var(--red)}
-
-/* VERIFY BOX */
-.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:10px;padding:1rem 1.15rem;margin-top:1.25rem}
-.verify-title{font-weight:700;color:#065f46;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
-.verify ul{padding-left:1.3rem}
-.verify li{font-size:.9rem;color:#047857;margin-bottom:.25rem}
-
-/* PIPELINE DIAGRAM */
-.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1rem 0;padding:1.25rem;background:#f8fafc;border-radius:12px;border:1px solid var(--border)}
-.pipe-node{background:#fff;border:2px solid var(--border);border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;text-align:center;min-width:100px}
-.pipe-node.trigger{border-color:var(--accent);background:var(--accent-light);color:#92400e}
-.pipe-node.lint{border-color:var(--blue);background:var(--blue-light);color:#1e3a8a}
-.pipe-node.test{border-color:var(--primary);background:var(--primary-light);color:#065f46}
-.pipe-node.cover{border-color:var(--purple);background:var(--purple-light);color:#4c1d95}
-.pipe-node.build{border-color:var(--sky);background:var(--sky-light);color:#0c4a6e}
-.pipe-node.fail{border-color:var(--red);background:var(--red-light);color:#991b1b}
-.pipe-arrow{color:var(--muted);font-weight:700;font-size:1.1rem}
-
-/* WORKFLOW ANATOMY */
-.wf-anatomy{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:2;overflow-x:auto;margin:1rem 0}
-.wf-c1{color:#f59e0b}.wf-c2{color:#34d399}.wf-c3{color:#60a5fa}.wf-c4{color:#c084fc}.wf-c5{color:#fb7185}.wf-gray{color:#64748b}
-
-/* FILE TREE */
-.file-tree{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.9;margin:1rem 0}
-.ft-new{color:#34d399;font-weight:700}
+.file-tree{background:#1e293b;color:#e2e8f0;border-radius:12px;padding:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;white-space:pre}
+.ft-new{color:#a78bfa;font-weight:700}
 .ft-chg{color:#fbbf24}
 .ft-dim{color:#475569}
+.ft-hi{color:#86efac;font-weight:600}
 
-/* INFO TABLE */
-.info-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
-.info-table th{background:#064e3b;color:#fff;padding:.6rem .9rem;text-align:left;font-weight:700}
-.info-table td{padding:.6rem .9rem;border:1px solid var(--border)}
-.info-table tr:nth-child(even) td{background:#f8fafc}
-.info-table code{background:#f1f5f9;padding:.1rem .35rem;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82em}
-
-/* DEBUG CHALLENGE BOX */
-.challenge{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:2px solid var(--accent);border-radius:14px;padding:1.5rem;margin:1.25rem 0}
-.challenge-title{font-weight:800;color:#92400e;font-size:1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
-.challenge-step{display:flex;gap:.75rem;padding:.6rem 0;border-bottom:1px dashed #fcd34d;align-items:flex-start}
-.challenge-step:last-child{border-bottom:none;padding-bottom:0}
-.cs-num{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem}
-.cs-body{flex:1;font-size:.88rem}
-
-/* COVERAGE TABLE */
-.cover-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem}
-.cover-table th{background:#1e293b;color:#e2e8f0;padding:.55rem .8rem;font-weight:700;text-align:left}
-.cover-table td{padding:.55rem .8rem;border-bottom:1px solid var(--border)}
-.cover-bar{height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;min-width:80px;display:inline-block;vertical-align:middle;margin-left:.5rem}
-.cover-bar-fill{height:100%;border-radius:4px}
-.cover-high{background:#10b981}
-.cover-mid{background:#f59e0b}
-.cover-low{background:#ef4444}
-.cover-pct{font-weight:700;font-family:'JetBrains Mono',monospace}
-
-/* CONCEPT CARDS */
-.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem;margin:1rem 0}
-.concept-card{border-radius:10px;padding:1rem;border:1.5px solid}
-.concept-card.green{background:#f0fdf4;border-color:#86efac}
-.concept-card.blue{background:var(--blue-light);border-color:#93c5fd}
-.concept-card.amber{background:var(--accent-light);border-color:#fcd34d}
-.concept-card.purple{background:var(--purple-light);border-color:#c4b5fd}
-.concept-card .cc-title{font-weight:700;font-size:.88rem;margin-bottom:.3rem}
-.concept-card .cc-body{font-size:.82rem;color:var(--muted);line-height:1.55}
-
-/* BADGE PREVIEW */
-.badge-demo{background:#0f172a;border-radius:10px;padding:1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#e2e8f0}
-.badge-img-row{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.75rem;align-items:center}
-.badge-img-placeholder{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:.35rem .9rem;font-size:.75rem;color:#94a3b8;display:flex;align-items:center;gap:.4rem}
-.badge-pass{background:rgba(16,185,129,.15);border-color:#10b981;color:#10b981}
-.badge-fail{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444}
-
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{position:static;max-height:none}
-  .new-grid{grid-template-columns:1fr}
-}
+footer{text-align:center;padding:1.5rem;color:var(--muted);font-size:.84rem;background:#fff;border-top:1px solid var(--border)}
+@media(max-width:600px){.sys-compare{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
-
-<header class="site-header">
+<div class="hero">
   <a href="../index.html" class="back-link">← DevOps Labs</a>
-  <div class="week-badge">สัปดาห์ที่ 5 · วิชา DevOps (30901-2008)</div>
-  <h1>Continuous Integration: First Pipeline</h1>
-  <p class="subtitle">ต่อยอด StockPro — เพิ่ม Unit Test, ESLint และ CI Pipeline ที่สมบูรณ์</p>
-  <div class="header-meta">
-    <span class="meta-chip">⏱ 300 นาที</span>
-    <span class="meta-chip">15 ขั้นตอน</span>
-    <span class="meta-chip">Jest · ESLint · GitHub Actions · Coverage</span>
-  </div>
-</header>
-
-<div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-card">
-    <div class="sidebar-title">เนื้อหา</div>
-    <ul class="toc-list" id="toc">
-      <li class="toc-item"><a href="#step1"><span class="toc-num">1</span>Week 5 Overview</a></li>
-      <li class="toc-item"><a href="#step2"><span class="toc-num">2</span>GitHub Actions Architecture</a></li>
-      <li class="toc-item"><a href="#step3"><span class="toc-num">3</span>Hello CI — Workflow แรก</a></li>
-      <li class="toc-item"><a href="#step4"><span class="toc-num">4</span>Trigger Events</a></li>
-      <li class="toc-item"><a href="#step5"><span class="toc-num">5</span>ติดตั้ง Jest + Supertest</a></li>
-      <li class="toc-item"><a href="#step6"><span class="toc-num">6</span>Unit Test 1 — Health Check</a></li>
-      <li class="toc-item"><a href="#step7"><span class="toc-num">7</span>Unit Test 2 — Products CRUD</a></li>
-      <li class="toc-item"><a href="#step8"><span class="toc-num">8</span>Unit Test 3 — Validation</a></li>
-      <li class="toc-item"><a href="#step9"><span class="toc-num">9</span>Code Coverage</a></li>
-      <li class="toc-item"><a href="#step10"><span class="toc-num">10</span>Setup ESLint</a></li>
-      <li class="toc-item"><a href="#step11"><span class="toc-num">11</span>CI Workflow สมบูรณ์</a></li>
-      <li class="toc-item"><a href="#step12"><span class="toc-num">12</span>Upload Artifact</a></li>
-      <li class="toc-item"><a href="#step13"><span class="toc-num">13</span>Branch Protection + CI Gate</a></li>
-      <li class="toc-item"><a href="#step14"><span class="toc-num">14</span>Debug Challenge</a></li>
-      <li class="toc-item"><a href="#step15"><span class="toc-num">15</span>Status Badge + ส่งงาน</a></li>
-    </ul>
-    <div class="progress-info">
-      ความคืบหน้า: <span id="prog-text">0 / 15</span>
-      <div class="progress-track"><div class="progress-track-fill" id="prog-fill"></div></div>
-    </div>
-  </div>
-</aside>
-
-<main class="content">
-
-<!-- NEW IN WEEK 5 -->
-<div class="new-in-week">
-  <h3>🆕 สิ่งที่เพิ่มมาใน Week 5 (ต่อยอดจาก Week 4 — StockPro)</h3>
-  <div class="new-grid">
-    <div class="new-item"><span class="ni-icon">🧪</span><div><div class="ni-title">Unit Tests (Jest + Supertest)</div><div class="ni-desc">≥3 tests ครอบคลุม /health, /api/products, validation</div></div></div>
-    <div class="new-item"><span class="ni-icon">📊</span><div><div class="ni-title">Code Coverage ≥ 60%</div><div class="ni-desc">jest --coverage + threshold ใน jest.config.js</div></div></div>
-    <div class="new-item"><span class="ni-icon">🔍</span><div><div class="ni-title">ESLint Config ที่สมบูรณ์</div><div class="ni-desc">.eslintrc.json + npm run lint ผ่านใน CI</div></div></div>
-    <div class="new-item"><span class="ni-icon">⚙️</span><div><div class="ni-title">CI Workflow 3 Jobs</div><div class="ni-desc">lint → test (with coverage) → build (sequential)</div></div></div>
-    <div class="new-item"><span class="ni-icon">📦</span><div><div class="ni-title">Upload Coverage Artifact</div><div class="ni-desc">actions/upload-artifact@v4 เก็บ HTML report</div></div></div>
-    <div class="new-item"><span class="ni-icon">🛡️</span><div><div class="ni-title">CI Gate ใน Branch Protection</div><div class="ni-desc">PR ถูก block ถ้า lint หรือ test ยัง fail</div></div></div>
-    <div class="new-item"><span class="ni-icon">🟢</span><div><div class="ni-title">Status Badge เพิ่มเติม</div><div class="ni-desc">badge แสดง CI status แบบ real-time ใน README</div></div></div>
-    <div class="new-item"><span class="ni-icon">🐛</span><div><div class="ni-title">Debug Challenge</div><div class="ni-desc">ฝึกอ่าน CI log + แก้ broken test ในเวลาจำกัด</div></div></div>
-  </div>
-</div>
-
-<!-- STEP 1 -->
-<div class="step-card" id="step1">
-  <div class="step-header">
-    <div class="step-num">1</div>
-    <div class="step-title">Week 5 Overview — CI คืออะไร และทำไมถึงสำคัญ</div>
-    <div class="step-time">⏱ 15 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ใน Week 4 เราสร้าง CI/CD pipeline เบื้องต้นแล้ว แต่ยังขาดสิ่งสำคัญที่สุดของ CI คือ <strong>Automated Tests</strong> Week 5 นี้เราจะสร้าง pipeline ที่แท้จริง — pipeline ที่บอกได้ว่า "code นี้ใช้งานได้จริง" ทุกครั้งที่ push</p>
-
-    <h4>ปัญหาก่อนมี CI</h4>
-    <div class="concept-grid">
-      <div class="concept-card amber">
-        <div class="cc-title">🔥 "Works on my machine"</div>
-        <div class="cc-body">code รันได้บนเครื่องตัวเอง แต่พอ merge แล้ว production พัง</div>
-      </div>
-      <div class="concept-card amber">
-        <div class="cc-title">😱 Integration Hell</div>
-        <div class="cc-body">ทีม 5 คนทำงานแยกกัน 2 สัปดาห์ → รวม code ใช้เวลาอีก 3 วัน</div>
-      </div>
-      <div class="concept-card amber">
-        <div class="cc-title">🐌 Manual Testing</div>
-        <div class="cc-body">ทดสอบด้วยมือทุกครั้ง ใช้เวลานาน ผิดพลาดง่าย ไม่ทำก็กลัว</div>
-      </div>
-      <div class="concept-card green">
-        <div class="cc-title">✅ CI แก้ปัญหานี้ได้</div>
-        <div class="cc-body">ทุก push → ทดสอบอัตโนมัติ → แจ้งผลทันที → merge ได้อย่างมั่นใจ</div>
-      </div>
-    </div>
-
-    <h4>Pipeline ที่จะสร้างใน Week 5</h4>
-    <div class="pipeline">
-      <div class="pipe-node trigger">📝 Push/PR</div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node lint">🔍 Lint<br><small>ESLint</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node test">🧪 Test<br><small>Jest+Coverage</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node cover">📊 Coverage<br><small>≥60%</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node build">📦 Build<br><small>Artifact</small></div>
-    </div>
-
-    <h4>โครงสร้างไฟล์ที่จะเพิ่มใน Week 5</h4>
-    <div class="file-tree">
-stockpro/  <span class="ft-dim">(จาก Week 4)</span><br>
-├── .github/<br>
-│   └── workflows/<br>
-│       ├── <span class="ft-chg">ci.yml</span>              <span class="ft-dim">← ปรับใหม่ (เพิ่ม test job)</span><br>
-│       └── cd.yml              <span class="ft-dim">← ไม่เปลี่ยน</span><br>
-├── backend/<br>
-│   ├── <span class="ft-chg">index.js</span>            <span class="ft-dim">← เพิ่ม module.exports</span><br>
-│   ├── <span class="ft-new">jest.config.js</span>       <span class="ft-dim">← ใหม่: Jest config + coverage threshold</span><br>
-│   ├── <span class="ft-new">.eslintrc.json</span>       <span class="ft-dim">← ใหม่: ESLint rules</span><br>
-│   ├── <span class="ft-chg">package.json</span>         <span class="ft-dim">← เพิ่ม test script + devDependencies</span><br>
-│   └── <span class="ft-new">tests/</span><br>
-│       ├── <span class="ft-new">health.test.js</span>   <span class="ft-dim">← ใหม่: test /health endpoint</span><br>
-│       ├── <span class="ft-new">stocks.test.js</span>   <span class="ft-dim">← ใหม่: test CRUD endpoints</span><br>
-│       └── <span class="ft-new">stats.test.js</span>    <span class="ft-dim">← ใหม่: test /api/stats + validation</span><br>
-└── <span class="ft-dim">... ไฟล์เดิม Week 4 ไม่เปลี่ยน</span>
-    </div>
-
-    <div class="alert info">
-      <span class="alert-icon">ℹ️</span>
-      <div class="alert-body"><strong>สิ่งที่ต้องมีก่อนเริ่ม Week 5</strong>
-        StockPro จาก Week 4 ที่มี CI/CD pipeline รันได้ · GitHub Repository ที่มี branch protection · Node.js 18+ บนเครื่อง
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ เช็ค prerequisite</div>
-      <ul>
-        <li><code class="inline-code">node --version</code> แสดง v18.x หรือสูงกว่า</li>
-        <li>GitHub repo จาก Week 4 มี .github/workflows/ci.yml อยู่แล้ว</li>
-        <li><code class="inline-code">docker compose up -d</code> ใน stockpro/ รันได้</li>
-      </ul>
+  <div class="hero-inner">
+    <div class="week-badge">สัปดาห์ที่ 5 · วิชา DevOps (30901-2008)</div>
+    <h1>🧪 Continuous Integration: First Pipeline</h1>
+    <p class="subtitle">TaskFlow — ระบบจัดการงาน · Jest · ESLint · GitHub Actions · Coverage</p>
+    <div class="chips">
+      <span class="chip">⏱ 300 นาที</span>
+      <span class="chip">15 ขั้นตอน</span>
+      <span class="chip">3 Parts</span>
     </div>
   </div>
 </div>
 
-<!-- STEP 2 -->
-<div class="step-card" id="step2">
-  <div class="step-header">
-    <div class="step-num">2</div>
-    <div class="step-title">GitHub Actions Architecture — ลึกกว่าเดิม</div>
-    <div class="step-time">⏱ 20 นาที</div>
+<div class="container">
+
+  <!-- New system announcement -->
+  <div class="new-system">
+    <h2>🔄 ระบบใหม่ใน Week 5</h2>
+    <div class="sys-compare">
+      <div class="sys-box old">
+        <div class="sys-label old">Week 3–4 (เก่า)</div>
+        <div class="sys-name old">📦 StockPro</div>
+        <div class="sys-desc">ระบบจัดการสินค้าคงคลัง<br>Products · Categories · Stock</div>
+      </div>
+      <div class="sys-box new-s">
+        <div class="sys-label new-s">Week 5–6 (ใหม่)</div>
+        <div class="sys-name new-s">📋 TaskFlow</div>
+        <div class="sys-desc">ระบบจัดการงาน<br>Tasks · Status · Priority · Assignee</div>
+      </div>
+    </div>
+    <p style="margin-top:1rem;font-size:.88rem;color:#6d28d9">
+      โครงสร้าง backend/frontend <strong>เหมือนกัน</strong> เปลี่ยนแค่ domain data — ใช้ฝึก CI/CD กับ system ใหม่ที่สดชื่นกว่า
+    </p>
   </div>
-  <div class="step-body">
-    <p>ก่อนเขียน workflow ขอทบทวนและขยายความเข้าใจ GitHub Actions ให้ลึกขึ้น เพื่อให้ออกแบบ pipeline ได้อย่างถูกต้อง</p>
 
-    <h4>โครงสร้าง Workflow YAML</h4>
-    <div class="wf-anatomy">
-<span class="wf-c1">name</span><span class="wf-gray">:</span> CI Pipeline    <span class="wf-gray"># ชื่อ workflow (แสดงใน GitHub UI)</span><br>
-<br>
-<span class="wf-c1">on</span><span class="wf-gray">:</span>              <span class="wf-gray"># 1. EVENTS — อะไรทำให้ workflow ทำงาน</span><br>
-&nbsp;&nbsp;<span class="wf-c2">push</span><span class="wf-gray">:</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">branches</span><span class="wf-gray">: [</span>main<span class="wf-gray">,</span> develop<span class="wf-gray">,</span> <span class="wf-gray">'</span>feature/**<span class="wf-gray">']</span><br>
-&nbsp;&nbsp;<span class="wf-c2">pull_request</span><span class="wf-gray">:</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">branches</span><span class="wf-gray">: [</span>main<span class="wf-gray">,</span> develop<span class="wf-gray">]</span><br>
-<br>
-<span class="wf-c1">jobs</span><span class="wf-gray">:</span>            <span class="wf-gray"># 2. JOBS — งานที่ต้องทำ (รันบน Runner แต่ละตัว)</span><br>
-&nbsp;&nbsp;<span class="wf-c2">lint</span><span class="wf-gray">:</span>          <span class="wf-gray"># job id (ตั้งชื่ออะไรก็ได้)</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">runs-on</span><span class="wf-gray">:</span> ubuntu-latest   <span class="wf-gray"># Runner type</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">steps</span><span class="wf-gray">:</span>        <span class="wf-gray"># 3. STEPS — คำสั่งย่อย ๆ ในแต่ละ job</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c4">- uses</span><span class="wf-gray">:</span> actions/checkout@v4   <span class="wf-gray"># Action สำเร็จรูป</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c4">- name</span><span class="wf-gray">:</span> Run lint<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c5">run</span><span class="wf-gray">:</span> npm run lint     <span class="wf-gray"># Shell command</span><br>
-<br>
-&nbsp;&nbsp;<span class="wf-c2">test</span><span class="wf-gray">:</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">needs</span><span class="wf-gray">:</span> lint    <span class="wf-gray"># รอให้ lint ผ่านก่อน</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">runs-on</span><span class="wf-gray">:</span> ubuntu-latest<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="wf-c3">steps</span><span class="wf-gray">:</span> <span class="wf-gray">...</span>
-    </div>
-
-    <h4>Contexts และ Expressions ที่ใช้บ่อย</h4>
-    <table class="info-table">
-      <thead><tr><th>Expression</th><th>ความหมาย</th><th>ตัวอย่าง</th></tr></thead>
-      <tbody>
-        <tr><td><code>$&#123;&#123; github.sha &#125;&#125;</code></td><td>SHA ของ commit ปัจจุบัน (40 ตัวอักษร)</td><td>ใช้ tag Docker image</td></tr>
-        <tr><td><code>$&#123;&#123; github.ref_name &#125;&#125;</code></td><td>ชื่อ branch หรือ tag</td><td>feature/login, main, v1.0.0</td></tr>
-        <tr><td><code>$&#123;&#123; github.event_name &#125;&#125;</code></td><td>ประเภท event ที่ trigger</td><td>push, pull_request</td></tr>
-        <tr><td><code>$&#123;&#123; secrets.MY_SECRET &#125;&#125;</code></td><td>ค่า Secret ที่ตั้งใน repo</td><td>Registry password, SSH key</td></tr>
-        <tr><td><code>$&#123;&#123; env.MY_VAR &#125;&#125;</code></td><td>Environment variable ที่ตั้งใน workflow</td><td>APP_VERSION, NODE_ENV</td></tr>
-        <tr><td><code>$&#123;&#123; matrix.node-version &#125;&#125;</code></td><td>ค่าจาก matrix strategy</td><td>18, 20 (เมื่อใช้ matrix build)</td></tr>
-      </tbody>
-    </table>
-
-    <h4>Runner Types</h4>
-    <div class="concept-grid">
-      <div class="concept-card green">
-        <div class="cc-title">ubuntu-latest</div>
-        <div class="cc-body">ใช้บ่อยที่สุด เร็ว ฟรี 2,000 นาที/เดือน (public repo ฟรีไม่จำกัด)</div>
-      </div>
-      <div class="concept-card blue">
-        <div class="cc-title">windows-latest</div>
-        <div class="cc-body">สำหรับ .NET, PowerShell — ใช้ credit เร็วกว่า linux ×2</div>
-      </div>
-      <div class="concept-card purple">
-        <div class="cc-title">macos-latest</div>
-        <div class="cc-body">สำหรับ iOS/macOS build — ใช้ credit เร็วที่สุด ×10</div>
-      </div>
-      <div class="concept-card amber">
-        <div class="cc-title">Self-hosted Runner</div>
-        <div class="cc-body">ใช้เครื่องหรือ VM ของตัวเอง — ฟรี เหมาะกับ Proxmox ในห้อง lab</div>
-      </div>
-    </div>
-
-    <div class="alert tip">
-      <span class="alert-icon">💡</span>
-      <div class="alert-body"><strong>Tip: Jobs รันแบบ Parallel โดย default</strong>
-        ถ้าไม่ใส่ <code class="inline-code">needs:</code> jobs จะรันพร้อมกันทั้งหมด ซึ่งเร็วกว่า แต่ถ้าต้องการให้ test รันหลัง lint ผ่านเท่านั้น ต้องใส่ <code class="inline-code">needs: lint</code>
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ เช็คความเข้าใจ</div>
-      <ul>
-        <li>บอกได้ว่า Event, Job, Step ต่างกันอย่างไร</li>
-        <li>รู้ว่า <code class="inline-code">needs:</code> ทำให้ jobs ทำงานแบบ sequential</li>
-        <li>เข้าใจว่า <code class="inline-code">${&#123; github.sha &#125;}</code> ดึงค่าจาก context</li>
-      </ul>
+  <!-- What's new in week5 -->
+  <div class="new-box">
+    <h2>🆕 สิ่งที่เรียนใน Week 5 — CI Pipeline ที่แท้จริง</h2>
+    <div class="new-grid">
+      <div class="new-item"><span class="ni-icon">🧪</span><div><div class="ni-title">Unit Tests (Jest + Supertest)</div><div class="ni-desc">test /health, /api/tasks CRUD, validation</div></div></div>
+      <div class="new-item"><span class="ni-icon">🎭</span><div><div class="ni-title">Mock Database</div><div class="ni-desc">jest.mock('../db') — test โดยไม่ต้องมี DB จริง</div></div></div>
+      <div class="new-item"><span class="ni-icon">📊</span><div><div class="ni-title">Code Coverage ≥ 60%</div><div class="ni-desc">jest --coverage + threshold ใน jest.config.js</div></div></div>
+      <div class="new-item"><span class="ni-icon">🔍</span><div><div class="ni-title">ESLint Config สมบูรณ์</div><div class="ni-desc">.eslintrc.json + npm run lint ผ่านใน CI</div></div></div>
+      <div class="new-item"><span class="ni-icon">⚙️</span><div><div class="ni-title">CI Workflow 3 Jobs</div><div class="ni-desc">lint → test (+ coverage) → docker build</div></div></div>
+      <div class="new-item"><span class="ni-icon">📦</span><div><div class="ni-title">Upload Coverage Artifact</div><div class="ni-desc">actions/upload-artifact@v4 เก็บ HTML report</div></div></div>
+      <div class="new-item"><span class="ni-icon">🛡️</span><div><div class="ni-title">CI Gate</div><div class="ni-desc">PR ถูก block ถ้า test ยัง fail</div></div></div>
+      <div class="new-item"><span class="ni-icon">🐛</span><div><div class="ni-title">Debug Challenge</div><div class="ni-desc">ฝึกอ่าน CI log + แก้ broken test</div></div></div>
     </div>
   </div>
+
+  <!-- File tree -->
+  <div>
+    <h2 style="font-size:1rem;font-weight:700;color:#5b21b6;margin-bottom:.75rem">📂 โครงสร้างไฟล์ Week 5 — TaskFlow</h2>
+    <div class="file-tree"><span class="ft-dim">week5-ci-pipeline/</span>
+├── <span class="ft-new">.github/workflows/</span>
+│   ├── <span class="ft-hi">ci.yml</span>                 <span class="ft-dim">← CI: lint → test → docker build (3 jobs)</span>
+│   └── <span class="ft-dim">cd.yml</span>                 <span class="ft-dim">← CD (เหมือน Week 4)</span>
+├── backend/
+│   ├── <span class="ft-hi">index.js</span>               <span class="ft-dim">← TaskFlow API (tasks CRUD + /api/stats)</span>
+│   ├── <span class="ft-hi">jest.config.js</span>         <span class="ft-dim">← coverage threshold ≥ 60%</span>
+│   ├── <span class="ft-hi">.eslintrc.json</span>         <span class="ft-dim">← ESLint rules</span>
+│   └── <span class="ft-hi">tests/</span>
+│       ├── <span class="ft-new">health.test.js</span>     <span class="ft-dim">← test GET /health (4 tests)</span>
+│       ├── <span class="ft-new">tasks.test.js</span>      <span class="ft-dim">← test CRUD /api/tasks (7 tests)</span>
+│       └── <span class="ft-new">validation.test.js</span> <span class="ft-dim">← test validation (4 tests)</span>
+└── frontend/src/
+    ├── <span class="ft-hi">App.vue</span>                <span class="ft-dim">← root (thin, purple theme)</span>
+    ├── <span class="ft-hi">composables/useTasks.js</span> <span class="ft-dim">← state + logic ทั้งหมด</span>
+    └── components/
+        ├── <span class="ft-new">AppHeader.vue</span>      <span class="ft-dim">· StatsGrid.vue</span>
+        ├── <span class="ft-new">TaskToolbar.vue</span>    <span class="ft-dim">· TaskGrid.vue</span>
+        ├── <span class="ft-new">TaskCard.vue</span>       <span class="ft-dim">· TaskModal.vue</span>
+        └── <span class="ft-new">DeleteConfirm.vue</span></div>
+  </div>
+
+  <!-- 3 part cards -->
+  <div>
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem">🗺️ เลือก Part ที่ต้องการ</h2>
+    <div class="parts">
+      <a href="tutorial-part1.html" class="part-card">
+        <div class="part-header">
+          <div class="part-num p1">1</div>
+          <div>
+            <div class="part-title">Backend — TaskFlow API</div>
+            <div class="part-meta">Steps 1–5 · ~90 นาที</div>
+          </div>
+        </div>
+        <div class="part-body">
+          <ul class="part-steps">
+            <li>Week 5 Overview + TaskFlow System</li>
+            <li>โครงสร้างไฟล์ + Docker Compose</li>
+            <li>Database Schema + Seed Data</li>
+            <li>Backend API (index.js walkthrough)</li>
+            <li>รัน Backend + ทดสอบ API</li>
+          </ul>
+          <div class="part-btn">เริ่ม Part 1 →</div>
+        </div>
+      </a>
+      <a href="tutorial-part2.html" class="part-card">
+        <div class="part-header">
+          <div class="part-num p2">2</div>
+          <div>
+            <div class="part-title">Frontend — Vue 3 TaskFlow</div>
+            <div class="part-meta">Steps 6–10 · ~90 นาที</div>
+          </div>
+        </div>
+        <div class="part-body">
+          <ul class="part-steps">
+            <li>Frontend structure + vite.config.js</li>
+            <li>useTasks.js composable</li>
+            <li>AppHeader + StatsGrid + TaskToolbar</li>
+            <li>TaskCard + TaskGrid + TaskModal</li>
+            <li>App.vue + npm run dev + ทดสอบ</li>
+          </ul>
+          <div class="part-btn">เริ่ม Part 2 →</div>
+        </div>
+      </a>
+      <a href="tutorial-part3.html" class="part-card">
+        <div class="part-header">
+          <div class="part-num p3">3</div>
+          <div>
+            <div class="part-title">CI Pipeline — Tests + Actions</div>
+            <div class="part-meta">Steps 11–15 · ~120 นาที</div>
+          </div>
+        </div>
+        <div class="part-body">
+          <ul class="part-steps">
+            <li>Jest + Supertest setup</li>
+            <li>health.test.js + tasks.test.js</li>
+            <li>validation.test.js + Mock DB</li>
+            <li>Code Coverage + ESLint</li>
+            <li>GitHub Actions 3-job workflow</li>
+          </ul>
+          <div class="part-btn">เริ่ม Part 3 →</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
 </div>
 
-<!-- STEP 3 -->
-<div class="step-card" id="step3">
-  <div class="step-header">
-    <div class="step-num">3</div>
-    <div class="step-title">Hello CI — ทดลองสร้าง Workflow แรก</div>
-    <div class="step-time">⏱ 20 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ก่อนสร้าง CI จริง ลองสร้าง workflow ง่าย ๆ เพื่อทำความเข้าใจ cycle การทำงาน: เขียน YAML → push → ดูผล → แก้ไข</p>
+<footer>📘 วิชา 30901-2008 · Lab Week 5 · TaskFlow CI Pipeline</footer>
 
-    <h4>สร้างไฟล์ hello.yml</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน root โฟลเดอร์ stockpro)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">git checkout develop
-git checkout -b feature/add-ci-tests
-
-mkdir -p .github/workflows</code></pre>
-    </div>
-
-    <div class="code-wrap">
-      <div class="code-label">.github/workflows/hello.yml</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-yaml">name: Hello CI
-
-on:
-  push:
-    branches: ['**']   # trigger ทุก branch
-
-jobs:
-  greet:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Say Hello
-        run: |
-          echo "Hello CI from $RUNNER_OS!"
-          echo "Triggered by: ${{ github.event_name }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Actor: ${{ github.actor }}"
-
-      - name: List files
-        run: ls -la
-
-      - name: Show Node version
-        run: node --version || echo "Node not installed on runner"</code></pre>
-    </div>
-
-    <h4>Push แล้วดูผล</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">git add .github/workflows/hello.yml
-git commit -m "ci: add hello workflow for learning"
-git push -u origin feature/add-ci-tests</code></pre>
-    </div>
-
-    <p>ไปที่ GitHub → tab <strong>Actions</strong> → เลือก workflow "Hello CI" → คลิก run ล่าสุด → คลิก job "greet" → ดู output ของแต่ละ step</p>
-
-    <div class="alert success">
-      <span class="alert-icon">✅</span>
-      <div class="alert-body"><strong>สิ่งที่ควรเห็นใน output</strong>
-        <code>Hello CI from Linux!</code> · ชื่อ branch · SHA ยาว 40 ตัว · ชื่อ GitHub ของคุณ
-      </div>
-    </div>
-
-    <div class="alert warning">
-      <span class="alert-icon">⚠️</span>
-      <div class="alert-body"><strong>hello.yml นี้เป็นแค่ตัวทดสอบ</strong>
-        ไฟล์นี้จะลบออกทีหลัง ไม่ต้อง merge เข้า develop
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>ใน Actions tab เห็น workflow "Hello CI" สีเขียว ✓</li>
-        <li>ใน step "Say Hello" เห็น "Hello CI from Linux!" ใน log</li>
-        <li>เข้าใจวิธีอ่าน log แต่ละ step ใน GitHub Actions UI</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 4 -->
-<div class="step-card" id="step4">
-  <div class="step-header">
-    <div class="step-num">4</div>
-    <div class="step-title">Trigger Events ที่ใช้บ่อยใน CI</div>
-    <div class="step-time">⏱ 15 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>การเลือก trigger event ที่ถูกต้องสำคัญมาก — trigger ถี่เกินไปเปลือง minutes, triggerน้อยเกินไปก็ไม่รู้เมื่อ code พัง</p>
-
-    <table class="info-table">
-      <thead><tr><th>Event</th><th>เมื่อไหร่ trigger</th><th>ใช้สำหรับ</th></tr></thead>
-      <tbody>
-        <tr><td><code>push</code></td><td>ทุกครั้งที่ push ขึ้น branch</td><td>CI รัน lint+test เมื่อ dev push code</td></tr>
-        <tr><td><code>pull_request</code></td><td>เปิด PR, push ใหม่เข้า PR, sync</td><td>ตรวจสอบก่อน merge</td></tr>
-        <tr><td><code>workflow_dispatch</code></td><td>กดปุ่ม Run workflow ใน UI</td><td>รัน manual เมื่อต้องการ</td></tr>
-        <tr><td><code>schedule</code></td><td>เวลา cron ที่กำหนด</td><td>Nightly build, security scan</td></tr>
-        <tr><td><code>release</code></td><td>สร้าง GitHub Release</td><td>CD — deploy เมื่อ release</td></tr>
-      </tbody>
-    </table>
-
-    <h4>ตัวอย่าง: Filter branch ด้วย paths</h4>
-    <div class="code-wrap">
-      <div class="code-label">ตัวอย่าง trigger config ที่ใช้บ่อย</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-yaml">on:
-  push:
-    branches:
-      - main
-      - develop
-      - 'feature/**'
-      - 'hotfix/**'
-    paths:           # trigger เฉพาะเมื่อไฟล์เหล่านี้เปลี่ยน
-      - 'backend/**'
-      - '.github/workflows/**'
-  pull_request:
-    branches:
-      - main
-      - develop
-    types:           # trigger เฉพาะ event types เหล่านี้
-      - opened
-      - synchronize  # push ใหม่เข้า PR
-      - reopened
-  workflow_dispatch:  # เพิ่มปุ่ม Run workflow ใน UI
-    inputs:
-      environment:
-        description: 'Target environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options: [staging, production]</code></pre>
-    </div>
-
-    <div class="alert tip">
-      <span class="alert-icon">💡</span>
-      <div class="alert-body"><strong>ใช้ paths: เพื่อประหยัด minutes</strong>
-        ถ้า push แค่แก้ frontend CSS ไม่ควรรัน backend test ใช้ <code class="inline-code">paths: ['backend/**']</code> เพื่อ trigger เฉพาะเมื่อ backend เปลี่ยน
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 5 -->
-<div class="step-card" id="step5">
-  <div class="step-header">
-    <div class="step-num">5</div>
-    <div class="step-title">ติดตั้ง Jest + Supertest สำหรับ Backend Testing</div>
-    <div class="step-time">⏱ 25 นาที</div>
-  </div>
-  <div class="step-body">
-    <p><strong>Jest</strong> คือ test framework ยอดนิยมสำหรับ JavaScript/Node.js <strong>Supertest</strong> คือ library สำหรับทดสอบ HTTP endpoint โดยไม่ต้อง start server จริง</p>
-
-    <h4>ติดตั้ง dependencies</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน backend/)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">cd backend
-npm install --save-dev jest supertest</code></pre>
-    </div>
-
-    <h4>แก้ backend/package.json — เพิ่ม test script</h4>
-    <div class="code-wrap">
-      <div class="code-label">backend/package.json</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-json">{
-  "name": "stockpro-backend",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "lint": "eslint . --ext .js",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.11.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "supertest": "^7.0.0",
-    "eslint": "^8.57.0"
-  }
-}</code></pre>
-    </div>
-
-    <h4>สร้าง backend/jest.config.js</h4>
-    <div class="code-wrap">
-      <div class="code-label">backend/jest.config.js</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-javascript">module.exports = {
-  testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.test.js'],
-  collectCoverageFrom: [
-    'index.js',
-    '!node_modules/**',
-  ],
-  coverageThresholds: {
-    global: {
-      lines: 60,
-      functions: 60,
-      branches: 50,
-    },
-  },
-  coverageReporters: ['text', 'lcov', 'html'],
-};</code></pre>
-    </div>
-
-    <h4>แก้ backend/index.js — เพิ่ม module.exports</h4>
-    <p>เพื่อให้ Supertest สามารถ import app มาทดสอบได้โดยไม่ต้องเชื่อม port จริง ต้องแยก <code class="inline-code">app</code> ออกจาก <code class="inline-code">server</code></p>
-    <div class="code-wrap">
-      <div class="code-label">backend/index.js — บรรทัดสุดท้าย (เปลี่ยนจาก app.listen)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-javascript">// เดิม: app.listen(PORT, ...) อย่างเดียว
-// เปลี่ยนเป็น:
-
-const PORT = process.env.PORT || 3000;
-
-// รัน server เฉพาะเมื่อไม่ได้ถูก require จาก test
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`StockPro backend running on port ${PORT}`);
-  });
-}
-
-module.exports = app;  // ← เพิ่มบรรทัดนี้</code></pre>
-    </div>
-
-    <div class="alert info">
-      <span class="alert-icon">ℹ️</span>
-      <div class="alert-body"><strong>ทำไมต้อง <code>require.main === module</code>?</strong>
-        เมื่อ Jest <code>require('./index.js')</code> เพื่อทดสอบ เราไม่ต้องการให้ server เริ่มรันจริง ๆ ด้วย port — <code>require.main === module</code> คืนค่า false เมื่อถูก require จาก file อื่น
-      </div>
-    </div>
-
-    <h4>สร้างโฟลเดอร์ tests</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน backend/)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">mkdir tests
-touch tests/health.test.js tests/products.test.js tests/stats.test.js</code></pre>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li><code class="inline-code">npm test</code> รันได้ (แม้จะยังไม่มี test file จริง)</li>
-        <li>ใน backend/package.json มี jest และ supertest ใน devDependencies</li>
-        <li>ไฟล์ backend/jest.config.js มี coverageThresholds</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 6 -->
-<div class="step-card" id="step6">
-  <div class="step-header">
-    <div class="step-num">6</div>
-    <div class="step-title">Unit Test 1 — ทดสอบ /health Endpoint</div>
-    <div class="step-time">⏱ 20 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>เริ่มจาก test ที่ง่ายที่สุด — ทดสอบว่า <code class="inline-code">GET /health</code> ตอบกลับ 200 OK และมี field ที่ถูกต้อง</p>
-
-    <div class="code-wrap">
-      <div class="code-label">backend/tests/health.test.js</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-javascript">const request = require('supertest');
-const app = require('../index');
-
-describe('GET /health', () => {
-  test('returns 200 with status ok', async () => {
-    const res = await request(app).get('/health');
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('status', 'ok');
-  });
-
-  test('returns version field', async () => {
-    const res = await request(app).get('/health');
-    expect(res.body).toHaveProperty('version');
-    expect(typeof res.body.version).toBe('string');
-  });
-
-  test('returns uptime as a number', async () => {
-    const res = await request(app).get('/health');
-    expect(res.body).toHaveProperty('uptime');
-    expect(typeof res.body.uptime).toBe('number');
-    expect(res.body.uptime).toBeGreaterThan(0);
-  });
-});</code></pre>
-    </div>
-
-    <h4>รัน test ครั้งแรก</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน backend/)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">npm test -- --testPathPattern=health</code></pre>
-    </div>
-
-    <div class="alert warning">
-      <span class="alert-icon">⚠️</span>
-      <div class="alert-body"><strong>Test อาจ fail ครั้งแรก — นั่นคือเรื่องปกติ!</strong>
-        ถ้า <code>/health</code> ยังไม่ return <code>version</code> หรือ <code>uptime</code> ให้แก้ backend/index.js ก่อน เช่น <code>res.json(&#123; status:'ok', version: '1.0.0', uptime: process.uptime() &#125;)</code>
-      </div>
-    </div>
-
-    <h4>อ่าน Test Output</h4>
-    <div class="code-wrap">
-      <div class="code-label">ตัวอย่าง output เมื่อผ่านทั้งหมด</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash"> PASS  tests/health.test.js
-  GET /health
-    ✓ returns 200 with status ok (45 ms)
-    ✓ returns version field (3 ms)
-    ✓ returns uptime as a number (2 ms)
-
-Test Suites: 1 passed, 1 total
-Tests:       3 passed, 3 total</code></pre>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li><code class="inline-code">npm test -- --testPathPattern=health</code> แสดง 3 passed</li>
-        <li>เข้าใจความหมายของ <code>describe</code>, <code>test</code>, <code>expect</code>, <code>toBe</code>, <code>toHaveProperty</code></li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 7 -->
-<div class="step-card" id="step7">
-  <div class="step-header">
-    <div class="step-num">7</div>
-    <div class="step-title">Unit Test 2 — ทดสอบ Products CRUD Endpoints</div>
-    <div class="step-time">⏱ 25 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ทดสอบ endpoint หลักของ StockPro โดยใช้ <strong>Mock</strong> สำหรับ database เพื่อให้ test รันได้โดยไม่ต้องเชื่อม PostgreSQL จริง</p>
-
-    <div class="code-wrap">
-      <div class="code-label">backend/tests/products.test.js</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-javascript">const request = require('supertest');
-
-// Mock database ก่อน require app
-jest.mock('../db', () => ({
-  query: jest.fn(),
-}));
-const db = require('../db');
-const app = require('../index');
-
-describe('GET /api/products', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('returns 200 with array of products', async () => {
-    db.query.mockResolvedValueOnce({
-      rows: [
-        { id: 1, name: 'MacBook Air M3', category: 'Electronics', price: '44900.00', stock: 15 },
-        { id: 2, name: 'iPhone 16 Pro',  category: 'Electronics', price: '42900.00', stock: 8  },
-      ],
-    });
-
-    const res = await request(app).get('/api/products');
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body).toHaveLength(2);
-    expect(res.body[0]).toHaveProperty('name', 'MacBook Air M3');
-  });
-
-  test('returns empty array when no products', async () => {
-    db.query.mockResolvedValueOnce({ rows: [] });
-    const res = await request(app).get('/api/products');
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual([]);
-  });
-});
-
-describe('POST /api/products', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('creates product and returns 201 with id', async () => {
-    db.query.mockResolvedValueOnce({
-      rows: [{ id: 3, name: 'Nike Air Max', category: 'Footwear', price: '4590.00', stock: 32 }],
-    });
-
-    const res = await request(app)
-      .post('/api/products')
-      .send({ name: 'Nike Air Max', category: 'Footwear', price: 4590, stock: 32 });
-
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('id');
-    expect(res.body.name).toBe('Nike Air Max');
-  });
-});</code></pre>
-    </div>
-
-    <div class="alert info">
-      <span class="alert-icon">ℹ️</span>
-      <div class="alert-body"><strong>jest.mock() คืออะไร?</strong>
-        แทนที่ module จริง (db.js ที่เชื่อม PostgreSQL) ด้วย mock object ทำให้ test รันบน CI ได้โดยไม่ต้องมี database จริง — <code>mockResolvedValueOnce</code> กำหนดว่า mock จะ return อะไรในการเรียกครั้งนั้น ๆ
-      </div>
-    </div>
-
-    <h4>รัน test</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">npm test -- --testPathPattern=products</code></pre>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>stocks.test.js แสดง 3 passed</li>
-        <li>เข้าใจว่า jest.mock ช่วยให้ test รันโดยไม่ต้องเชื่อม DB จริง</li>
-        <li>เข้าใจ beforeEach และ jest.clearAllMocks()</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 8 -->
-<div class="step-card" id="step8">
-  <div class="step-header">
-    <div class="step-num">8</div>
-    <div class="step-title">Unit Test 3 — Validation และ /api/stats</div>
-    <div class="step-time">⏱ 20 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ทดสอบ edge cases: input validation (ส่ง body ไม่ครบ) และ endpoint <code class="inline-code">GET /api/stats</code> ที่เพิ่มมาใน Week 4</p>
-
-    <div class="code-wrap">
-      <div class="code-label">backend/tests/stats.test.js</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-javascript">const request = require('supertest');
-
-jest.mock('../db', () => ({
-  query: jest.fn(),
-}));
-const db = require('../db');
-const app = require('../index');
-
-describe('POST /api/products — validation', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  test('returns 400 when name is missing', async () => {
-    const res = await request(app)
-      .post('/api/products')
-      .send({ category: 'Electronics', price: 1000, stock: 5 });  // ไม่มี name
-    expect(res.statusCode).toBe(400);
-  });
-
-  test('returns 400 when category is missing', async () => {
-    const res = await request(app)
-      .post('/api/products')
-      .send({ name: 'Test Product', price: 100, stock: 10 });  // ไม่มี category
-    expect(res.statusCode).toBe(400);
-  });
-});
-
-describe('GET /api/stats', () => {
-  test('returns stats with overview and by_category', async () => {
-    // mock 2 queries (Promise.all ใน stats endpoint)
-    db.query
-      .mockResolvedValueOnce({
-        rows: [{ total_products: '10', total_stock: '243', total_value: '166750.00', out_of_stock: '0', low_stock: '2' }],
-      })
-      .mockResolvedValueOnce({
-        rows: [{ category: 'Electronics', products: '5', total_stock: '55', total_value: '139680.00' }],
-      });
-
-    const res = await request(app).get('/api/stats');
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('overview');
-    expect(res.body).toHaveProperty('by_category');
-    expect(res.body.overview).toHaveProperty('total_products');
-    expect(Array.isArray(res.body.by_category)).toBe(true);
-  });
-});</code></pre>
-    </div>
-
-    <h4>รัน test ทั้งหมด</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">npm test</code></pre>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>รัน <code class="inline-code">npm test</code> แล้วเห็น test ผ่านทั้ง 3 ไฟล์ รวม ≥8 tests</li>
-        <li>ไม่มี test ที่ fail (ถ้า fail ให้แก้ index.js ก่อน)</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 9 -->
-<div class="step-card" id="step9">
-  <div class="step-header">
-    <div class="step-num">9</div>
-    <div class="step-title">Code Coverage — วัดว่า Test ครอบคลุมแค่ไหน</div>
-    <div class="step-time">⏱ 15 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>Code Coverage วัดว่า test ของเรา "วิ่งผ่าน" code กี่ % ถ้า coverage ต่ำแสดงว่ามี code path ที่ไม่ได้ทดสอบ อาจซ่อน bug ไว้</p>
-
-    <h4>รัน coverage report</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">npm test   # ซึ่งรัน jest --coverage ตาม script ที่ตั้งไว้</code></pre>
-    </div>
-
-    <h4>อ่าน Coverage Output</h4>
-    <table class="cover-table">
-      <thead><tr><th>Metric</th><th>ความหมาย</th><th>เกณฑ์ Week 5</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Statements</strong></td>
-          <td>% ของ statement ที่ test รันผ่าน</td>
-          <td><span class="cover-pct" style="color:#10b981">≥ 60%</span></td>
-        </tr>
-        <tr>
-          <td><strong>Branches</strong></td>
-          <td>% ของ if/else/switch branch ที่ครอบคลุม</td>
-          <td><span class="cover-pct" style="color:#f59e0b">≥ 50%</span></td>
-        </tr>
-        <tr>
-          <td><strong>Functions</strong></td>
-          <td>% ของ function ที่ถูกเรียกใช้ในการทดสอบ</td>
-          <td><span class="cover-pct" style="color:#10b981">≥ 60%</span></td>
-        </tr>
-        <tr>
-          <td><strong>Lines</strong></td>
-          <td>% ของบรรทัดที่รันผ่าน (คล้าย Statements)</td>
-          <td><span class="cover-pct" style="color:#10b981">≥ 60%</span></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h4>ดู HTML Report</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (เปิด browser ดู coverage report)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash"># Windows
-start coverage/lcov-report/index.html
-
-# macOS
-open coverage/lcov-report/index.html</code></pre>
-    </div>
-
-    <div class="alert tip">
-      <span class="alert-icon">💡</span>
-      <div class="alert-body"><strong>เพิ่ม coverage/ ใน .gitignore</strong>
-        ไฟล์ coverage report ไม่ควรอยู่ใน git เพิ่ม <code class="inline-code">coverage/</code> ลงใน backend/.gitignore
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>npm test แสดง coverage table และทุก metric ≥ 60%</li>
-        <li>ถ้า coverage ต่ำกว่า threshold → jest จะ exit code 1 → CI จะ fail (ตามที่ตั้งใน jest.config.js)</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 10 -->
-<div class="step-card" id="step10">
-  <div class="step-header">
-    <div class="step-num">10</div>
-    <div class="step-title">Setup ESLint — Code Quality Gate</div>
-    <div class="step-time">⏱ 20 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ESLint วิเคราะห์ code แบบ static — หาข้อผิดพลาดและ style ที่ไม่สม่ำเสมอ <strong>โดยไม่ต้องรัน code</strong> เป็น "gate แรก" ของ CI</p>
-
-    <h4>สร้าง .eslintrc.json</h4>
-    <div class="code-wrap">
-      <div class="code-label">backend/.eslintrc.json</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-json">{
-  "env": {
-    "node": true,
-    "es2021": true,
-    "jest": true
-  },
-  "extends": "eslint:recommended",
-  "parserOptions": {
-    "ecmaVersion": 2021
-  },
-  "rules": {
-    "no-unused-vars": "warn",
-    "no-console": "off",
-    "semi": ["error", "always"],
-    "quotes": ["warn", "single"],
-    "eqeqeq": ["error", "always"],
-    "no-var": "error",
-    "prefer-const": "warn"
-  }
-}</code></pre>
-    </div>
-
-    <h4>รัน lint</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน backend/)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">npm run lint</code></pre>
-    </div>
-
-    <h4>แก้ error ที่พบบ่อย</h4>
-    <table class="info-table">
-      <thead><tr><th>ESLint Error</th><th>สาเหตุ</th><th>วิธีแก้</th></tr></thead>
-      <tbody>
-        <tr><td><code>Missing semicolon</code></td><td>ไม่มี <code>;</code> ท้ายบรรทัด</td><td>เพิ่ม <code>;</code></td></tr>
-        <tr><td><code>no-unused-vars</code></td><td>ประกาศ variable แต่ไม่ใช้</td><td>ลบหรือใช้งาน variable นั้น</td></tr>
-        <tr><td><code>eqeqeq</code></td><td>ใช้ <code>==</code> แทน <code>===</code></td><td>เปลี่ยนเป็น <code>===</code></td></tr>
-        <tr><td><code>no-var</code></td><td>ใช้ <code>var</code> แทน <code>let/const</code></td><td>เปลี่ยนเป็น <code>const</code> หรือ <code>let</code></td></tr>
-      </tbody>
-    </table>
-
-    <div class="alert tip">
-      <span class="alert-icon">💡</span>
-      <div class="alert-body"><strong>แก้ error อัตโนมัติ</strong>
-        รัน <code class="inline-code">npx eslint . --fix</code> เพื่อให้ ESLint แก้ error บางตัว (เช่น semicolons, quotes) อัตโนมัติ
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li><code class="inline-code">npm run lint</code> รันได้โดยไม่มี error (warnings OK)</li>
-        <li>ไฟล์ backend/.eslintrc.json มีอยู่</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 11 -->
-<div class="step-card" id="step11">
-  <div class="step-header">
-    <div class="step-num">11</div>
-    <div class="step-title">สร้าง CI Workflow ที่สมบูรณ์ (3 Jobs)</div>
-    <div class="step-time">⏱ 30 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ถึงเวลาสร้าง CI workflow ที่สมบูรณ์ — 3 jobs ที่รันแบบ sequential: <strong>lint → test → build</strong></p>
-
-    <h4>Pipeline Flow</h4>
-    <div class="pipeline">
-      <div class="pipe-node trigger">Push/PR<br><small>feature/**</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node lint">Job: lint<br><small>ESLint</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node test">Job: test<br><small>Jest + Coverage</small></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node build">Job: build<br><small>Docker build</small></div>
-    </div>
-
-    <h4>แก้ .github/workflows/ci.yml</h4>
-    <div class="code-wrap">
-      <div class="code-label">.github/workflows/ci.yml (ฉบับสมบูรณ์)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-yaml">name: CI
-
-on:
-  push:
-    branches:
-      - main
-      - develop
-      - 'feature/**'
-      - 'hotfix/**'
-    paths:
-      - 'backend/**'
-      - '.github/workflows/ci.yml'
-  pull_request:
-    branches:
-      - main
-      - develop
-    types: [opened, synchronize, reopened]
-
-jobs:
-  # ─── JOB 1: LINT ───────────────────────────────────────────
-  lint:
-    name: 🔍 Lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-  # ─── JOB 2: TEST ───────────────────────────────────────────
-  test:
-    name: 🧪 Test & Coverage
-    runs-on: ubuntu-latest
-    needs: lint           # รอ lint ผ่านก่อน
-    defaults:
-      run:
-        working-directory: backend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests with coverage
-        run: npm test
-        env:
-          NODE_ENV: test
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()       # upload แม้ test fail เพื่อดู report
-        with:
-          name: coverage-report
-          path: backend/coverage/
-          retention-days: 7
-
-  # ─── JOB 3: BUILD ──────────────────────────────────────────
-  build:
-    name: 🐳 Docker Build
-    runs-on: ubuntu-latest
-    needs: test           # รอ test ผ่านก่อน
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image (no push)
-        run: |
-          docker build -t stockpro-backend:${{ github.sha }} ./backend
-          echo "Build successful: stockpro-backend:${{ github.sha }}"</code></pre>
-    </div>
-
-    <h4>อธิบาย YAML ทีละส่วน</h4>
-    <table class="info-table">
-      <thead><tr><th>Key</th><th>ความหมาย</th></tr></thead>
-      <tbody>
-        <tr><td><code>defaults.run.working-directory</code></td><td>ทำให้ทุก <code>run:</code> step เริ่มที่โฟลเดอร์ backend/ โดยอัตโนมัติ</td></tr>
-        <tr><td><code>actions/setup-node cache: 'npm'</code></td><td>Cache node_modules → install เร็วขึ้น 60-80%</td></tr>
-        <tr><td><code>npm ci</code></td><td>Install ตาม package-lock.json แน่นอน ไม่อัปเดต (ปลอดภัยกว่า npm install)</td></tr>
-        <tr><td><code>needs: lint</code></td><td>Job นี้จะรันเฉพาะเมื่อ lint ผ่าน ถ้า lint fail → test ไม่รัน</td></tr>
-        <tr><td><code>if: always()</code></td><td>Upload artifact แม้ step ก่อนหน้าจะ fail</td></tr>
-        <tr><td><code>retention-days: 7</code></td><td>เก็บ artifact ไว้ 7 วัน แล้วลบอัตโนมัติ</td></tr>
-      </tbody>
-    </table>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>ci.yml มี 3 jobs: lint, test, build</li>
-        <li>test job มี <code>needs: lint</code> และ build job มี <code>needs: test</code></li>
-        <li>มี upload-artifact step ใน test job</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 12 -->
-<div class="step-card" id="step12">
-  <div class="step-header">
-    <div class="step-num">12</div>
-    <div class="step-title">Push → ดู CI ทำงาน และ Download Artifact</div>
-    <div class="step-time">⏱ 20 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ถึงเวลา push code ทั้งหมดขึ้น GitHub และดูว่า CI pipeline ทำงานถูกต้อง</p>
-
-    <h4>Commit และ Push</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal (ใน root stockpro/)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash"># Stage ทุกไฟล์ใหม่
-git add backend/tests/ backend/jest.config.js backend/.eslintrc.json
-git add backend/package.json backend/index.js
-git add .github/workflows/ci.yml
-
-# Commit ด้วย Conventional Commits format
-git commit -m "test: add unit tests with jest and coverage threshold
-
-- Add health, stocks, and stats test suites (>= 8 tests)
-- Configure jest with 60% coverage threshold
-- Add ESLint config
-- Update CI workflow with 3 sequential jobs (lint->test->build)
-- Upload coverage artifact"
-
-git push</code></pre>
-    </div>
-
-    <h4>ดูผลใน GitHub Actions</h4>
-    <ol>
-      <li>ไปที่ repo บน GitHub → คลิก tab <strong>Actions</strong></li>
-      <li>เลือก workflow run ล่าสุด — เห็น 3 jobs เรียงกัน</li>
-      <li>รอให้ทุก job เขียว ✓ (ใช้เวลา ~2-4 นาที)</li>
-      <li>คลิก job <strong>"Test &amp; Coverage"</strong> → เลื่อนลงดู coverage summary</li>
-    </ol>
-
-    <h4>Download Coverage Artifact</h4>
-    <p>ใน run summary ด้านล่างจะมีส่วน <strong>Artifacts</strong> — คลิก <code>coverage-report</code> เพื่อ download zip แตกออกมาแล้วเปิด <code>lcov-report/index.html</code> ในบราวเซอร์เพื่อดู coverage แบบ visual</p>
-
-    <div class="alert success">
-      <span class="alert-icon">✅</span>
-      <div class="alert-body"><strong>สิ่งที่ควรเห็นใน GitHub Actions</strong>
-        3 jobs สีเขียวทั้งหมด · Coverage ≥60% ใน test log · Artifact "coverage-report" ที่ download ได้
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>GitHub Actions แสดง 3 jobs ผ่านทั้งหมด (สีเขียว)</li>
-        <li>ใน test job log เห็น coverage table</li>
-        <li>Download artifact coverage-report ได้</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 13 -->
-<div class="step-card" id="step13">
-  <div class="step-header">
-    <div class="step-num">13</div>
-    <div class="step-title">Branch Protection + Required CI Checks</div>
-    <div class="step-time">⏱ 15 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ตั้งค่า Branch Protection ให้ PR ถูก block จนกว่า CI จะผ่าน — ป้องกัน code ที่พังเข้า main/develop</p>
-
-    <h4>ขั้นตอนตั้งค่าใน GitHub</h4>
-    <ol>
-      <li>ไปที่ repo → <strong>Settings</strong> → <strong>Branches</strong></li>
-      <li>คลิก <strong>Add branch ruleset</strong> (หรือ Edit rule ที่มีอยู่)</li>
-      <li>Branch name pattern: <code class="inline-code">main</code></li>
-      <li>เปิด <strong>Require status checks to pass</strong></li>
-      <li>ค้นหาและเพิ่ม: <code class="inline-code">🔍 Lint</code>, <code class="inline-code">🧪 Test &amp; Coverage</code></li>
-      <li>เปิด <strong>Require branches to be up to date</strong></li>
-      <li>Save changes</li>
-    </ol>
-
-    <div class="alert info">
-      <span class="alert-icon">ℹ️</span>
-      <div class="alert-body"><strong>Status check name = "name:" ใน workflow jobs</strong>
-        ชื่อที่ต้องใส่ใน Required checks คือค่าจาก <code class="inline-code">name:</code> ของ job เช่น <code>🔍 Lint</code> และ <code>🧪 Test &amp; Coverage</code>
-      </div>
-    </div>
-
-    <h4>ทดสอบ: เปิด PR แล้วดูว่า checks แสดงขึ้น</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash"># ทำงานบน feature branch อยู่แล้ว
-# เปิด PR ไป develop
-gh pr create --title "feat: add unit tests and CI pipeline" \
-  --body "Add Jest unit tests, ESLint config, and update CI workflow" \
-  --base develop</code></pre>
-    </div>
-
-    <p>ใน PR จะเห็น status checks รันอยู่ — ถ้า CI ผ่าน ปุ่ม Merge จะเปิดใช้ได้ ถ้า CI fail ปุ่ม Merge จะถูก block</p>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>Branch Protection Rule ของ main ต้องการให้ "Lint" และ "Test &amp; Coverage" ผ่าน</li>
-        <li>เปิด PR แล้วเห็น CI checks รันใน PR page</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 14 -->
-<div class="step-card" id="step14">
-  <div class="step-header">
-    <div class="step-num">14</div>
-    <div class="step-title">Debug Challenge — แก้ Broken CI</div>
-    <div class="step-time">⏱ 25 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ครูจะ push commit ที่ทำให้ CI fail เข้าไปใน repo ของทีม ภารกิจของทีมคือ: <strong>อ่าน log, วิเคราะห์หาต้นเหตุ, แก้ไข, push ใหม่ให้ CI เขียวภายใน 20 นาที</strong></p>
-
-    <div class="challenge">
-      <div class="challenge-title">🐛 Debug Protocol — ทำตามลำดับนี้ทุกครั้งที่ CI fail</div>
-      <div class="challenge-step">
-        <div class="cs-num">1</div>
-        <div class="cs-body"><strong>อ่าน log จาก job ที่ fail</strong> — คลิก job สีแดง → คลิก step ที่ fail → อ่าน output สีแดงบรรทัดสุดท้าย</div>
-      </div>
-      <div class="challenge-step">
-        <div class="cs-num">2</div>
-        <div class="cs-body"><strong>จำแนก error ประเภท</strong> — lint error? test fail? coverage ต่ำ? build fail? แต่ละประเภทแก้ต่างกัน</div>
-      </div>
-      <div class="challenge-step">
-        <div class="cs-num">3</div>
-        <div class="cs-body"><strong>Reproduce ที่เครื่องตัวเอง</strong> — รัน <code class="inline-code">npm run lint</code> หรือ <code class="inline-code">npm test</code> บนเครื่อง แก้ให้ผ่านก่อน</div>
-      </div>
-      <div class="challenge-step">
-        <div class="cs-num">4</div>
-        <div class="cs-body"><strong>แก้ code → commit → push</strong> — CI จะ trigger อีกรอบ รอดูว่าเขียวแล้ว</div>
-      </div>
-      <div class="challenge-step">
-        <div class="cs-num">5</div>
-        <div class="cs-body"><strong>ถ้าแก้ไม่ได้ใน 5 นาที</strong> — ขอ hint จากครู อย่าเสียเวลากับ error เดิมนานเกิน</div>
-      </div>
-    </div>
-
-    <h4>Error ที่พบบ่อยใน CI และวิธีแก้</h4>
-    <table class="info-table">
-      <thead><tr><th>Error ใน Log</th><th>สาเหตุ</th><th>วิธีแก้</th></tr></thead>
-      <tbody>
-        <tr><td><code>Cannot find module '../db'</code></td><td>ลืม mock db หรือ path ผิด</td><td>เพิ่ม <code>jest.mock('../db', ...)</code></td></tr>
-        <tr><td><code>expect(received).toBe(expected)</code></td><td>ค่าที่ได้ไม่ตรงกับที่คาดไว้</td><td>ดูว่า API return อะไรจริง ๆ</td></tr>
-        <tr><td><code>Jest: "global" coverage threshold not met</code></td><td>Coverage ต่ำกว่า threshold</td><td>เพิ่ม test cases ให้ครอบคลุม code มากขึ้น</td></tr>
-        <tr><td><code>error  Parsing error: Unexpected token</code></td><td>ESLint parse JS ไม่ได้ (syntax error)</td><td>แก้ syntax ใน JS file ที่ระบุ</td></tr>
-        <tr><td><code>npm ERR! missing script: lint</code></td><td>ไม่มี lint script ใน package.json</td><td>เพิ่ม <code>"lint": "eslint . --ext .js"</code></td></tr>
-      </tbody>
-    </table>
-
-    <div class="alert danger">
-      <span class="alert-icon">🚨</span>
-      <div class="alert-body"><strong>กฎ: ห้าม skip test หรือลด threshold เพื่อให้ CI ผ่าน</strong>
-        การแก้ปัญหาที่ถูกต้องคือแก้ code ให้ test ผ่านจริง ไม่ใช่ลดมาตรฐานลง
-      </div>
-    </div>
-
-    <div class="verify">
-      <div class="verify-title">✅ Checkpoint</div>
-      <ul>
-        <li>วิเคราะห์ error จาก CI log ได้ว่า fail ที่ step ไหน เพราะอะไร</li>
-        <li>แก้ code จนผ่าน CI ได้ภายใน 20 นาที</li>
-        <li>PR page แสดง CI checks ทั้งหมดสีเขียว</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- STEP 15 -->
-<div class="step-card" id="step15">
-  <div class="step-header">
-    <div class="step-num">15</div>
-    <div class="step-title">Status Badge + Merge + ส่งงาน</div>
-    <div class="step-time">⏱ 15 นาที</div>
-  </div>
-  <div class="step-body">
-    <p>ขั้นตอนสุดท้าย: เพิ่ม Status Badge ใน README, merge PR, และเตรียมสิ่งที่ต้องส่ง</p>
-
-    <h4>Copy Badge URL จาก GitHub</h4>
-    <ol>
-      <li>ไปที่ repo → Actions → เลือก workflow "CI"</li>
-      <li>คลิก <strong>…</strong> (three dots) มุมบนขวา → <strong>Create status badge</strong></li>
-      <li>เลือก branch: <code>main</code> → Copy Markdown</li>
-    </ol>
-
-    <div class="badge-demo">
-      <span style="color:#64748b">ตัวอย่าง Badge Markdown ที่ได้:</span><br><br>
-      <span style="color:#e2e8f0">[![CI](https://github.com/<span style="color:#fde68a">username</span>/<span style="color:#86efac">stockpro</span>/actions/workflows/ci.yml/badge.svg)](https://github.com/<span style="color:#fde68a">username</span>/<span style="color:#86efac">stockpro</span>/actions/workflows/ci.yml)</span>
-      <div class="badge-img-row">
-        <div class="badge-img-placeholder badge-pass">CI: passing</div>
-        <div class="badge-img-placeholder badge-fail">CI: failing</div>
-        <span style="color:#64748b;font-size:.75rem">← badge จะดูแบบนี้ (แสดงสถานะ real-time)</span>
-      </div>
-    </div>
-
-    <h4>เพิ่มใน README.md</h4>
-    <div class="code-wrap">
-      <div class="code-label">README.md (ส่วน badges)</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-markdown"># StockPro
-
-[![CI](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/ci.yml)
-[![CD](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/stockpro/actions/workflows/cd.yml)
-
-> Inventory management app — Week 5: CI Pipeline with Unit Tests</code></pre>
-    </div>
-
-    <h4>Merge PR เข้า develop</h4>
-    <div class="code-wrap">
-      <div class="code-label">terminal</div>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash">git add README.md
-git commit -m "docs: add CI status badge to README"
-git push
-
-# Merge PR ใน GitHub UI หรือด้วย CLI
-gh pr merge --squash --auto</code></pre>
-    </div>
-
-    <h4>Checklist สิ่งที่ต้องส่ง</h4>
-    <div class="verify">
-      <div class="verify-title">✅ สิ่งที่ต้องมีครบก่อนส่งงาน Week 5</div>
-      <ul>
-        <li>Unit Tests ≥ 8 test cases ใน 3 ไฟล์ (health, stocks, stats)</li>
-        <li>npm test รันได้ทุก test ผ่าน โดยไม่ต้องเชื่อม database จริง</li>
-        <li>Code Coverage ≥ 60% (lines, functions)</li>
-        <li>ESLint ไม่มี error (warnings ยอมรับได้)</li>
-        <li>CI Workflow 3 jobs (lint → test → build) ผ่านทั้งหมดใน GitHub Actions</li>
-        <li>Coverage artifact upload ได้ใน GitHub Actions</li>
-        <li>Branch Protection บน main ต้องการให้ Lint และ Test ผ่าน</li>
-        <li>Status Badge ใน README.md แสดงสถานะ CI</li>
-        <li>ส่ง URL GitHub Repository และ URL ของ CI run ล่าสุดให้ครู</li>
-      </ul>
-    </div>
-
-    <div class="alert success">
-      <span class="alert-icon">🎉</span>
-      <div class="alert-body"><strong>Week 5 เสร็จสมบูรณ์!</strong>
-        ตอนนี้ StockPro มี CI pipeline ที่แท้จริง — ทุกครั้งที่ push code ระบบจะ lint, test พร้อม coverage, และ build อัตโนมัติ สัปดาห์ต่อไปเราจะต่อยอดด้วย SonarQube Quality Gate
-      </div>
-    </div>
-  </div>
-</div>
-
-</main>
-</div>
-
-<footer style="background:#0f172a;border-top:1px solid #1e293b;text-align:center;padding:2rem;color:#475569;font-size:.84rem;margin-top:2rem">
-  วิชา DevOps (30901-2008) · สัปดาห์ที่ 5 · <a href="../index.html" style="color:#38bdf8;text-decoration:none">← กลับหน้าหลัก</a>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
-
-<script>
-const STORAGE_KEY = 'w5_progress';
-const TOTAL = 15;
-
-function getProgress() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
-}
-function saveProgress(p) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-}
-
-function updateUI() {
-  const p = getProgress();
-  const done = Object.values(p).filter(Boolean).length;
-  document.getElementById('prog-text').textContent = `${done} / ${TOTAL}`;
-  document.getElementById('prog-fill').style.width = `${(done / TOTAL) * 100}%`;
-  document.getElementById('pbar').querySelector('.progress-fill').style.width = `${(done / TOTAL) * 100}%`;
-
-  document.querySelectorAll('.step-card').forEach((card, i) => {
-    const id = `step${i + 1}`;
-    const tocLink = document.querySelector(`.toc-item a[href="#${id}"]`);
-    if (p[id]) {
-      card.style.opacity = '1';
-      if (tocLink) tocLink.style.textDecoration = 'line-through';
-    }
-  });
-}
-
-document.querySelectorAll('.verify').forEach((el, i) => {
-  const stepId = el.closest('.step-card')?.id;
-  if (!stepId) return;
-
-  const btn = document.createElement('button');
-  btn.textContent = getProgress()[stepId] ? '✓ เสร็จแล้ว' : 'Mark เสร็จ';
-  btn.style.cssText = 'margin-top:.75rem;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:.4rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif';
-  btn.onclick = () => {
-    const p = getProgress();
-    p[stepId] = !p[stepId];
-    saveProgress(p);
-    btn.textContent = p[stepId] ? '✓ เสร็จแล้ว' : 'Mark เสร็จ';
-    btn.style.background = p[stepId] ? '#065f46' : 'var(--primary)';
-    updateUI();
-  };
-  if (getProgress()[stepId]) btn.style.background = '#065f46';
-  el.appendChild(btn);
-});
-
-function copyCode(btn) {
-  const pre = btn.nextElementSibling;
-  navigator.clipboard.writeText(pre.textContent).then(() => {
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-  });
-}
-
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      const id = e.target.id;
-      document.querySelectorAll('.toc-item a').forEach(a => a.classList.remove('active'));
-      const active = document.querySelector(`.toc-item a[href="#${id}"]`);
-      if (active) active.classList.add('active');
-    }
-  });
-}, { threshold: 0.3 });
-
-document.querySelectorAll('.step-card').forEach(c => observer.observe(c));
-
-updateUI();
-</script>
 </body>
 </html>

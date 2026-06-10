@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 2 of 3 — Frontend Review + GitHub Actions Jobs 1–3 · Steps 6–10 | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --vue: #42b883; --vue-light: #f0fdf4;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 260px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),#a78bfa); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    .hero {
+      background: linear-gradient(135deg,#1e1b4b 0%,#3b0764 30%,#5b21b6 70%,#7c3aed 100%);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center;
+    }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    .main { flex: 1; min-width: 0; }
+
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),#a78bfa); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.vue    { background: var(--vue-light); color: #065f46; }
+    .step-badge.review { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.ci     { background: #f1f5f9; color: #475569; }
+    .step-badge.sonar  { background: var(--amber-light); color: #92400e; }
+    .step-badge.setup  { background: var(--info-light); color: #1e40af; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.vue     { background: var(--vue-light); border-left: 4px solid var(--vue); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; padding-top: .05rem; }
+
+    /* Component grid */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; }
+    .comp-card { background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 10px; padding: .8rem 1rem; }
+    .comp-name { font-family: 'JetBrains Mono', monospace; font-size: .82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: .25rem; }
+    .comp-desc { font-size: .8rem; color: var(--muted); }
+    .comp-card.composable { background: var(--vue-light); border-color: var(--vue); }
+    .comp-card.composable .comp-name { color: #065f46; }
+
+    /* Sonar architecture diagram */
+    .arch-box {
+      background: #1e293b; border-radius: 12px; padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: .82rem;
+      line-height: 1.9; color: #e2e8f0; overflow-x: auto;
+    }
+    .arch-title { color: #c4b5fd; font-weight: 700; }
+    .arch-step  { color: #86efac; }
+    .arch-arrow { color: #7c3aed; }
+    .arch-label { color: #fbbf24; }
+    .arch-note  { color: #64748b; }
+
+    /* Quality gate */
+    .qg-box { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .qg-box { grid-template-columns: 1fr; } }
+    .qg-col { border-radius: 10px; padding: 1rem 1.1rem; }
+    .qg-pass { background: var(--green-light); border: 1.5px solid var(--green); }
+    .qg-fail { background: var(--danger-light); border: 1.5px solid var(--danger); }
+    .qg-label { font-weight: 800; font-size: .9rem; margin-bottom: .6rem; }
+    .qg-pass .qg-label { color: var(--green); }
+    .qg-fail .qg-label { color: var(--danger); }
+    .qg-col ul { list-style: none; display: grid; gap: .3rem; }
+    .qg-col ul li { font-size: .85rem; display: flex; gap: .5rem; align-items: flex-start; }
+
+    /* Secrets setup */
+    .secret-row { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: flex-start; padding: .75rem 0; border-bottom: 1px solid var(--border); }
+    .secret-row:last-child { border-bottom: none; }
+    .secret-name { background: #1e293b; color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: .82rem; padding: .3rem .7rem; border-radius: 6px; white-space: nowrap; }
+    .secret-desc { font-size: .88rem; color: #475569; }
+
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.next { background: var(--primary); color: #fff; }
+    .nav-btn.next:hover { background: var(--primary-dark); }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="tutorial-part1.html">← Part 1</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<div class="hero">
+  <div class="badge">Week 6 · Part 2/3 · Steps 6–10</div>
+  <h1>Frontend Review + GitHub Actions Jobs 1–3</h1>
+  <p class="subtitle">Vue 3 Components · ci.yml Jobs 1–2 · SonarQube Scan · Quality Gate</p>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">Part 2: CI Jobs 1–3</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s6"  id="toc-6"><span class="dot"></span>6. Frontend Component Review</a>
+      <a class="toc-link" href="#s7"  id="toc-7"><span class="dot"></span>7. useTasks.js Patterns</a>
+      <a class="toc-link" href="#s8"  id="toc-8"><span class="dot"></span>8. ci.yml Jobs 1 &amp; 2</a>
+      <a class="toc-link" href="#s9"  id="toc-9"><span class="dot"></span>9. Job 3: SonarQube Scan</a>
+      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. Quality Gate + Secrets</a>
+      <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);">
+        <a href="tutorial-part3.html" style="display:block;background:var(--primary);color:#fff;text-align:center;padding:.5rem;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none;">Part 3: Docker Build &amp; Push →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div class="step-title">Frontend Component Structure — Brief Review</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>Frontend ใน Week 6 <strong>ไม่มีการเปลี่ยนแปลง</strong>จาก Week 5 — ส่วนนี้เป็นการ refresh memory ก่อนไปดู CI ซึ่งเป็นส่วนหลักของ Part 2</p>
+
+        <div class="alert vue">
+          <span class="alert-icon">💚</span>
+          <div>
+            <strong>TaskFlow Purple Theme</strong>
+            Primary color: <code>#7c3aed</code> (purple) · Background: <code>#f5f3ff</code> · Vue 3 + Vite + Composition API + Composable pattern
+          </div>
+        </div>
+
+        <p><strong>7 Components + 1 Composable:</strong></p>
+        <div class="comp-grid">
+          <div class="comp-card composable">
+            <div class="comp-name">useTasks.js</div>
+            <div class="comp-desc">composable หลัก — state, computed, API calls, filters ทั้งหมดอยู่ที่นี่</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">App.vue</div>
+            <div class="comp-desc">root component얇 (~50 บรรทัด) — import composable + จัดวาง layout</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">AppHeader.vue</div>
+            <div class="comp-desc">header + ชื่อแอป + จำนวนงานทั้งหมด</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">StatsGrid.vue</div>
+            <div class="comp-desc">4 stat cards: total / todo / in-progress / done + overdue warning</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">TaskToolbar.vue</div>
+            <div class="comp-desc">search input + status dropdown + priority dropdown + Add Task button</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">TaskGrid.vue</div>
+            <div class="comp-desc">grid layout สำหรับแสดง TaskCard ทุกใบ</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">TaskCard.vue</div>
+            <div class="comp-desc">แสดงข้อมูลงาน 1 ชิ้น: title, status badge, priority, assignee, due date</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">TaskModal.vue</div>
+            <div class="comp-desc">modal form สำหรับ Add / Edit งาน</div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-name">DeleteConfirm.vue</div>
+            <div class="comp-desc">confirmation dialog ก่อนลบงาน</div>
+          </div>
+        </div>
+
+        <p><strong>App.vue — Thin Root Pattern:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> frontend/src/App.vue</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — โครงสร้างหลัก</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// App.vue — script setup
+import { useTasks } from './composables/useTasks'
+
+import AppHeader    from './components/AppHeader.vue'
+import StatsGrid    from './components/StatsGrid.vue'
+import TaskToolbar  from './components/TaskToolbar.vue'
+import TaskGrid     from './components/TaskGrid.vue'
+import TaskModal    from './components/TaskModal.vue'
+import DeleteConfirm from './components/DeleteConfirm.vue'
+
+// รับ state + actions ทั้งหมดจาก composable
+const {
+  tasks, loading, stats,
+  search, statusFilter, priorityFilter,
+  showModal, editingId, confirmDelete, form,
+  openAdd, openEdit, closeModal, saveTask,
+  deleteTask, confirmDeleteTask
+} = useTasks()</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ทำไม App.vue ถึงบางมาก?</strong>
+            Business logic ทั้งหมด (API calls, state management, computed, watchers) อยู่ใน <code>useTasks.js</code> — App.vue เป็นแค่ "glue" ที่นำ composable มาต่อกับ components<br>
+            ข้อดี: แยก concerns ชัดเจน, test composable แยกได้โดยไม่ต้อง mount component
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div class="step-title">useTasks.js — Key Patterns สำคัญ</div>
+        <div class="step-badge review">Composable</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>frontend/src/composables/useTasks.js</code> — ทบทวน patterns สำคัญที่ใช้ในโปรเจกต์</p>
+
+        <p><strong>State ทั้งหมด:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">tasks</span><span class="le-desc">ref([]) — array ของงานทั้งหมดที่ fetch จาก backend</span></div>
+          <div class="le-row"><span class="le-code">loading</span><span class="le-desc">ref(false) — แสดง spinner ระหว่าง API call</span></div>
+          <div class="le-row"><span class="le-code">search</span><span class="le-desc">ref('') — ค่า search input (debounced 280ms)</span></div>
+          <div class="le-row"><span class="le-code">statusFilter</span><span class="le-desc">ref('') — ค่า status dropdown ('', 'todo', 'in-progress', 'done')</span></div>
+          <div class="le-row"><span class="le-code">priorityFilter</span><span class="le-desc">ref('') — ค่า priority dropdown ('', 'low', 'medium', 'high')</span></div>
+          <div class="le-row"><span class="le-code">showModal</span><span class="le-desc">ref(false) — toggle TaskModal visibility</span></div>
+          <div class="le-row"><span class="le-code">editingId</span><span class="le-desc">ref(null) — id ของงานที่กำลัง edit (null = add mode)</span></div>
+          <div class="le-row"><span class="le-code">confirmDelete</span><span class="le-desc">ref(null) — task object ที่รอ confirm ลบ</span></div>
+          <div class="le-row"><span class="le-code">form</span><span class="le-desc">reactive({}) — ข้อมูลใน TaskModal form (title, status, priority, ...)</span></div>
+        </div>
+
+        <p><strong>Computed Properties:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — computed: filtered, stats</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// filtered — tasks ที่ผ่าน 3 conditions (client-side filter)
+const filtered = computed(() =>
+  tasks.value.filter(t => {
+    const matchSearch = !search.value ||
+      t.title.toLowerCase().includes(search.value.toLowerCase()) ||
+      (t.description || '').toLowerCase().includes(search.value.toLowerCase())
+    const matchStatus   = !statusFilter.value   || t.status   === statusFilter.value
+    const matchPriority = !priorityFilter.value || t.priority === priorityFilter.value
+    return matchSearch && matchStatus && matchPriority
+  })
+)
+
+// stats — คำนวณจาก tasks.value (ไม่ใช่ filtered)
+const stats = computed(() => ({
+  total:       tasks.value.length,
+  todo:        tasks.value.filter(t => t.status === 'todo').length,
+  in_progress: tasks.value.filter(t => t.status === 'in-progress').length,
+  done:        tasks.value.filter(t => t.status === 'done').length,
+  overdue:     tasks.value.filter(t =>
+    t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+  ).length
+}))</code></pre>
+        </div>
+
+        <p><strong>Watch patterns — debounce + immediate:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — watchers</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// search: debounce 280ms — ไม่ call API ทุก keystroke
+let searchTimer = null
+watch(search, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(fetchTasks, 280)
+})
+
+// statusFilter + priorityFilter: immediate fetch เมื่อเปลี่ยนค่า
+watch([statusFilter, priorityFilter], fetchTasks)</code></pre>
+        </div>
+
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">debounce 280ms</span><span class="le-desc">รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch — ลด API calls ที่ไม่จำเป็น</span></div>
+          <div class="le-row"><span class="le-code">watch([statusFilter, priorityFilter])</span><span class="le-desc">watch หลาย ref พร้อมกัน — fetch ทันทีเมื่อ dropdown เปลี่ยน (ไม่ต้อง debounce เพราะ user click ไม่ได้ type)</span></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔄</span>
+          <div>
+            <strong>Composable Pattern — เหตุผลที่สำคัญ</strong>
+            Logic ใน <code>useTasks.js</code> สามารถ reuse ได้ในทุก component เพียง import ครั้งเดียว<br>
+            ถ้าใช้ Vuex/Pinia แทน — ต้อง setup store, action, mutation แยก — สำหรับแอปขนาดนี้ composable ง่ายกว่ามาก<br>
+            ถ้าใช้ Option API — logic จะกระจายใน <code>data()</code>, <code>methods</code>, <code>computed</code>, <code>watch</code> — อ่านยากกว่า
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div class="step-title">ci.yml — Jobs 1 &amp; 2: Lint + Test</div>
+        <div class="step-badge ci">GitHub Actions</div>
+      </div>
+      <div class="step-body">
+        <p>เปิดไฟล์ <code>.github/workflows/ci.yml</code> — ดู Jobs 1 และ 2 ที่เหมือนกับ Week 5 แต่เป็นส่วนฐานของ 4-job pipeline</p>
+
+        <p><strong>ESLint config — .eslintrc.json:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> backend/.eslintrc.json</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>.eslintrc.json — ESLint configuration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-json"><code>{
+  "env": {
+    "node": true,
+    "jest": true,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2021
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off"
+  }
+}</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">env.node: true</span><span class="le-desc">เปิด globals ของ Node.js เช่น <code>require</code>, <code>module</code>, <code>process</code>, <code>__dirname</code></span></div>
+          <div class="le-row"><span class="le-code">env.jest: true</span><span class="le-desc">เปิด globals ของ Jest เช่น <code>describe</code>, <code>it</code>, <code>expect</code>, <code>beforeAll</code> — ป้องกัน "no-undef" error ในไฟล์ test</span></div>
+          <div class="le-row"><span class="le-code">eslint:recommended</span><span class="le-desc">rule set พื้นฐานที่ ESLint แนะนำ — ตรวจ common mistakes เช่น no-undef, no-dupe-keys</span></div>
+          <div class="le-row"><span class="le-code">no-unused-vars: warn</span><span class="le-desc">warn (ไม่ error) เมื่อมีตัวแปรที่ไม่ได้ใช้ — ไม่ทำให้ pipeline fail แต่บอกให้รู้</span></div>
+          <div class="le-row"><span class="le-code">no-console: off</span><span class="le-desc">ปิด rule นี้ — backend มี console.log/error เยอะ ถ้าเปิดจะ warn ทุกบรรทัด</span></div>
+        </div>
+
+        <p><strong>Job 1 — Lint:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> .github/workflows/ci.yml</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Job 1: Lint</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>name: CI — TaskFlow Advanced
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">name: CI — TaskFlow Advanced</span><span class="le-desc">ชื่อ workflow ที่แสดงใน GitHub Actions tab ของ repository</span></div>
+          <div class="le-row"><span class="le-code">on: push / pull_request</span><span class="le-desc">trigger เมื่อ push หรือเปิด PR — ทำให้ CI รันทุก code change</span></div>
+          <div class="le-row"><span class="le-code">paths: backend/**</span><span class="le-desc">รัน CI เฉพาะเมื่อไฟล์ใน backend/ เปลี่ยน — ประหยัด CI minutes ถ้าแก้ไขเฉพาะ docs หรือ README</span></div>
+          <div class="le-row"><span class="le-code">defaults: run: working-directory: backend</span><span class="le-desc">ทุก <code>run:</code> step จะรันใน backend/ directory อัตโนมัติ — ไม่ต้อง cd backend ทุก step</span></div>
+          <div class="le-row"><span class="le-code">cache: 'npm'</span><span class="le-desc">cache node_modules ระหว่าง workflow runs — ครั้งแรก ~30s, ครั้งถัดไป ~5s (ถ้า package-lock.json ไม่เปลี่ยน)</span></div>
+          <div class="le-row"><span class="le-code">npm ci</span><span class="le-desc">install exact versions จาก package-lock.json — reproducible builds, ต่างจาก <code>npm install</code> ที่อาจ update minor versions</span></div>
+          <div class="le-row"><span class="le-code">npm run lint</span><span class="le-desc">รัน eslint ตาม script ใน package.json: <code>"lint": "eslint . --ext .js"</code> — ตรวจทุก .js file ใน backend/</span></div>
+        </div>
+
+        <p><strong>Job 2 — Test:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Job 2: Test</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run Jest tests
+        run: npm test
+        working-directory: backend
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 7</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">needs: lint</span><span class="le-desc">Job 2 จะ start เฉพาะเมื่อ Job 1 (lint) ผ่าน — ถ้า lint fail → test ไม่รัน → ประหยัด runner minutes</span></div>
+          <div class="le-row"><span class="le-code">npm test</span><span class="le-desc">รัน <code>jest --coverage</code> จาก scripts ใน package.json — สร้าง coverage/ folder พร้อม lcov.info</span></div>
+          <div class="le-row"><span class="le-code">NODE_ENV: test</span><span class="le-desc">set environment variable ให้ app รู้ว่าอยู่ใน test mode — index.js อ่านค่านี้เพื่อปรับ behavior</span></div>
+          <div class="le-row"><span class="le-code">upload-artifact@v4</span><span class="le-desc">save coverage/ folder เป็น artifact ใน GitHub Actions — ดาวน์โหลด HTML report ได้จาก Actions tab</span></div>
+          <div class="le-row"><span class="le-code">if: always()</span><span class="le-desc">upload artifact แม้ test fail — เพราะต้องการดูว่า test ไหนที่ fail โดยดูจาก coverage report</span></div>
+          <div class="le-row"><span class="le-code">retention-days: 7</span><span class="le-desc">เก็บ artifact ไว้ 7 วัน แล้วลบอัตโนมัติ — ป้องกัน storage ของ GitHub เต็ม</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📦</span>
+          <div>
+            <strong>ทำไม upload coverage artifact ใน Job 2 แต่ Job 3 รัน npm test ใหม่?</strong>
+            Job 2 upload artifact ไว้เพื่อให้นักศึกษา/นักพัฒนาดาวน์โหลด HTML report มาดูใน browser<br>
+            Job 3 (Sonar) ต้องรัน test ใหม่เพราะ SonarSource action ต้องการ lcov.info ในไฟล์ระบบของ runner นั้นเอง — ไม่สามารถใช้ artifact จาก Job อื่นได้โดยตรง
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div class="step-title">Job 3: SonarQube Scan — หัวใจของ Part 2</div>
+        <div class="step-badge sonar">SonarQube</div>
+      </div>
+      <div class="step-body">
+        <p>Job 3 คือส่วนใหม่ที่สำคัญที่สุดใน Week 6 — ทำ static analysis และตรวจ Quality Gate ก่อนที่ pipeline จะ proceed ไป Job 4 (Docker push)</p>
+
+        <p><strong>SonarQube Architecture — ภาพรวมการทำงาน:</strong></p>
+        <div class="arch-box">
+<span class="arch-title">GitHub Actions Runner (ubuntu-latest)</span>
+├── <span class="arch-step">npm test</span> → สร้าง <span class="arch-label">coverage/lcov.info</span>
+└── <span class="arch-step">sonarqube-scan-action@v3</span>
+    ├── อ่านไฟล์: <span class="arch-label">backend/index.js</span>, <span class="arch-label">tests/</span>, <span class="arch-label">coverage/lcov.info</span>
+    ├── อ่านค่า: <span class="arch-label">backend/sonar-project.properties</span>
+    └── ส่งข้อมูลไปยัง: <span class="arch-label">SONAR_HOST_URL</span> (SonarQube server)
+        <span class="arch-note">         using: SONAR_TOKEN (authentication)</span>
+
+<span class="arch-title">SonarQube Server</span> (sonarcloud.io หรือ self-hosted)
+├── analyze: code smells, bugs, vulnerabilities, duplications
+├── import coverage จาก lcov.info → แสดง coverage % ใน dashboard
+└── evaluate Quality Gate → <span class="arch-step">PASSED</span> หรือ <span class="arch-label">FAILED</span>
+
+<span class="arch-title">sonarqube-quality-gate-action@v1</span>
+└── poll ทุก 5s → รับผล Quality Gate
+    ├── PASSED → Job 3 success → Job 4 เริ่มทำงาน
+    └── FAILED → Job 3 fail → pipeline หยุด, Job 4 ไม่รัน</div>
+
+        <p><strong>Job 3 YAML — เนื้อหาทั้งหมด:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> .github/workflows/ci.yml</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ci.yml — Job 3: SonarQube Quality Gate</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-yaml"><code>  sonar:
+    name: SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run tests to generate lcov coverage
+        run: npm test
+        working-directory: backend
+        env:
+          NODE_ENV: test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}</code></pre>
+        </div>
+
+        <p><strong>อธิบายทุก field สำคัญ:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">needs: test</span><span class="le-desc">Job 3 รันเฉพาะเมื่อ Job 2 (test) ผ่าน — ถ้า 15 tests fail → Sonar ไม่รัน → ไม่เสีย Sonar API quota</span></div>
+          <div class="le-row"><span class="le-code">fetch-depth: 0</span><span class="le-desc">checkout git history ทั้งหมด (ไม่ใช่แค่ commit ล่าสุด) — SonarQube ใช้ git blame ระบุว่าใครเขียน code บรรทัดไหน เพื่อ assign ปัญหาให้ถูกคน</span></div>
+          <div class="le-row"><span class="le-code">Run tests to generate lcov</span><span class="le-desc">รัน Jest ใหม่อีกครั้งใน Job นี้ — lcov.info ต้องอยู่ใน filesystem ของ runner เดียวกับที่ Sonar scan</span></div>
+          <div class="le-row"><span class="le-code">sonarqube-scan-action@v3</span><span class="le-desc">official action จาก SonarSource — อ่าน sonar-project.properties แล้วส่งข้อมูลไปยัง SonarQube server</span></div>
+          <div class="le-row"><span class="le-code">projectBaseDir: backend</span><span class="le-desc">บอก action ว่า sonar-project.properties อยู่ใน backend/ ไม่ใช่ root — สำคัญมาก ถ้าไม่ใส่จะ error</span></div>
+          <div class="le-row"><span class="le-code">SONAR_TOKEN</span><span class="le-desc">Personal Access Token จาก SonarQube Settings → Security → Tokens — ใช้ authenticate กับ server (เก็บใน GitHub Secrets)</span></div>
+          <div class="le-row"><span class="le-code">SONAR_HOST_URL</span><span class="le-desc">URL ของ SonarQube server เช่น <code>https://sonarcloud.io</code> หรือ <code>http://your-server:9000</code> (เก็บใน GitHub Secrets)</span></div>
+          <div class="le-row"><span class="le-code">sonarqube-quality-gate-action@v1</span><span class="le-desc">official action ที่ poll SonarQube server จนได้ผล Quality Gate — fail pipeline ถ้า gate ไม่ผ่าน</span></div>
+          <div class="le-row"><span class="le-code">timeout-minutes: 5</span><span class="le-desc">รอผล Quality Gate ไม่เกิน 5 นาที — ถ้า SonarQube server ช้ามาก/ไม่ตอบ pipeline จะ fail แทน hang ตลอดไป</span></div>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ลำดับ steps ใน Job 3 สำคัญมาก</strong>
+            ต้องรัน <code>npm test</code> ก่อน <code>sonarqube-scan-action</code> เสมอ<br>
+            เพราะ <code>sonar-project.properties</code> ระบุ <code>sonar.javascript.lcov.reportPaths=coverage/lcov.info</code> — ถ้าไฟล์นี้ไม่มีตอน scan → SonarQube จะแสดง coverage = 0% → Quality Gate fail
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔬</span>
+          <div>
+            <strong>SonarCloud vs Self-hosted SonarQube</strong>
+            <strong>SonarCloud (sonarcloud.io)</strong> — free สำหรับ public repo, ไม่ต้องตั้ง server, <code>SONAR_HOST_URL=https://sonarcloud.io</code><br>
+            <strong>Self-hosted SonarQube</strong> — ต้องตั้ง server เอง (Docker: <code>sonarqube:community</code>), <code>SONAR_HOST_URL=http://your-ip:9000</code><br>
+            สำหรับ course นี้: แนะนำ SonarCloud เพราะไม่ต้องตั้ง server
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="step-card" id="s10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div class="step-title">Quality Gate Concepts + ตั้งค่า GitHub Secrets</div>
+        <div class="step-badge setup">Secrets</div>
+      </div>
+      <div class="step-body">
+        <p>ทำความเข้าใจ Quality Gate และตั้งค่า Secrets ที่จำเป็นใน GitHub repository</p>
+
+        <p><strong>Quality Gate คืออะไร?</strong></p>
+        <p>Quality Gate คือ <strong>ชุดเงื่อนไข</strong> ที่กำหนดใน SonarQube ว่า code ต้องผ่าน threshold เท่าไหร่จึงจะ "ผ่าน" — ถ้าไม่ผ่านข้อใดข้อหนึ่ง pipeline fail ทันที</p>
+
+        <div class="qg-box">
+          <div class="qg-col qg-pass">
+            <div class="qg-label">Quality Gate PASSED</div>
+            <ul>
+              <li><span>✓</span> <span>Coverage on New Code &ge; 80%</span></li>
+              <li><span>✓</span> <span>No new Critical Bugs</span></li>
+              <li><span>✓</span> <span>No new Vulnerabilities</span></li>
+              <li><span>✓</span> <span>No new Blockers</span></li>
+              <li><span>✓</span> <span>Duplication &lt; 3%</span></li>
+            </ul>
+          </div>
+          <div class="qg-col qg-fail">
+            <div class="qg-label">Quality Gate FAILED</div>
+            <ul>
+              <li><span>✗</span> <span>Coverage &lt; threshold ที่กำหนด</span></li>
+              <li><span>✗</span> <span>มี new Critical Bug</span></li>
+              <li><span>✗</span> <span>มี new Vulnerability (HIGH/CRITICAL)</span></li>
+              <li><span>✗</span> <span>Duplication เกิน threshold</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🎓</span>
+          <div>
+            <strong>ปรับ Quality Gate สำหรับโปรเจกต์นักศึกษา</strong>
+            Default coverage threshold คือ 80% ซึ่งอาจสูงเกินไปสำหรับโปรเจกต์เรียน<br>
+            สามารถปรับใน SonarQube: <strong>Administration → Quality Gates → สร้าง gate ใหม่</strong> แล้วตั้ง coverage &ge; 60%<br>
+            ไป Settings → Projects → เลือก project → Quality Gate → เลือก gate ที่สร้าง
+          </div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 1 — สร้าง Project ใน SonarCloud:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">1. ไปที่ sonarcloud.io</span><span class="le-desc">Login ด้วย GitHub account</span></div>
+          <div class="le-row"><span class="le-code">2. + → Analyze new project</span><span class="le-desc">เลือก GitHub organization/account → เลือก repository ของ TaskFlow</span></div>
+          <div class="le-row"><span class="le-code">3. Set up project</span><span class="le-desc">เลือก "With GitHub Actions" → SonarCloud จะสร้าง project key และแนะนำ SONAR_TOKEN</span></div>
+          <div class="le-row"><span class="le-code">4. Copy SONAR_TOKEN</span><span class="le-desc">บันทึก token ที่ขึ้นต้นด้วย <code>sqp_xxxx...</code> — แสดงครั้งเดียวเท่านั้น</span></div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 2 — ตั้งค่า GitHub Secrets:</strong></p>
+        <div class="alert info">
+          <span class="alert-icon">📍</span>
+          <div>
+            <strong>วิธีเพิ่ม Secrets ใน GitHub</strong>
+            ไปที่ Repository → <strong>Settings → Secrets and variables → Actions → New repository secret</strong>
+          </div>
+        </div>
+
+        <div style="border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: .5rem;">
+          <div style="background: #1e293b; color: #fff; padding: .6rem 1rem; font-size: .82rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">GitHub Secrets ที่ต้องตั้งค่า</div>
+          <div style="padding: .75rem 1.25rem;">
+            <div class="secret-row">
+              <span class="secret-name">SONAR_TOKEN</span>
+              <div class="secret-desc">Personal Access Token จาก SonarCloud — รูปแบบ: <code>sqp_xxxxxxxxxxxxxxxxxxxx</code><br>สร้างได้ที่: SonarCloud → My Account → Security → Generate Tokens</div>
+            </div>
+            <div class="secret-row">
+              <span class="secret-name">SONAR_HOST_URL</span>
+              <div class="secret-desc">URL ของ SonarQube server:<br>• SonarCloud: <code>https://sonarcloud.io</code><br>• Self-hosted: <code>http://your-server-ip:9000</code></div>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin-top: 1rem;"><strong>ตรวจสอบว่า sonar.projectKey ตรงกัน:</strong></p>
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>sonar.projectKey ต้องตรงกับ key ใน SonarCloud</strong>
+            ในไฟล์ <code>sonar-project.properties</code> เราตั้งค่า <code>sonar.projectKey=taskflow</code><br>
+            ใน SonarCloud: project key ต้องเป็น <code>taskflow</code> ด้วย (หรือ format: <code>orgname_taskflow</code>)<br>
+            ถ้าไม่ตรง → SonarQube จะ error "Project not found" หรือสร้าง project ใหม่แทนที่จะอัปเดต project เดิม
+          </div>
+        </div>
+
+        <p><strong>สิ่งที่เกิดขึ้นเมื่อ Quality Gate Fail:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">Job 3 fail</span><span class="le-desc">sonarqube-quality-gate-action คืน exit code ไม่ใช่ 0 → step fail → Job 3 เป็น "Failed" ใน Actions UI</span></div>
+          <div class="le-row"><span class="le-code">Job 4 ไม่รัน</span><span class="le-desc">Job 4 มี <code>needs: sonar</code> → เมื่อ Job 3 fail, Job 4 (docker push) ถูก skip อัตโนมัติ — ป้องกันการ push code ที่ไม่ quality ไป registry</span></div>
+          <div class="le-row"><span class="le-code">PR blocked</span><span class="le-desc">ถ้า repo ตั้ง branch protection ให้ CI ต้องผ่าน → PR merge ไม่ได้จนกว่า Quality Gate จะผ่าน</span></div>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ — ก่อนไปต่อ Part 3</div>
+            <ul>
+              <li>Push code ไป GitHub แล้วเห็น 4 jobs ใน Actions tab (lint / test / sonar / build-push)</li>
+              <li>Job 1 (lint) ผ่านสีเขียว — ไม่มี ESLint errors</li>
+              <li>Job 2 (test) ผ่านสีเขียว — 15/15 tests pass, coverage artifact ถูก upload</li>
+              <li>Job 3 (sonar) ผ่านสีเขียว — SonarQube dashboard แสดงโปรเจกต์ TaskFlow</li>
+              <li>SonarQube dashboard แสดง coverage % (ใกล้เคียงกับที่ Jest รายงาน)</li>
+              <li>Quality Gate status แสดง "Passed" ใน SonarQube</li>
+              <li>GitHub Secrets มี SONAR_TOKEN และ SONAR_HOST_URL ครบ</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎉</span>
+          <div>
+            <strong>Part 2 เสร็จสมบูรณ์!</strong>
+            Frontend review เสร็จ, ci.yml Jobs 1-3 ถูกตั้งค่าแล้ว, SonarQube Quality Gate ทำงานได้<br>
+            ไปต่อ Part 3 เพื่อเพิ่ม Job 4: Docker BuildKit + Push ไป registry พร้อม image tagging strategy
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="part-nav">
+      <a href="tutorial-part1.html" class="nav-btn prev">← Part 1: TaskFlow Review</a>
+      <a href="tutorial-part3.html" class="nav-btn next">Part 3: Docker Build &amp; Push →</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  วิชา 30901-2008 · Lab Week 6 Part 2/3
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 5;
+  const KEY = 'w6p2-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  // steps in this part are numbered 6-10, map to internal 1-5
+  function stepIndex(n) { return n - 5; }
+  function stepNum(i) { return i + 5; }
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 6; i <= 10; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

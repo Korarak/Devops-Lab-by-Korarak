@@ -61,11 +61,13 @@
     .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
     .step-badge.setup    { background: #f1f5f9; color: #475569; }
     .step-badge.vue      { background: var(--vue-light); color: #065f46; }
+    .step-badge.compose  { background: var(--primary-light); color: var(--primary-dark); }
     .step-badge.test     { background: var(--amber-light); color: #92400e; }
     .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
 
     .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
     .file-path .fp-label { color: #64748b; }
+    .file-path .fp-size { color: #fbbf24; font-size: .72rem; margin-left: .4rem; }
 
     .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
     .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
@@ -96,13 +98,12 @@
     .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
     .le-desc { color: #475569; padding-top: .1rem; }
 
-    /* Diff box */
-    .diff-box { background: #1e293b; border-radius: 10px; overflow: hidden; }
-    .diff-header { background: #0f172a; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .5rem 1rem; }
-    .diff-body { padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .83rem; line-height: 1.9; }
-    .diff-add { color: #86efac; }
-    .diff-rem { color: #fca5a5; }
-    .diff-ctx { color: #64748b; }
+    /* Component map */
+    .comp-map { background: #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 2; color: #e2e8f0; overflow-x: auto; white-space: pre; }
+    .cm-file { color: #86efac; font-weight: 600; }
+    .cm-size { color: #fbbf24; }
+    .cm-desc { color: #64748b; }
+    .cm-tree { color: #475569; }
 
     .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
     .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
@@ -125,7 +126,7 @@
 <div class="hero">
   <div class="badge">Part 2 of 3 · Steps 6–10</div>
   <h1>🌿 Vue 3 Frontend</h1>
-  <p class="subtitle">main.js · vite.config.js · App.vue (State → Computed → Methods → Template)</p>
+  <p class="subtitle">Component-Based Architecture · Composable · Props & Emits</p>
 </div>
 
 <div class="layout">
@@ -134,11 +135,11 @@
     <div class="sb-card">
       <div class="sb-head">📋 Part 2: Vue 3 Frontend</div>
       <div class="toc-section">Steps</div>
-      <a class="toc-link" href="#s6" id="toc-6"><span class="dot"></span>6. โครงสร้าง + Config</a>
-      <a class="toc-link" href="#s7" id="toc-7"><span class="dot"></span>7. App.vue — State (ref)</a>
-      <a class="toc-link" href="#s8" id="toc-8"><span class="dot"></span>8. App.vue — Computed</a>
-      <a class="toc-link" href="#s9" id="toc-9"><span class="dot"></span>9. App.vue — Methods</a>
-      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. ทดสอบ Frontend</a>
+      <a class="toc-link" href="#s6"  id="toc-6"><span class="dot"></span>6. โครงสร้าง + Config</a>
+      <a class="toc-link" href="#s7"  id="toc-7"><span class="dot"></span>7. useProducts.js</a>
+      <a class="toc-link" href="#s8"  id="toc-8"><span class="dot"></span>8. Components: Layout</a>
+      <a class="toc-link" href="#s9"  id="toc-9"><span class="dot"></span>9. Components: Product</a>
+      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. App.vue + ทดสอบ</a>
       <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);display:grid;gap:.5rem;">
         <a href="tutorial-part1.html" style="display:block;background:#f1f5f9;color:#334155;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">← Part 1: Backend</a>
         <a href="tutorial-part3.html" style="display:block;background:var(--docker);color:#fff;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">Part 3: Docker →</a>
@@ -152,153 +153,79 @@
     <div class="step-card" id="s6">
       <div class="step-header">
         <div class="step-num">6</div>
-        <div class="step-title">โครงสร้าง Frontend + vite.config.js + main.js</div>
-        <div class="step-badge setup">Setup</div>
+        <div class="step-title">โครงสร้าง Frontend — ไฟล์เล็กๆ ที่มีหน้าที่ชัดเจน</div>
+        <div class="step-badge setup">Overview</div>
       </div>
       <div class="step-body">
-        <p>ใน Step นี้จะ <strong>สร้าง Vue 3 + Vite project ด้วยตัวเอง</strong> ตั้งแต่ต้น — ไม่ต้องเขียน <code>package.json</code> เอง ใช้ Vite scaffold ให้เลย</p>
-
-        <p><strong>1. Scaffold โปรเจกต์ด้วย Vite:</strong></p>
-        <div class="code-wrap">
-          <div class="code-label"><span>terminal — อยู่ใน week3-containerize/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code>npm create vite@latest frontend -- --template vue</code></pre>
-        </div>
+        <p>Frontend ของ StockPro แยก code ออกเป็น <strong>ไฟล์เล็กๆ</strong> แต่ละไฟล์มีหน้าที่เดียว — เปิดไฟล์ไหนก็รู้ทันทีว่าทำอะไร</p>
 
         <div class="alert info">
+          <span class="alert-icon">📂</span>
+          <div>
+            <strong>เปิดโฟลเดอร์ frontend/ ใน VS Code</strong>
+            ไฟล์ทั้งหมดมีอยู่แล้ว — Part นี้จะพาเปิดทีละไฟล์ ทำความเข้าใจ แล้วรันให้ทำงานได้
+          </div>
+        </div>
+
+        <p><strong>โครงสร้างไฟล์ frontend/src/ ทั้งหมด:</strong></p>
+        <pre class="comp-map"><span class="cm-tree">frontend/src/</span>
+<span class="cm-tree">├──</span> <span class="cm-file">App.vue</span>                        <span class="cm-size">~50 บรรทัด</span>  <span class="cm-desc"># root: ประกอบ components ทั้งหมด</span>
+<span class="cm-tree">├──</span> <span class="cm-file">main.js</span>                        <span class="cm-size">3 บรรทัด</span>   <span class="cm-desc"># entry point</span>
+<span class="cm-tree">│</span>
+<span class="cm-tree">├──</span> <span class="cm-file">composables/</span>
+<span class="cm-tree">│   └──</span> <span class="cm-file">useProducts.js</span>             <span class="cm-size">~80 บรรทัด</span>  <span class="cm-desc"># state + computed + API ทั้งหมด</span>
+<span class="cm-tree">│</span>
+<span class="cm-tree">└──</span> <span class="cm-file">components/</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">AppHeader.vue</span>              <span class="cm-size">~30 บรรทัด</span>  <span class="cm-desc"># header + ปุ่มเพิ่มสินค้า</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">StatsGrid.vue</span>              <span class="cm-size">~45 บรรทัด</span>  <span class="cm-desc"># dashboard 4 card</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">LowStockAlert.vue</span>          <span class="cm-size">~20 บรรทัด</span>  <span class="cm-desc"># แจ้งเตือนสต็อกใกล้หมด</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">ProductToolbar.vue</span>         <span class="cm-size">~40 บรรทัด</span>  <span class="cm-desc"># search + filter</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">ProductGrid.vue</span>            <span class="cm-size">~35 บรรทัด</span>  <span class="cm-desc"># grid wrapper + loading/empty</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">ProductCard.vue</span>            <span class="cm-size">~90 บรรทัด</span>  <span class="cm-desc"># card สินค้าแต่ละชิ้น</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">ProductModal.vue</span>           <span class="cm-size">~80 บรรทัด</span>  <span class="cm-desc"># modal เพิ่ม/แก้ไขสินค้า</span>
+    <span class="cm-tree">└──</span> <span class="cm-file">DeleteConfirm.vue</span>          <span class="cm-size">~35 บรรทัด</span>  <span class="cm-desc"># dialog ยืนยันการลบ</span></pre>
+
+        <div class="alert vue">
           <span class="alert-icon">💡</span>
           <div>
-            <strong>คำสั่งนี้ทำอะไร?</strong>
-            <code>npm create vite@latest</code> เรียกใช้ Vite project generator<br>
-            <code>frontend</code> คือชื่อโฟลเดอร์ที่จะสร้าง<br>
-            <code>--template vue</code> บอก Vite ว่าให้ scaffold Vue 3 + JavaScript template<br>
-            Vite จะสร้าง <code>package.json</code>, <code>vite.config.js</code>, <code>src/main.js</code> และไฟล์อื่น ๆ ให้ครบ
+            <strong>ทำไมต้องแยก component?</strong>
+            เปิดไฟล์เดียว เห็นได้ทั้งหน้าจอ — ไม่ต้องเลื่อนหาว่าส่วน header อยู่บรรทัดไหน<br>
+            แต่ละไฟล์มี <strong>template + script + style รวมกัน</strong> แต่แค่ส่วนของมันเอง<br>
+            เห็นชื่อไฟล์ก็รู้ทันทีว่าทำอะไร: <code>ProductCard.vue</code> = card สินค้าแต่ละชิ้น
           </div>
         </div>
 
-        <p><strong>โครงสร้างที่ Vite สร้างให้:</strong></p>
+        <p style="margin-top:.5rem;"><strong>เปิดไฟล์ frontend/vite.config.js:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> frontend/vite.config.js</div>
         <div class="code-wrap">
-          <div class="code-label"><span>โครงสร้างไฟล์หลังรัน scaffold</span></div>
-          <pre class="language-bash"><code>frontend/
-├── index.html            ← entry HTML, มี &lt;div id="app"&gt;
-├── package.json          ← dependencies (vue, vite, @vitejs/plugin-vue)
-├── vite.config.js        ← Vite config (จะแก้เพิ่ม proxy)
-├── public/
-│   └── vite.svg
-└── src/
-    ├── main.js           ← entry point ของ Vue app
-    ├── App.vue           ← root component (จะเขียนใหม่ใน Step 7–9)
-    ├── assets/
-    └── components/
-        └── HelloWorld.vue</code></pre>
-        </div>
-
-        <p><strong>2. ติดตั้ง dependencies:</strong></p>
-        <div class="code-wrap">
-          <div class="code-label"><span>terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code>cd frontend
-npm install</code></pre>
-        </div>
-
-        <p><strong>package.json ที่ Vite สร้างให้มีอะไรบ้าง:</strong></p>
-        <div class="line-explain">
-          <div class="le-row"><span class="le-code">vue</span><span class="le-desc"><strong>Vue 3 framework</strong> — library หลักสำหรับ UI, reactive state, component system</span></div>
-          <div class="le-row"><span class="le-code">vite</span><span class="le-desc"><strong>Build tool + Dev server</strong> — <code>npm run dev</code> รัน dev server, <code>npm run build</code> สร้าง production build</span></div>
-          <div class="le-row"><span class="le-code">@vitejs/plugin-vue</span><span class="le-desc"><strong>Vue plugin</strong> — ทำให้ Vite อ่าน .vue files ได้ ถ้าไม่มีตัวนี้ Vite จะไม่รู้จัก syntax ของ Single-File Component</span></div>
-        </div>
-
-        <div class="alert info">
-          <span class="alert-icon">📦</span>
-          <div>
-            <strong>dependencies vs devDependencies ต่างกันอย่างไร?</strong>
-            <code>dependencies</code> (vue) — ต้องการตอน runtime ด้วย, ถูก bundle เข้า production build<br>
-            <code>devDependencies</code> (vite, plugin-vue) — ใช้แค่ตอน develop/build, ไม่ถูก bundle เข้า production
-          </div>
-        </div>
-
-        <div class="verify">
-          <span class="verify-icon">✅</span>
-          <div>
-            <div class="verify-title">ตรวจสอบหลัง npm install</div>
-            <ul>
-              <li>มีโฟลเดอร์ <code>frontend/node_modules/</code> ถูกสร้างขึ้น</li>
-              <li>มีไฟล์ <code>frontend/package-lock.json</code> (lock versions)</li>
-              <li>ใน <code>node_modules/</code> จะเห็นโฟลเดอร์ <code>vue/</code>, <code>vite/</code>, <code>@vitejs/</code></li>
-            </ul>
-          </div>
-        </div>
-
-        <p style="margin-top:.75rem;"><strong>3. แก้ไข vite.config.js — เพิ่ม proxy สำหรับ API:</strong></p>
-        <p>Vite scaffold มาให้แค่ plugin พื้นฐาน ต้องเพิ่ม <code>server.proxy</code> เพื่อ forward request <code>/api/*</code> ไป backend</p>
-        <div class="file-path"><span class="fp-label">แก้ไขไฟล์:</span> frontend/vite.config.js</div>
-        <div class="diff-box">
-          <div class="diff-header">vite.config.js — ก่อน vs หลัง</div>
-          <div class="diff-body">
-<span class="diff-ctx">  import { defineConfig } from 'vite'</span>
-<span class="diff-ctx">  import vue from '@vitejs/plugin-vue'</span>
-<span class="diff-ctx"> </span>
-<span class="diff-ctx">  export default defineConfig({</span>
-<span class="diff-ctx">    plugins: [vue()],</span>
-<span class="diff-add">+   server: {</span>
-<span class="diff-add">+     proxy: {</span>
-<span class="diff-add">+       '/api': 'http://localhost:3001'</span>
-<span class="diff-add">+     }</span>
-<span class="diff-add">+   }</span>
-<span class="diff-ctx">  })</span>
-          </div>
-        </div>
-        <div class="code-wrap">
-          <div class="code-label"><span>frontend/vite.config.js — เนื้อหาหลังแก้ไข</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="code-label"><span>frontend/vite.config.js — เนื้อหาทั้งหมด (7 บรรทัด)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-javascript"><code>import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
   server: {
-    proxy: {
-      '/api': 'http://localhost:3001'
-    }
-  }
-})</code></pre>
-        </div>
-        <div class="code-wrap">
-          <div class="code-label"><span>frontend/vite.config.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-javascript"><code>import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-
-export default defineConfig({
-  plugins: [vue()],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:3001'
-    }
+    proxy: { '/api': 'http://localhost:3001' }
   }
 })</code></pre>
         </div>
         <div class="line-explain">
-          <div class="le-row"><span class="le-code">plugins: [vue()]</span><span class="le-desc">เปิดใช้งาน Vue 3 plugin — ทำให้ Vite เข้าใจ .vue files ได้</span></div>
-          <div class="le-row"><span class="le-code">proxy: {'/api': ...}</span><span class="le-desc">เมื่อ dev server เห็น request ไป /api/* → ส่งต่อไปที่ localhost:3001 แทน (ป้องกัน CORS)</span></div>
+          <div class="le-row"><span class="le-code">plugins: [vue()]</span><span class="le-desc">เปิดใช้ Vue plugin — ทำให้ Vite อ่าน .vue files ได้</span></div>
+          <div class="le-row"><span class="le-code">proxy: {'/api': ...}</span><span class="le-desc">Dev server forward request /api/* → localhost:3001 ป้องกัน CORS ตอน develop</span></div>
         </div>
 
-        <div class="file-path" style="margin-top:.75rem;"><span class="fp-label">เปิดไฟล์:</span> frontend/src/main.js</div>
+        <p style="margin-top:.5rem;"><strong>เปิดไฟล์ frontend/src/main.js:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> frontend/src/main.js</div>
         <div class="code-wrap">
-          <div class="code-label"><span>frontend/src/main.js — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="code-label"><span>frontend/src/main.js — เนื้อหาทั้งหมด (3 บรรทัด)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
           <pre class="language-javascript"><code>import { createApp } from 'vue'
 import App from './App.vue'
 
 createApp(App).mount('#app')</code></pre>
         </div>
         <div class="line-explain">
-          <div class="le-row"><span class="le-code">createApp(App)</span><span class="le-desc">สร้าง Vue application instance โดยใช้ App.vue เป็น root component</span></div>
-          <div class="le-row"><span class="le-code">.mount('#app')</span><span class="le-desc">แนบ app เข้ากับ element id="app" ใน index.html — ทุกอย่างใน App.vue จะ render ตรงนี้</span></div>
-        </div>
-
-        <div class="alert vue">
-          <span class="alert-icon">⚡</span>
-          <div>
-            <strong>ทำไม Frontend มีแค่ App.vue ไฟล์เดียว?</strong>
-            Lab นี้ใช้ Single-File Component (SFC) แบบ single component — App.vue มีทุกอย่าง: template, script, style
-            เหมาะสำหรับโปรเจกต์ขนาดเล็ก ถ้าใหญ่ขึ้นจะแยก component ออกเป็นหลายไฟล์
-          </div>
+          <div class="le-row"><span class="le-code">createApp(App)</span><span class="le-desc">สร้าง Vue application ใช้ App.vue เป็น root component</span></div>
+          <div class="le-row"><span class="le-code">.mount('#app')</span><span class="le-desc">แนบ app เข้า <code>&lt;div id="app"&gt;</code> ใน index.html</span></div>
         </div>
       </div>
     </div>
@@ -307,91 +234,160 @@ createApp(App).mount('#app')</code></pre>
     <div class="step-card" id="s7">
       <div class="step-header">
         <div class="step-num">7</div>
-        <div class="step-title">App.vue — Script Setup: State ด้วย ref()</div>
-        <div class="step-badge vue">Vue 3</div>
+        <div class="step-title">composables/useProducts.js — State และ Logic ทั้งหมด</div>
+        <div class="step-badge compose">Composable</div>
       </div>
       <div class="step-body">
-        <p>ลบเนื้อหาทั้งหมดใน <code>frontend/src/App.vue</code> ที่ Vite scaffold สร้างมา แล้วเขียน StockPro ใหม่ตั้งแต่ต้น — เริ่มจาก <code>&lt;script setup&gt;</code> ก่อน</p>
+        <p><strong>Composable</strong> คือ function ที่ return reactive state และ methods ออกมา — เก็บ logic ไว้ที่เดียว แล้ว component อื่นเรียกใช้ได้</p>
 
-        <div class="alert warning">
-          <span class="alert-icon">⚠️</span>
+        <div class="alert vue">
+          <span class="alert-icon">🧩</span>
           <div>
-            <strong>เคลียร์ไฟล์ scaffold ก่อน</strong>
-            เปิด <code>src/App.vue</code> แล้ว <strong>ลบเนื้อหาทั้งหมด</strong> ออก<br>
-            จากนั้นลบ <code>src/components/HelloWorld.vue</code> และโฟลเดอร์ <code>src/assets/</code> ทิ้งด้วย — โปรเจกต์นี้ไม่ใช้
+            <strong>ทำไมต้องมี Composable?</strong>
+            ถ้าใส่ state + API calls ไว้ใน App.vue → App.vue ยาว 200+ บรรทัด<br>
+            แยกออกมาเป็น <code>useProducts.js</code> → App.vue เหลือแค่ import component + เรียก composable
           </div>
         </div>
 
-        <p>โครงสร้าง SFC ที่จะเขียนใน App.vue มี 3 ส่วน — Step 7–8 เขียน script, Step 9 เขียน template + style:</p>
-        <div class="diff-box">
-          <div class="diff-header">App.vue — โครงสร้าง Single-File Component</div>
-          <div class="diff-body">
-<span class="diff-add">&lt;template&gt;      ← HTML + Vue directives        → Step 9</span>
-<span class="diff-add">&lt;/template&gt;</span>
-<span class="diff-ctx"> </span>
-<span class="diff-add">&lt;script setup&gt;  ← State, Computed, Methods   → Step 7–8–9</span>
-<span class="diff-add">&lt;/script&gt;</span>
-<span class="diff-ctx"> </span>
-<span class="diff-add">&lt;style scoped&gt;  ← CSS เฉพาะ component นี้    → Step 9</span>
-<span class="diff-add">&lt;/style&gt;</span>
-          </div>
-        </div>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/composables/useProducts.js<span class="fp-size">~80 บรรทัด</span></div>
 
-        <p><strong>เขียน &lt;script setup&gt; — ส่วน Import + State:</strong></p>
-        <div class="file-path"><span class="fp-label">เขียนใน:</span> frontend/src/App.vue → <span style="color:#fbbf24;">&lt;script setup&gt;</span></div>
-
-        <div class="diff-box">
-          <div class="diff-header">Vue 3 Vanilla JS เปรียบเทียบ — การเก็บ state</div>
-          <div class="diff-body">
-<span class="diff-rem">// ❌ Vanilla JS — ต้องเก็บใน variable ธรรมดา DOM ไม่อัพเดตอัตโนมัติ</span>
-<span class="diff-rem">let products = []</span>
-<span class="diff-rem">products = await res.json()</span>
-<span class="diff-rem">// ต้อง rebuild DOM เอง...</span>
-<span class="diff-ctx"> </span>
-<span class="diff-add">// ✓ Vue 3 — ref() สร้าง reactive state, DOM อัพเดตอัตโนมัติ</span>
-<span class="diff-add">const products = ref([])           // array ว่าง</span>
-<span class="diff-add">products.value = await res.json()  // เปลี่ยนค่าผ่าน .value</span>
-<span class="diff-add">// Vue detect การเปลี่ยนแปลง → re-render เฉพาะส่วนที่ใช้ products</span>
-          </div>
-        </div>
-
+        <p><strong>ส่วนที่ 1 — State (ref):</strong></p>
         <div class="code-wrap">
-          <div class="code-label"><span>App.vue — &lt;script setup&gt; ส่วน State</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-javascript"><code>import { ref, computed, onMounted } from 'vue'
+          <div class="code-label"><span>useProducts.js — State</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { ref, computed, watch } from 'vue'
 
-// ── State ────────────────────────────────────────────────────────
-const products      = ref([])       // รายการสินค้าทั้งหมดจาก API
-const loading       = ref(true)     // แสดง loading spinner
-const search        = ref('')       // ข้อความค้นหา
-const catFilter     = ref('')       // category ที่กำลัง filter
-const showModal     = ref(false)    // แสดง/ซ่อน modal เพิ่ม/แก้ไข
-const editingId     = ref(null)     // null = กำลัง add, มีค่า = กำลัง edit
-const confirmDelete = ref(null)     // เก็บ product ที่จะลบ (ใช้ confirm dialog)
+export function useProducts() {
 
-// ข้อมูลในฟอร์ม modal
-const form = ref({ name: '', category: '', price: '', stock: 0, description: '' })
+  // ── State ────────────────────────────────────────────────────────
+  const products      = ref([])        // รายการสินค้าจาก API
+  const loading       = ref(true)      // กำลังโหลดอยู่หรือไม่
+  const search        = ref('')        // ข้อความค้นหา
+  const catFilter     = ref('')        // category ที่เลือก
+  const showModal     = ref(false)     // แสดง/ซ่อน modal เพิ่ม/แก้ไข
+  const editingId     = ref(null)      // null = Add, มีค่า = Edit
+  const confirmDelete = ref(null)      // product ที่กำลังจะลบ
 
-let debounceTimer = null            // สำหรับ debounce search input</code></pre>
+  const emptyForm = () => ({ name: '', category: '', price: '', stock: 0, description: '' })
+  const form = ref(emptyForm())        // ข้อมูลที่ส่งให้ ProductModal</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">ref([])</span><span class="le-desc">สร้าง reactive array — เมื่อ products.value เปลี่ยน Vue re-render ส่วนที่ใช้ products อัตโนมัติ</span></div>
+          <div class="le-row"><span class="le-code">editingId</span><span class="le-desc">null = mode Add (POST), มีค่า = mode Edit (PUT) — ใช้ตัดสินใจใน saveProduct</span></div>
+          <div class="le-row"><span class="le-code">emptyForm()</span><span class="le-desc">function สร้าง object ว่างสำหรับ form ใหม่ — เรียกทุกครั้งที่เปิด modal Add</span></div>
         </div>
 
-        <p><strong>อธิบาย State แต่ละตัว:</strong></p>
+        <p><strong>ส่วนที่ 2 — Computed:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useProducts.js — Computed</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── Computed ─────────────────────────────────────────────────────
+  const filtered = computed(() => {
+    const s = search.value.toLowerCase()
+    return products.value.filter(p => {
+      const matchS = !s || p.name.toLowerCase().includes(s) ||
+                     (p.description || '').toLowerCase().includes(s)
+      const matchC = !catFilter.value || p.category === catFilter.value
+      return matchS && matchC
+    })
+  })
+
+  const categories = computed(() =>
+    [...new Set(products.value.map(p => p.category))].sort()
+  )
+
+  const stats = computed(() => ({
+    total:      products.value.length,
+    lowStock:   products.value.filter(p => p.stock < 10).length,
+    totalItems: products.value.reduce((s, p) => s + p.stock, 0),
+    totalValue: products.value.reduce((s, p) => s + parseFloat(p.price) * p.stock, 0)
+  }))</code></pre>
+        </div>
         <div class="line-explain">
-          <div class="le-row"><span class="le-code">products</span><span class="le-desc">เก็บ array ของสินค้าจาก API — เมื่อเปลี่ยน Vue จะ re-render product grid อัตโนมัติ</span></div>
-          <div class="le-row"><span class="le-code">loading</span><span class="le-desc">ควบคุมการแสดง spinner "กำลังโหลด..." — true ตอนเริ่ม, false หลัง fetch เสร็จ</span></div>
-          <div class="le-row"><span class="le-code">search</span><span class="le-desc">ผูกกับ input field ด้วย v-model — เมื่อ user พิมพ์ ค่านี้จะอัพเดตทันที</span></div>
-          <div class="le-row"><span class="le-code">catFilter</span><span class="le-desc">ผูกกับ select dropdown — ใช้กรองสินค้าตาม category</span></div>
-          <div class="le-row"><span class="le-code">showModal</span><span class="le-desc">ควบคุมการแสดง modal form — v-if="showModal" ใน template</span></div>
-          <div class="le-row"><span class="le-code">editingId</span><span class="le-desc">null = mode Add, มีค่า id = mode Edit — ใช้ตัดสินใจว่าจะ POST หรือ PUT</span></div>
-          <div class="le-row"><span class="le-code">confirmDelete</span><span class="le-desc">เก็บ product object ที่กำลังจะลบ — ใช้แสดง confirm dialog</span></div>
-          <div class="le-row"><span class="le-code">form</span><span class="le-desc">เก็บข้อมูลที่กรอกในฟอร์ม modal ทุก field ผูกด้วย v-model</span></div>
+          <div class="le-row"><span class="le-code">computed()</span><span class="le-desc">คำนวณค่าจาก state — Vue cache ผลไว้, คำนวณใหม่เฉพาะเมื่อ dependencies (products, search, catFilter) เปลี่ยน</span></div>
+          <div class="le-row"><span class="le-code">filtered</span><span class="le-desc">กรองสินค้าตาม search text AND category — ProductGrid ใช้ค่านี้แสดงผล</span></div>
+          <div class="le-row"><span class="le-code">new Set(...)</span><span class="le-desc">ดึง category unique จาก products ทั้งหมด — ตัดซ้ำ, sort ตัวอักษร</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 3 — Methods:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useProducts.js — API Methods</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── API Methods ───────────────────────────────────────────────────
+  async function fetchProducts() {
+    loading.value = true
+    const q = new URLSearchParams()
+    if (search.value)    q.set('search',   search.value)
+    if (catFilter.value) q.set('category', catFilter.value)
+    try {
+      const res = await fetch(`/api/products?${q}`)
+      products.value = await res.json()
+    } catch {
+      products.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function openAdd() {
+    editingId.value = null
+    form.value = emptyForm()
+    showModal.value = true
+  }
+
+  function openEdit(p) {
+    editingId.value = p.id
+    form.value = { name: p.name, category: p.category,
+                   price: p.price, stock: p.stock, description: p.description || '' }
+    showModal.value = true
+  }
+
+  async function saveProduct(formData) {
+    const body = { name: formData.name, category: formData.category,
+                   price: parseFloat(formData.price), stock: parseInt(formData.stock),
+                   description: formData.description }
+    const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
+    const method = editingId.value ? 'PUT' : 'POST'
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    showModal.value = false
+    fetchProducts()
+  }
+
+  async function deleteProduct(id) {
+    await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    confirmDelete.value = null
+    fetchProducts()
+  }</code></pre>
+        </div>
+
+        <p><strong>ส่วนที่ 4 — Watchers + Return:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useProducts.js — Watch + Return</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── Watchers ──────────────────────────────────────────────────────
+  let debounceTimer = null
+  watch(search, () => {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(fetchProducts, 280)  // รอ 280ms หลังพิมพ์หยุด
+  })
+
+  watch(catFilter, fetchProducts)  // fetch ทันทีเมื่อเลือก category
+
+  return {
+    products, loading, search, catFilter, showModal, editingId, confirmDelete, form,
+    filtered, categories, stats,
+    fetchProducts, openAdd, openEdit, saveProduct, deleteProduct
+  }
+}</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">watch(search, ...)</span><span class="le-desc">ทุกครั้งที่ search เปลี่ยน → clear timer เก่า → set timer ใหม่ 280ms → fetchProducts<br>ถ้าพิมพ์ต่อก่อน 280ms → timer รีเซ็ต → ไม่ fetch ทุก keystroke</span></div>
+          <div class="le-row"><span class="le-code">watch(catFilter, ...)</span><span class="le-desc">catFilter เปลี่ยน → fetchProducts ทันที (ไม่ต้อง debounce เพราะเลือกครั้งเดียว)</span></div>
+          <div class="le-row"><span class="le-code">return {...}</span><span class="le-desc">export ทุกอย่างออกมา — App.vue destructure เอาแค่ที่ต้องการ</span></div>
         </div>
 
         <div class="alert tip">
-          <span class="alert-icon">📌</span>
+          <span class="alert-icon">🔁</span>
           <div>
-            <strong>การอ่าน/เขียนค่า ref() ต้องใช้ .value เสมอ</strong>
-            ใน script: <code>products.value = [...]</code> / <code>loading.value = false</code><br>
-            ใน template: Vue ทำให้อัตโนมัติ ไม่ต้อง .value — <code>{{ products.length }}</code> ก็พอ
+            <strong>Watch vs @input — ต่างกันยังไง?</strong>
+            <code>watch(search, ...)</code> ใน composable ตรวจ state เปลี่ยนเอง — component ไม่ต้องส่ง event<br>
+            ผล: ProductToolbar แค่ update <code>search</code> ผ่าน v-model, composable จัดการ fetch เอง
           </div>
         </div>
       </div>
@@ -401,70 +397,139 @@ let debounceTimer = null            // สำหรับ debounce search input<
     <div class="step-card" id="s8">
       <div class="step-header">
         <div class="step-num">8</div>
-        <div class="step-title">App.vue — Script Setup: Computed</div>
+        <div class="step-title">Components ส่วน Layout — Header, Stats, Alert, Toolbar</div>
         <div class="step-badge vue">Vue 3</div>
       </div>
       <div class="step-body">
-        <p><code>computed()</code> คือค่าที่คำนวณจาก state — Vue จะ recalculate เฉพาะเมื่อ dependencies เปลี่ยน และ cache ผลไว้</p>
+        <p>4 components นี้เป็น <strong>display components</strong> — รับข้อมูลผ่าน <strong>props</strong> แสดงผล และส่ง event กลับผ่าน <strong>emits</strong></p>
 
-        <div class="file-path"><span class="fp-label">เขียนต่อใน:</span> frontend/src/App.vue → <span style="color:#fbbf24;">&lt;script setup&gt; ต่อจาก State</span></div>
-        <div class="code-wrap">
-          <div class="code-label"><span>App.vue — Computed properties</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-javascript"><code>// ── Computed ─────────────────────────────────────────────────────
-
-// กรองสินค้าตาม search + catFilter พร้อมกัน
-const filtered = computed(() => {
-  const s = search.value.toLowerCase()
-  return products.value.filter(p => {
-    // ตรงกับ search text? (เช็คทั้ง name และ description)
-    const matchS = !s ||
-      p.name.toLowerCase().includes(s) ||
-      (p.description || '').toLowerCase().includes(s)
-    // ตรงกับ category filter?
-    const matchC = !catFilter.value || p.category === catFilter.value
-    return matchS && matchC
-  })
-})
-
-// สร้าง list ของ categories จาก products ที่มีอยู่ (unique + sort)
-const categories = computed(() =>
-  [...new Set(products.value.map(p => p.category))].sort()
-)
-
-// คำนวณ 4 ตัวเลข dashboard stats
-const stats = computed(() => ({
-  total:      products.value.length,
-  lowStock:   products.value.filter(p => p.stock < 10).length,
-  totalItems: products.value.reduce((s, p) => s + p.stock, 0),
-  totalValue: products.value.reduce((s, p) => s + parseFloat(p.price) * p.stock, 0)
-}))</code></pre>
-        </div>
-
-        <p><strong>อธิบายแต่ละ computed:</strong></p>
-        <div class="line-explain">
-          <div class="le-row"><span class="le-code">filtered</span><span class="le-desc">อัพเดตทันทีเมื่อ search หรือ catFilter เปลี่ยน — template ใช้ v-for="p in filtered" ไม่ใช่ products โดยตรง</span></div>
-          <div class="le-row"><span class="le-code">categories</span><span class="le-desc">ดึง category ที่ unique จาก products ทั้งหมด — ใช้ Set เพื่อตัดซ้ำ, sort() เรียงตัวอักษร</span></div>
-          <div class="le-row"><span class="le-code">stats.total</span><span class="le-desc">จำนวนสินค้าทั้งหมด</span></div>
-          <div class="le-row"><span class="le-code">stats.lowStock</span><span class="le-desc">สินค้าที่ stock &lt; 10 ชิ้น — ใช้แสดง alert banner</span></div>
-          <div class="le-row"><span class="le-code">stats.totalItems</span><span class="le-desc">รวมจำนวน stock ทั้งหมดทุกสินค้า (reduce)</span></div>
-          <div class="le-row"><span class="le-code">stats.totalValue</span><span class="le-desc">มูลค่ารวม = ราคา × stock ทุกสินค้า</span></div>
-        </div>
-
-        <div class="alert vue">
-          <span class="alert-icon">🧮</span>
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
           <div>
-            <strong>computed() vs methods() — ทำไมถึงใช้ computed?</strong>
-            <strong>computed()</strong> มี cache — ถ้า products ไม่เปลี่ยน Vue ใช้ค่าเดิม ไม่คำนวณใหม่<br>
-            <strong>methods()</strong> รันทุกครั้งที่ template re-render — สิ้นเปลืองกว่าสำหรับ stats ที่ต้องแสดงตลอด
+            <strong>Props vs Emits</strong>
+            <strong>Props:</strong> พ่อ → ลูก — ส่งข้อมูลลงมา (<code>:stats="stats"</code>)<br>
+            <strong>Emits:</strong> ลูก → พ่อ — แจ้งเหตุการณ์ขึ้นไป (<code>@add="openAdd"</code>)
           </div>
         </div>
 
-        <div class="alert info">
-          <span class="alert-icon">📋</span>
+        <!-- AppHeader -->
+        <p><strong>1. AppHeader.vue — Header พร้อมปุ่มเพิ่มสินค้า</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/AppHeader.vue<span class="fp-size">~30 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>AppHeader.vue — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;header class="app-header"&gt;
+    &lt;div class="logo"&gt;
+      &lt;span class="logo-icon"&gt;📦&lt;/span&gt;
+      &lt;div&gt;
+        &lt;div class="logo-name"&gt;StockPro&lt;/div&gt;
+        &lt;div class="logo-sub"&gt;ระบบจัดการสินค้าคงคลัง&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;button class="btn-add" @click="$emit('add')"&gt;+ เพิ่มสินค้า&lt;/button&gt;
+  &lt;/header&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineEmits(['add'])
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+/* CSS ของ header อยู่ที่นี่ */
+&lt;/style&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">$emit('add')</span><span class="le-desc">เมื่อกดปุ่ม → แจ้ง parent (App.vue) ด้วย event ชื่อ 'add' → App.vue เรียก openAdd()</span></div>
+          <div class="le-row"><span class="le-code">defineEmits(['add'])</span><span class="le-desc">ประกาศ events ที่ component นี้ส่งออกได้ — ช่วยให้ IDE แสดง autocomplete</span></div>
+          <div class="le-row"><span class="le-code">&lt;style scoped&gt;</span><span class="le-desc">CSS ใน scoped ใช้ได้แค่กับ component นี้เท่านั้น ไม่กระทบ component อื่น</span></div>
+        </div>
+
+        <!-- StatsGrid -->
+        <p style="margin-top:.5rem;"><strong>2. StatsGrid.vue — Dashboard 4 card</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/StatsGrid.vue<span class="fp-size">~45 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>StatsGrid.vue — &lt;script setup&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// รับ stats object จาก App.vue
+defineProps({ stats: { type: Object, required: true } })</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>StatsGrid.vue — template (ตัวอย่าง 1 card)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- ใช้ stats.total ที่รับมาจาก props แสดงผล --&gt;
+&lt;div class="stat-card"&gt;
+  &lt;div class="stat-icon si-green"&gt;📦&lt;/div&gt;
+  &lt;div class="stat-body"&gt;
+    &lt;div class="stat-val" style="color:#059669"&gt;{{ stats.total }}&lt;/div&gt;
+    &lt;div class="stat-label"&gt;สินค้าทั้งหมด&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <!-- LowStockAlert -->
+        <p style="margin-top:.5rem;"><strong>3. LowStockAlert.vue — Banner แจ้งเตือน</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/LowStockAlert.vue<span class="fp-size">~20 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>LowStockAlert.vue — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;!-- v-if: แสดงเฉพาะเมื่อ count > 0 --&gt;
+  &lt;div class="alert-low" v-if="count &gt; 0"&gt;
+    🚨 มีสินค้า &lt;strong&gt;{{ count }} รายการ&lt;/strong&gt;
+    ที่มีจำนวนสต็อกน้อยกว่า 10 ชิ้น
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({ count: { type: Number, required: true } })
+&lt;/script&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">v-if="count &gt; 0"</span><span class="le-desc">ถ้าไม่มีสินค้าใกล้หมด → ไม่ render element นี้เลย (ต่างจาก v-show ที่ยังมีแต่ซ่อน)</span></div>
+        </div>
+
+        <!-- ProductToolbar -->
+        <p style="margin-top:.5rem;"><strong>4. ProductToolbar.vue — Search + Filter</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/ProductToolbar.vue<span class="fp-size">~40 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ProductToolbar.vue — &lt;script setup&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>defineProps({
+  search:        { type: String,  required: true },
+  catFilter:     { type: String,  required: true },
+  categories:    { type: Array,   required: true },
+  loading:       { type: Boolean, required: true },
+  filteredCount: { type: Number,  required: true },
+  totalCount:    { type: Number,  required: true },
+})
+defineEmits(['update:search', 'update:catFilter'])</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ProductToolbar.vue — template (input search)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- ":value" รับค่าจาก props, "@input $emit" ส่งค่าใหม่กลับ parent --&gt;
+&lt;input
+  :value="search"
+  @input="$emit('update:search', $event.target.value)"
+  class="input-search"
+  placeholder="🔍 ค้นหาชื่อสินค้า หรือคำอธิบาย..."
+/&gt;</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔗</span>
           <div>
-            <strong>categories ไม่ได้มาจาก /api/categories</strong>
-            App.vue คำนวณ categories จาก products ที่ดึงมาแล้ว — ไม่ต้องเรียก API เพิ่ม
-            (backend มี <code>/api/categories</code> route ไว้ แต่ frontend ไม่ได้ใช้งานจริง)
+            <strong>v-model กับ Custom Component</strong>
+            ใน App.vue ใช้ <code>v-model:search="search"</code> กับ ProductToolbar<br>
+            Vue แปลงเป็น: <code>:search="search"</code> + <code>@update:search="search = $event"</code><br>
+            เมื่อ search เปลี่ยน → <code>watch(search, ...)</code> ใน composable ตรวจเจอ → debounce → fetch
+          </div>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">เข้าใจ Pattern นี้แล้วใช่ไหม?</div>
+            <ul>
+              <li>Props = ทางเดียว จาก parent → child ผ่าน <code>:propName="value"</code></li>
+              <li>Emits = ทางเดียว จาก child → parent ผ่าน <code>$emit('eventName', data)</code></li>
+              <li>v-model = สะดวกขึ้น: รวม prop + emit เข้าด้วยกัน</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -474,541 +539,173 @@ const stats = computed(() => ({
     <div class="step-card" id="s9">
       <div class="step-header">
         <div class="step-num">9</div>
-        <div class="step-title">App.vue — Script Setup: Methods + Template</div>
+        <div class="step-title">Components ส่วน Product — Card, Grid, Modal, Confirm</div>
         <div class="step-badge vue">Vue 3</div>
       </div>
       <div class="step-body">
-        <p>ส่วน methods ทำงานกับ API (fetch, add, edit, delete) — เขียนต่อจาก Computed แล้ว Step นี้จะปิด &lt;script setup&gt; และเขียน &lt;template&gt; + &lt;style scoped&gt; ให้ครบ</p>
+        <p>4 components นี้จัดการสินค้า — ProductCard เป็น <strong>child ของ ProductGrid</strong> (component ซ้อนกัน)</p>
 
-        <div class="file-path"><span class="fp-label">เขียนต่อใน:</span> frontend/src/App.vue → <span style="color:#fbbf24;">&lt;script setup&gt; ต่อจาก Computed</span></div>
+        <!-- ProductCard -->
+        <p><strong>1. ProductCard.vue — Card สินค้าแต่ละชิ้น</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/ProductCard.vue<span class="fp-size">~90 บรรทัด</span></div>
         <div class="code-wrap">
-          <div class="code-label"><span>App.vue — Methods ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-javascript"><code>// ── Methods ───────────────────────────────────────────────────────
+          <div class="code-label"><span>ProductCard.vue — &lt;script setup&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>defineProps({ product: { type: Object, required: true } })
+defineEmits(['edit', 'delete'])
 
-// debounce: รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch
-// (ป้องกัน API ถูกเรียกทุก keystroke)
-function debounceFetch() {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(fetchProducts, 280)
-}
-
-// ดึงสินค้าจาก API (ส่ง search + catFilter เป็น query params)
-async function fetchProducts() {
-  loading.value = true
-  const q = new URLSearchParams()
-  if (search.value)    q.set('search',   search.value)
-  if (catFilter.value) q.set('category', catFilter.value)
-  try {
-    const res = await fetch(`/api/products?${q}`)
-    products.value = await res.json()
-  } catch {
-    products.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-// เปิด modal แบบ Add (clear form)
-function openAdd() {
-  editingId.value = null
-  form.value = { name: '', category: '', price: '', stock: 0, description: '' }
-  showModal.value = true
-}
-
-// เปิด modal แบบ Edit (copy ข้อมูลจาก product เข้า form)
-function openEdit(p) {
-  editingId.value = p.id
-  form.value = {
-    name: p.name, category: p.category,
-    price: p.price, stock: p.stock,
-    description: p.description || ''
-  }
-  showModal.value = true
-}
-
-// บันทึก (ถ้า editingId มีค่า = PUT, ถ้าเป็น null = POST)
-async function saveProduct() {
-  const body = {
-    name:        form.value.name,
-    category:    form.value.category,
-    price:       parseFloat(form.value.price),
-    stock:       parseInt(form.value.stock),
-    description: form.value.description
-  }
-  const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
-  const method = editingId.value ? 'PUT' : 'POST'
-  await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  showModal.value = false
-  fetchProducts()   // reload สินค้าใหม่
-}
-
-// ลบสินค้า
-async function deleteProduct(id) {
-  await fetch(`/api/products/${id}`, { method: 'DELETE' })
-  confirmDelete.value = null
-  fetchProducts()
-}
-
-// คืน CSS class ตาม stock level (ใช้กับ stock bar และตัวเลข)
+// คืน CSS class ตามระดับ stock
 function stockClass(s) {
-  if (s <= 0) return 'out'    // หมด
-  if (s < 10) return 'low'    // ใกล้หมด
-  if (s < 30) return 'mid'    // ปานกลาง
-  return 'high'               // เพียงพอ
+  if (s <= 0) return 'out'   // หมด
+  if (s < 10) return 'low'   // ใกล้หมด
+  if (s < 30) return 'mid'   // ปานกลาง
+  return 'high'              // เพียงพอ
 }
 
 // คืน CSS class ตาม category (ใช้กับ badge สี)
 function catClass(cat) {
-  const m = {
-    Electronics: 'c-elec', Clothing: 'c-cloth',
-    Footwear:    'c-foot',  Food:     'c-food',
-    Sports:      'c-sport', Books:    'c-book',
-    Furniture:   'c-furn',  Bags:     'c-bag',
-    Accessories: 'c-acc',   Tools:    'c-tool'
-  }
+  const m = { Electronics: 'c-elec', Clothing: 'c-cloth', ... }
   return m[cat] || 'c-other'
-}
-
-// โหลดสินค้าทันทีเมื่อ component mount ครั้งแรก
-onMounted(fetchProducts)</code></pre>
+}</code></pre>
         </div>
-
-        <p><strong>Vue Directives ที่ใช้ใน Template:</strong></p>
-        <div class="line-explain">
-          <div class="le-row"><span class="le-code">v-for="p in filtered"</span><span class="le-desc">วน loop ผ่าน filtered computed (ไม่ใช่ products โดยตรง) — search/filter มีผลทันที</span></div>
-          <div class="le-row"><span class="le-code">:key="p.id"</span><span class="le-desc">Vue ใช้ key track ว่า element ไหนคือ element ไหน — ลดการ re-render ที่ไม่จำเป็น</span></div>
-          <div class="le-row"><span class="le-code">v-model="search"</span><span class="le-desc">two-way binding — input เปลี่ยน search เปลี่ยน, search เปลี่ยน input แสดงค่าใหม่</span></div>
-          <div class="le-row"><span class="le-code">v-if="showModal"</span><span class="le-desc">สร้าง/ทำลาย DOM element ตามเงื่อนไข — ต่างจาก v-show ที่แค่ toggle display:none</span></div>
-          <div class="le-row"><span class="le-code">@click.self="..."</span><span class="le-desc">.self modifier — event trigger เฉพาะ element นั้นเอง ไม่ใช่ child — คลิก overlay ปิด modal แต่คลิกใน modal ไม่ปิด</span></div>
-          <div class="le-row"><span class="le-code">:class="stockClass(p.stock)"</span><span class="le-desc">dynamic class — ผูก CSS class ตามผลลัพธ์ function</span></div>
-          <div class="le-row"><span class="le-code">:style="{ width: ... + '%' }"</span><span class="le-desc">dynamic style — stock bar width คำนวณจาก stock / 80 * 100</span></div>
-        </div>
-
-        <div class="alert tip">
-          <span class="alert-icon">🔀</span>
-          <div>
-            <strong>ทำไม proxy ใน vite.config.js ทำงานได้ตอน dev แต่ใน production ใช้ nginx.conf?</strong>
-            ตอน dev: Vite dev server รัน proxy ให้<br>
-            ตอน production (Docker): ไม่มี Vite dev server — Nginx ทำหน้าที่ proxy แทนตาม nginx.conf
-          </div>
-        </div>
-
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1.5rem 0;">
-
-        <p><strong>เขียน &lt;template&gt; — HTML structure ของ StockPro:</strong></p>
-        <p>template มี 4 ส่วนหลัก: Header, Stats Dashboard, Product Grid, Modals</p>
-
-        <p style="font-weight:700;margin-bottom:.4rem;">ส่วนที่ 1 — Header + Stats Dashboard + Low Stock Alert + Toolbar</p>
-        <div class="file-path"><span class="fp-label">เขียนใน:</span> frontend/src/App.vue → <span style="color:#fbbf24;">&lt;template&gt;</span></div>
         <div class="code-wrap">
-          <div class="code-label"><span>App.vue — &lt;template&gt; ส่วนที่ 1/3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-html"><code>&lt;template&gt;
-  &lt;div&gt;
+          <div class="code-label"><span>ProductCard.vue — template (ส่วนหลัก)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- :class dynamic — ขอบแดงถ้า stock ใกล้หมด --&gt;
+&lt;div class="product-card"
+  :class="{ 'card-low': product.stock &gt; 0 &amp;&amp; product.stock &lt; 10,
+             'card-out': product.stock &lt;= 0 }"&gt;
 
-    &lt;!-- HEADER --&gt;
-    &lt;header class="app-header"&gt;
-      &lt;div class="logo"&gt;
-        &lt;span class="logo-icon"&gt;📦&lt;/span&gt;
-        &lt;div&gt;
-          &lt;div class="logo-name"&gt;StockPro&lt;/div&gt;
-          &lt;div class="logo-sub"&gt;ระบบจัดการสินค้าคงคลัง&lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-      &lt;button class="btn-add" @click="openAdd"&gt;+ เพิ่มสินค้า&lt;/button&gt;
-    &lt;/header&gt;
-
-    &lt;main class="main"&gt;
-
-      &lt;!-- STATS DASHBOARD --&gt;
-      &lt;div class="stats-grid"&gt;
-        &lt;div class="stat-card"&gt;
-          &lt;div class="stat-icon si-green"&gt;📦&lt;/div&gt;
-          &lt;div class="stat-body"&gt;
-            &lt;div class="stat-val" style="color:#059669"&gt;{{ stats.total }}&lt;/div&gt;
-            &lt;div class="stat-label"&gt;สินค้าทั้งหมด&lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div class="stat-card"&gt;
-          &lt;div class="stat-icon si-red"&gt;⚠️&lt;/div&gt;
-          &lt;div class="stat-body"&gt;
-            &lt;div class="stat-val" style="color:#dc2626"&gt;{{ stats.lowStock }}&lt;/div&gt;
-            &lt;div class="stat-label"&gt;สต็อกใกล้หมด (&lt;10)&lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div class="stat-card"&gt;
-          &lt;div class="stat-icon si-amber"&gt;📊&lt;/div&gt;
-          &lt;div class="stat-body"&gt;
-            &lt;div class="stat-val" style="color:#d97706"&gt;{{ stats.totalItems.toLocaleString() }}&lt;/div&gt;
-            &lt;div class="stat-label"&gt;จำนวนสต็อกรวม&lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div class="stat-card"&gt;
-          &lt;div class="stat-icon si-blue"&gt;💰&lt;/div&gt;
-          &lt;div class="stat-body"&gt;
-            &lt;div class="stat-val" style="color:#2563eb;font-size:1.3rem"&gt;
-              ฿{{ Math.round(stats.totalValue).toLocaleString() }}
-            &lt;/div&gt;
-            &lt;div class="stat-label"&gt;มูลค่าสต็อกรวม&lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-
-      &lt;!-- LOW STOCK ALERT --&gt;
-      &lt;div class="alert-low" v-if="stats.lowStock &gt; 0"&gt;
-        🚨 มีสินค้า &lt;strong&gt;{{ stats.lowStock }} รายการ&lt;/strong&gt;
-        ที่มีจำนวนสต็อกน้อยกว่า 10 ชิ้น — กรุณาตรวจสอบและเติมสต็อก
-      &lt;/div&gt;
-
-      &lt;!-- TOOLBAR --&gt;
-      &lt;div class="toolbar"&gt;
-        &lt;input
-          v-model="search"
-          @input="debounceFetch"
-          class="input-search"
-          placeholder="🔍 ค้นหาชื่อสินค้า หรือคำอธิบาย..."
-        /&gt;
-        &lt;select v-model="catFilter" @change="fetchProducts" class="input-select"&gt;
-          &lt;option value=""&gt;ทุกหมวดหมู่&lt;/option&gt;
-          &lt;option v-for="c in categories" :key="c" :value="c"&gt;{{ c }}&lt;/option&gt;
-        &lt;/select&gt;
-        &lt;span class="result-count" v-if="!loading"&gt;
-          แสดง {{ filtered.length }} / {{ products.length }} รายการ
-        &lt;/span&gt;
-      &lt;/div&gt;</code></pre>
-        </div>
-
-        <p style="font-weight:700;margin-bottom:.4rem;margin-top:1rem;">ส่วนที่ 2 — Loading / Empty states + Product Grid</p>
-        <div class="code-wrap">
-          <div class="code-label"><span>App.vue — &lt;template&gt; ส่วนที่ 2/3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-html"><code>      &lt;!-- LOADING --&gt;
-      &lt;div class="state-box" v-if="loading"&gt;
-        &lt;div class="state-icon"&gt;⏳&lt;/div&gt;
-        &lt;div&gt;กำลังโหลดข้อมูลสินค้า...&lt;/div&gt;
-      &lt;/div&gt;
-
-      &lt;!-- EMPTY --&gt;
-      &lt;div class="state-box" v-else-if="filtered.length === 0"&gt;
-        &lt;div class="state-icon"&gt;📭&lt;/div&gt;
-        &lt;div class="state-title"&gt;ไม่พบสินค้า&lt;/div&gt;
-        &lt;div class="state-desc"&gt;
-          {{ search || catFilter ? 'ลองเปลี่ยน keyword หรือ filter' : 'กดปุ่ม "+ เพิ่มสินค้า" เพื่อเริ่มต้น' }}
-        &lt;/div&gt;
-      &lt;/div&gt;
-
-      &lt;!-- PRODUCT GRID --&gt;
-      &lt;div class="product-grid" v-else&gt;
-        &lt;div
-          v-for="p in filtered"
-          :key="p.id"
-          class="product-card"
-          :class="{ 'card-low': p.stock &gt; 0 &amp;&amp; p.stock &lt; 10, 'card-out': p.stock &lt;= 0 }"
-        &gt;
-          &lt;div class="card-top"&gt;
-            &lt;span class="cat-badge" :class="catClass(p.category)"&gt;{{ p.category }}&lt;/span&gt;
-            &lt;div class="product-name"&gt;{{ p.name }}&lt;/div&gt;
-            &lt;div class="product-desc" v-if="p.description"&gt;{{ p.description }}&lt;/div&gt;
-            &lt;div class="product-price"&gt;
-              ฿{{ parseFloat(p.price).toLocaleString('th-TH', { minimumFractionDigits: 2 }) }}
-            &lt;/div&gt;
-            &lt;div class="stock-info"&gt;
-              &lt;div class="stock-row"&gt;
-                &lt;span class="stock-label"&gt;สต็อก&lt;/span&gt;
-                &lt;span class="stock-num" :class="stockClass(p.stock)"&gt;
-                  {{ p.stock.toLocaleString() }} ชิ้น
-                  &lt;span v-if="p.stock &lt;= 0"&gt; — หมดแล้ว!&lt;/span&gt;
-                  &lt;span v-else-if="p.stock &lt; 10"&gt; — ใกล้หมด!&lt;/span&gt;
-                &lt;/span&gt;
-              &lt;/div&gt;
-              &lt;div class="stock-track"&gt;
-                &lt;div
-                  class="stock-fill"
-                  :class="stockClass(p.stock)"
-                  :style="{ width: Math.min((p.stock / 80) * 100, 100) + '%' }"
-                &gt;&lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div class="card-footer"&gt;
-            &lt;button class="btn-edit" @click="openEdit(p)"&gt;✏️ แก้ไข&lt;/button&gt;
-            &lt;button class="btn-del" @click="confirmDelete = p"&gt;🗑️ ลบ&lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-
-    &lt;/main&gt;</code></pre>
-        </div>
-
-        <p style="font-weight:700;margin-bottom:.4rem;margin-top:1rem;">ส่วนที่ 3 — Add/Edit Modal + Delete Confirm Dialog + ปิด &lt;template&gt;</p>
-        <div class="code-wrap">
-          <div class="code-label"><span>App.vue — &lt;template&gt; ส่วนที่ 3/3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-html"><code>    &lt;!-- ADD/EDIT MODAL --&gt;
-    &lt;div class="overlay" v-if="showModal" @click.self="showModal = false"&gt;
-      &lt;div class="modal"&gt;
-        &lt;div class="modal-title"&gt;
-          {{ editingId ? '✏️ แก้ไขสินค้า' : '📦 เพิ่มสินค้าใหม่' }}
-        &lt;/div&gt;
-        &lt;form @submit.prevent="saveProduct"&gt;
-          &lt;div class="form-group"&gt;
-            &lt;label class="form-label"&gt;ชื่อสินค้า *&lt;/label&gt;
-            &lt;input class="form-input" v-model="form.name" placeholder="เช่น MacBook Air M3" required /&gt;
-          &lt;/div&gt;
-          &lt;div class="form-row"&gt;
-            &lt;div class="form-group"&gt;
-              &lt;label class="form-label"&gt;หมวดหมู่ *&lt;/label&gt;
-              &lt;input class="form-input" v-model="form.category" list="cat-list" placeholder="เช่น Electronics" required /&gt;
-              &lt;datalist id="cat-list"&gt;
-                &lt;option v-for="c in categories" :value="c" :key="c" /&gt;
-              &lt;/datalist&gt;
-            &lt;/div&gt;
-            &lt;div class="form-group"&gt;
-              &lt;label class="form-label"&gt;ราคา (บาท) *&lt;/label&gt;
-              &lt;input class="form-input" v-model="form.price" type="number" min="0" step="0.01" placeholder="0.00" required /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div class="form-group"&gt;
-            &lt;label class="form-label"&gt;จำนวนสต็อก (ชิ้น) *&lt;/label&gt;
-            &lt;input class="form-input" v-model="form.stock" type="number" min="0" placeholder="0" required /&gt;
-          &lt;/div&gt;
-          &lt;div class="form-group"&gt;
-            &lt;label class="form-label"&gt;คำอธิบายสินค้า&lt;/label&gt;
-            &lt;textarea class="form-input" v-model="form.description" rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)" style="resize:vertical"&gt;&lt;/textarea&gt;
-          &lt;/div&gt;
-          &lt;div class="modal-footer"&gt;
-            &lt;button type="button" class="btn-cancel" @click="showModal = false"&gt;ยกเลิก&lt;/button&gt;
-            &lt;button type="submit" class="btn-save"&gt;
-              {{ editingId ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มสินค้า' }}
-            &lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/form&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-
-    &lt;!-- DELETE CONFIRM --&gt;
-    &lt;div class="overlay" v-if="confirmDelete" @click.self="confirmDelete = null"&gt;
-      &lt;div class="modal confirm"&gt;
-        &lt;div class="confirm-icon"&gt;🗑️&lt;/div&gt;
-        &lt;div class="confirm-title"&gt;ยืนยันการลบสินค้า&lt;/div&gt;
-        &lt;div class="confirm-desc"&gt;
-          คุณต้องการลบ &lt;strong&gt;{{ confirmDelete?.name }}&lt;/strong&gt; ออกจากระบบหรือไม่?&lt;br&gt;
-          &lt;span style="color:#dc2626"&gt;การกระทำนี้ไม่สามารถย้อนกลับได้&lt;/span&gt;
-        &lt;/div&gt;
-        &lt;div class="confirm-actions"&gt;
-          &lt;button class="btn-cancel" @click="confirmDelete = null"&gt;ยกเลิก&lt;/button&gt;
-          &lt;button class="btn-danger-confirm" @click="deleteProduct(confirmDelete.id)"&gt;ลบเลย&lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-
+  &lt;span class="cat-badge" :class="catClass(product.category)"&gt;
+    {{ product.category }}
+  &lt;/span&gt;
+  &lt;div class="product-name"&gt;{{ product.name }}&lt;/div&gt;
+  &lt;div class="product-price"&gt;
+    ฿{{ parseFloat(product.price).toLocaleString('th-TH', {minimumFractionDigits: 2}) }}
   &lt;/div&gt;
-&lt;/template&gt;</code></pre>
+
+  &lt;!-- progress bar ตามระดับ stock --&gt;
+  &lt;div class="stock-fill"
+    :class="stockClass(product.stock)"
+    :style="{ width: Math.min((product.stock / 80) * 100, 100) + '%' }"&gt;
+  &lt;/div&gt;
+
+  &lt;!-- ปุ่ม emit events กลับ parent --&gt;
+  &lt;button @click="$emit('edit', product)"&gt;✏️ แก้ไข&lt;/button&gt;
+  &lt;button @click="$emit('delete', product)"&gt;🗑️ ลบ&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">:class="{ 'card-low': ... }"</span><span class="le-desc">object syntax — เพิ่ม class 'card-low' ถ้า condition เป็น true</span></div>
+          <div class="le-row"><span class="le-code">:style="{ width: ... }"</span><span class="le-desc">dynamic inline style — ความกว้าง progress bar คำนวณจาก stock / 80 * 100%</span></div>
         </div>
 
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1.5rem 0;">
-
-        <p><strong>เขียน &lt;style scoped&gt; — CSS ทั้งหมดของ StockPro:</strong></p>
-        <p><code>scoped</code> = CSS ใน block นี้มีผลแค่กับ component นี้เท่านั้น ไม่ leak ออกไปกระทบ component อื่น</p>
-        <div class="file-path"><span class="fp-label">เขียนต่อท้าย:</span> frontend/src/App.vue → <span style="color:#fbbf24;">&lt;style scoped&gt;</span></div>
+        <!-- ProductGrid -->
+        <p style="margin-top:.5rem;"><strong>2. ProductGrid.vue — Grid Wrapper + States</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/ProductGrid.vue<span class="fp-size">~35 บรรทัด</span></div>
         <div class="code-wrap">
-          <div class="code-label"><span>App.vue — &lt;style scoped&gt; ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-css"><code>&lt;style scoped&gt;
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+          <div class="code-label"><span>ProductGrid.vue — template ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- loading state --&gt;
+&lt;div class="state-box" v-if="loading"&gt;
+  &lt;div class="state-icon"&gt;⏳&lt;/div&gt;กำลังโหลดข้อมูลสินค้า...
+&lt;/div&gt;
 
-.app-header {
-  position: sticky; top: 0; z-index: 100;
-  background: #fff; border-bottom: 1px solid #e2e8f0;
-  height: 62px; padding: 0 1.5rem;
-  display: flex; align-items: center; gap: .85rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,.07);
-}
-.logo { display: flex; align-items: center; gap: .6rem; }
-.logo-icon { font-size: 1.6rem; }
-.logo-name { font-weight: 800; font-size: 1.15rem; color: #065f46; line-height: 1; }
-.logo-sub  { font-size: .72rem; color: #64748b; }
-.btn-add {
-  margin-left: auto;
-  background: #10b981; color: #fff;
-  border: none; border-radius: 8px;
-  padding: .55rem 1.2rem; font-size: .9rem; font-weight: 700;
-  cursor: pointer; transition: background .2s;
-}
-.btn-add:hover { background: #059669; }
+&lt;!-- empty state --&gt;
+&lt;div class="state-box" v-else-if="products.length === 0"&gt;
+  &lt;div class="state-icon"&gt;📭&lt;/div&gt;
+  &lt;div&gt;{{ isFiltered ? 'ลองเปลี่ยน keyword หรือ filter'
+                     : 'กดปุ่ม "+ เพิ่มสินค้า" เพื่อเริ่มต้น' }}&lt;/div&gt;
+&lt;/div&gt;
 
-.main { max-width: 1280px; margin: 0 auto; padding: 1.75rem 1.5rem; }
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem; margin-bottom: 1.5rem;
-}
-.stat-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-  padding: 1.1rem; display: flex; align-items: center; gap: .9rem;
-}
-.stat-icon {
-  width: 46px; height: 46px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.si-green { background: #d1fae5; }
-.si-red   { background: #fee2e2; }
-.si-amber { background: #fef3c7; }
-.si-blue  { background: #dbeafe; }
-.stat-val { font-size: 1.65rem; font-weight: 800; line-height: 1; }
-.stat-label { font-size: .8rem; color: #64748b; margin-top: .2rem; }
-
-.alert-low {
-  background: #fef2f2; border: 1px solid #fca5a5;
-  border-radius: 10px; padding: .85rem 1.2rem;
-  font-size: .92rem; margin-bottom: 1.5rem; color: #991b1b;
-}
-
-.toolbar { display: flex; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
-.input-search {
-  flex: 1; min-width: 200px;
-  padding: .6rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: .95rem; outline: none; transition: border-color .2s;
-}
-.input-search:focus { border-color: #10b981; }
-.input-select {
-  padding: .6rem .9rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  background: #fff; font-size: .9rem; outline: none; cursor: pointer;
-}
-.input-select:focus { border-color: #10b981; }
-.result-count { font-size: .82rem; color: #64748b; white-space: nowrap; }
-
-.state-box { text-align: center; padding: 4rem 1rem; color: #64748b; }
-.state-icon { font-size: 3rem; margin-bottom: .75rem; }
-.state-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: .3rem; }
-.state-desc { font-size: .9rem; }
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
-  gap: 1.2rem;
-}
-.product-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-  overflow: hidden; transition: transform .2s, box-shadow .2s;
-}
-.product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
-.product-card.card-low  { border-color: #fca5a5; }
-.product-card.card-out  { border-color: #d1d5db; opacity: .7; }
-
-.card-top { padding: 1.1rem; }
-.cat-badge {
-  display: inline-block; padding: .2rem .65rem;
-  border-radius: 20px; font-size: .72rem; font-weight: 700; margin-bottom: .6rem;
-}
-.c-elec  { background: #dbeafe; color: #1e40af; }
-.c-cloth { background: #fce7f3; color: #9d174d; }
-.c-foot  { background: #f3e8ff; color: #6b21a8; }
-.c-food  { background: #fef3c7; color: #92400e; }
-.c-sport { background: #d1fae5; color: #065f46; }
-.c-book  { background: #e0f2fe; color: #0369a1; }
-.c-furn  { background: #fdf4ff; color: #7e22ce; }
-.c-bag   { background: #fff7ed; color: #9a3412; }
-.c-acc   { background: #f0fdf4; color: #15803d; }
-.c-tool  { background: #f1f5f9; color: #475569; }
-.c-other { background: #ede9fe; color: #5b21b6; }
-
-.product-name  { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: .3rem; line-height: 1.35; }
-.product-desc  { font-size: .82rem; color: #64748b; line-height: 1.5; margin-bottom: .75rem; }
-.product-price { font-size: 1.25rem; font-weight: 800; color: #059669; }
-
-.stock-info { margin-top: .85rem; }
-.stock-row  { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: .3rem; }
-.stock-label { color: #64748b; }
-.stock-num   { font-weight: 700; }
-.stock-num.out  { color: #9ca3af; }
-.stock-num.low  { color: #dc2626; }
-.stock-num.mid  { color: #d97706; }
-.stock-num.high { color: #059669; }
-.stock-track { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-.stock-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; min-width: 4px; }
-.stock-fill.out  { background: #d1d5db; width: 2% !important; }
-.stock-fill.low  { background: #dc2626; }
-.stock-fill.mid  { background: #f59e0b; }
-.stock-fill.high { background: #10b981; }
-
-.card-footer {
-  display: flex; gap: .5rem;
-  padding: .75rem 1.1rem;
-  border-top: 1px solid #f1f5f9; background: #fafafa;
-}
-.btn-edit, .btn-del {
-  flex: 1; padding: .45rem; border-radius: 7px;
-  font-size: .82rem; font-weight: 600; cursor: pointer; border: none; transition: all .2s;
-}
-.btn-edit { background: #f1f5f9; color: #334155; }
-.btn-edit:hover { background: #e2e8f0; }
-.btn-del  { background: #fee2e2; color: #dc2626; }
-.btn-del:hover  { background: #fecaca; }
-
-.overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 500; padding: 1rem;
-}
-.modal {
-  background: #fff; border-radius: 16px;
-  width: 100%; max-width: 480px;
-  max-height: 90vh; overflow-y: auto; padding: 2rem;
-}
-.modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
-
-.form-group { margin-bottom: 1rem; }
-.form-label { display: block; font-size: .87rem; font-weight: 600; margin-bottom: .35rem; }
-.form-input {
-  width: 100%; padding: .6rem .85rem;
-  border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: .95rem; outline: none; transition: border-color .2s;
-}
-.form-input:focus { border-color: #10b981; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-
-.modal-footer {
-  display: flex; gap: .75rem; justify-content: flex-end;
-  padding-top: 1rem; border-top: 1px solid #f1f5f9; margin-top: 1rem;
-}
-.btn-cancel {
-  background: #f1f5f9; color: #334155;
-  border: none; border-radius: 8px; padding: .6rem 1.25rem;
-  font-weight: 600; cursor: pointer;
-}
-.btn-cancel:hover { background: #e2e8f0; }
-.btn-save {
-  background: #10b981; color: #fff;
-  border: none; border-radius: 8px; padding: .6rem 1.25rem;
-  font-weight: 700; cursor: pointer;
-}
-.btn-save:hover { background: #059669; }
-
-.confirm { text-align: center; max-width: 380px; }
-.confirm-icon  { font-size: 3rem; margin-bottom: 1rem; }
-.confirm-title { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
-.confirm-desc  { font-size: .9rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
-.confirm-actions { display: flex; gap: .75rem; justify-content: center; }
-.btn-danger-confirm {
-  background: #dc2626; color: #fff;
-  border: none; border-radius: 8px; padding: .6rem 1.4rem;
-  font-weight: 700; cursor: pointer;
-}
-.btn-danger-confirm:hover { background: #b91c1c; }
-
-@media (max-width: 640px) {
-  .form-row { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-}
-&lt;/style&gt;</code></pre>
+&lt;!-- product grid (ใช้ ProductCard ในตัว) --&gt;
+&lt;div class="product-grid" v-else&gt;
+  &lt;ProductCard
+    v-for="p in products"
+    :key="p.id"
+    :product="p"
+    @edit="$emit('edit', p)"
+    @delete="$emit('request-delete', p)"
+  /&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">v-if / v-else-if / v-else</span><span class="le-desc">แสดงเฉพาะ state เดียว: loading → empty → grid ตามลำดับ</span></div>
+          <div class="le-row"><span class="le-code">v-for="p in products" :key="p.id"</span><span class="le-desc">วน loop สร้าง ProductCard ทุกรายการ — key ช่วย Vue track element</span></div>
+          <div class="le-row"><span class="le-code">@delete="$emit('request-delete', p)"</span><span class="le-desc">รับ event จาก ProductCard แล้วส่งต่อขึ้นไป App.vue (re-emit)</span></div>
         </div>
 
-        <div class="alert success">
-          <span class="alert-icon">✅</span>
-          <div>
-            <strong>App.vue เขียนครบแล้ว!</strong>
-            ไฟล์มี 3 ส่วนครบ: &lt;template&gt; + &lt;script setup&gt; + &lt;style scoped&gt; — ไปทดสอบใน Step 10
-          </div>
+        <!-- ProductModal -->
+        <p style="margin-top:.5rem;"><strong>3. ProductModal.vue — Form เพิ่ม/แก้ไขสินค้า</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/ProductModal.vue<span class="fp-size">~80 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ProductModal.vue — &lt;script setup&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { reactive } from 'vue'
+
+const props = defineProps({
+  editingId:   { default: null },
+  initialForm: { type: Object, required: true },
+  categories:  { type: Array,  required: true },
+})
+const emit = defineEmits(['save', 'close'])
+
+// copy ค่าเริ่มต้นจาก props เข้า local state — ไม่แก้ props โดยตรง
+const localForm = reactive({ ...props.initialForm })
+
+function onSubmit() {
+  emit('save', { ...localForm })  // ส่ง form data กลับ App.vue
+}</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>ProductModal.vue — template (form)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- @click.self — ปิด modal เมื่อคลิก overlay แต่ไม่ปิดเมื่อคลิกใน modal --&gt;
+&lt;div class="overlay" @click.self="$emit('close')"&gt;
+  &lt;div class="modal"&gt;
+    &lt;div class="modal-title"&gt;
+      {{ editingId ? '✏️ แก้ไขสินค้า' : '📦 เพิ่มสินค้าใหม่' }}
+    &lt;/div&gt;
+    &lt;form @submit.prevent="onSubmit"&gt;
+      &lt;input v-model="localForm.name" ... required /&gt;
+      &lt;input v-model="localForm.category" ... required /&gt;
+      &lt;input v-model="localForm.price"    type="number" ... required /&gt;
+      &lt;input v-model="localForm.stock"    type="number" ... required /&gt;
+      &lt;textarea v-model="localForm.description" ...&gt;&lt;/textarea&gt;
+      &lt;button type="submit"&gt;{{ editingId ? 'บันทึก' : 'เพิ่มสินค้า' }}&lt;/button&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">reactive({ ...props.initialForm })</span><span class="le-desc">spread copy props → ได้ object ใหม่ที่ไม่เชื่อมกับ props — แก้ได้อิสระใน form</span></div>
+          <div class="le-row"><span class="le-code">@submit.prevent</span><span class="le-desc">.prevent = preventDefault() — หยุด form จากการ reload หน้า</span></div>
+          <div class="le-row"><span class="le-code">emit('save', { ...localForm })</span><span class="le-desc">ส่ง form data กลับ App.vue → saveProduct(formData) ใน composable รับต่อ</span></div>
+        </div>
+
+        <!-- DeleteConfirm -->
+        <p style="margin-top:.5rem;"><strong>4. DeleteConfirm.vue — Dialog ยืนยันการลบ</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/DeleteConfirm.vue<span class="fp-size">~35 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>DeleteConfirm.vue — เนื้อหาทั้งหมด (script + template)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div class="overlay" @click.self="$emit('cancel')"&gt;
+    &lt;div class="modal confirm"&gt;
+      &lt;div class="confirm-title"&gt;ยืนยันการลบสินค้า&lt;/div&gt;
+      &lt;div class="confirm-desc"&gt;
+        คุณต้องการลบ &lt;strong&gt;{{ product.name }}&lt;/strong&gt; หรือไม่?
+      &lt;/div&gt;
+      &lt;div class="confirm-actions"&gt;
+        &lt;button @click="$emit('cancel')"&gt;ยกเลิก&lt;/button&gt;
+        &lt;button @click="$emit('confirm')"&gt;ลบเลย&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({ product: { type: Object, required: true } })
+defineEmits(['confirm', 'cancel'])
+&lt;/script&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">product.name</span><span class="le-desc">ชื่อสินค้าที่กำลังจะลบ — ใช้ยืนยันให้ user แน่ใจก่อนลบ</span></div>
+          <div class="le-row"><span class="le-code">emit('confirm') / emit('cancel')</span><span class="le-desc">แจ้ง App.vue — ถ้า confirm: deleteProduct(id), ถ้า cancel: confirmDelete = null</span></div>
         </div>
       </div>
     </div>
@@ -1017,44 +714,123 @@ onMounted(fetchProducts)</code></pre>
     <div class="step-card" id="s10">
       <div class="step-header">
         <div class="step-num">10</div>
-        <div class="step-title">ทดสอบ Frontend Dev Server</div>
+        <div class="step-title">App.vue — ประกอบทุกอย่าง + ติดตั้ง + ทดสอบ</div>
         <div class="step-badge test">Test</div>
       </div>
       <div class="step-body">
+        <p>App.vue ทำหน้าที่แค่ <strong>ประกอบ (assemble)</strong> components — import ทุกอย่าง แล้วใส่ในที่ถูกต้อง</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/App.vue<span class="fp-size">~50 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — &lt;script setup&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { onMounted } from 'vue'
+import { useProducts }   from './composables/useProducts.js'
+import AppHeader         from './components/AppHeader.vue'
+import StatsGrid         from './components/StatsGrid.vue'
+import LowStockAlert     from './components/LowStockAlert.vue'
+import ProductToolbar    from './components/ProductToolbar.vue'
+import ProductGrid       from './components/ProductGrid.vue'
+import ProductModal      from './components/ProductModal.vue'
+import DeleteConfirm     from './components/DeleteConfirm.vue'
+
+// destructure ทุกอย่างจาก composable
+const {
+  products, loading, search, catFilter, showModal, editingId, confirmDelete, form,
+  filtered, categories, stats,
+  fetchProducts, openAdd, openEdit, saveProduct, deleteProduct
+} = useProducts()
+
+onMounted(fetchProducts)   // โหลดสินค้าครั้งแรกเมื่อ App mount</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — &lt;template&gt;</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div&gt;
+    &lt;AppHeader @add="openAdd" /&gt;
+
+    &lt;main class="main"&gt;
+      &lt;StatsGrid     :stats="stats" /&gt;
+      &lt;LowStockAlert :count="stats.lowStock" /&gt;
+      &lt;ProductToolbar
+        v-model:search="search"
+        v-model:catFilter="catFilter"
+        :categories="categories"
+        :loading="loading"
+        :filtered-count="filtered.length"
+        :total-count="products.length"
+      /&gt;
+      &lt;ProductGrid
+        :products="filtered"
+        :loading="loading"
+        :is-filtered="!!(search || catFilter)"
+        @edit="openEdit"
+        @request-delete="p =&gt; (confirmDelete = p)"
+      /&gt;
+    &lt;/main&gt;
+
+    &lt;!-- v-if: สร้าง modal เฉพาะเมื่อจำเป็น → mount ใหม่ทุกครั้ง --&gt;
+    &lt;ProductModal
+      v-if="showModal"
+      :editing-id="editingId"
+      :initial-form="form"
+      :categories="categories"
+      @save="saveProduct"
+      @close="showModal = false"
+    /&gt;
+    &lt;DeleteConfirm
+      v-if="confirmDelete"
+      :product="confirmDelete"
+      @confirm="deleteProduct(confirmDelete.id)"
+      @cancel="confirmDelete = null"
+    /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+        </div>
+
+        <p><strong>อธิบาย data flow ทั้งระบบ:</strong></p>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">@add="openAdd"</span><span class="le-desc">AppHeader กดปุ่ม → emit 'add' → App.vue เรียก openAdd() → composable set showModal=true</span></div>
+          <div class="le-row"><span class="le-code">v-model:search="search"</span><span class="le-desc">ProductToolbar พิมพ์ → emit update:search → search ref เปลี่ยน → watch → debounce → fetchProducts</span></div>
+          <div class="le-row"><span class="le-code">@request-delete="p => confirmDelete = p"</span><span class="le-desc">กดลบใน ProductCard → ProductGrid re-emit → App.vue set confirmDelete = product → DeleteConfirm แสดง</span></div>
+          <div class="le-row"><span class="le-code">@save="saveProduct"</span><span class="le-desc">กด submit ใน ProductModal → emit 'save' พร้อม formData → App.vue เรียก saveProduct(formData)</span></div>
+          <div class="le-row"><span class="le-code">v-if="showModal"</span><span class="le-desc">mount ProductModal ใหม่ทุกครั้งที่เปิด → localForm ใน Modal reset เสมอ</span></div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1rem 0;">
+
+        <p><strong>ติดตั้ง dependencies และทดสอบ:</strong></p>
         <div class="alert warning">
           <span class="alert-icon">⚠️</span>
           <div>
             <strong>ต้องรัน Backend ก่อน</strong>
-            เปิด terminal แรก รัน <code>cd backend && node index.js</code> ค้างไว้
+            เปิด terminal แรก รัน <code>cd backend &amp;&amp; node index.js</code> ค้างไว้
             แล้วเปิด terminal ใหม่สำหรับ frontend
           </div>
         </div>
 
-        <p><strong>รัน Frontend Dev Server:</strong></p>
         <div class="code-wrap">
-          <div class="code-label"><span>terminal — อยู่ใน frontend/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre class="language-bash"><code>npm run dev
+          <div class="code-label"><span>terminal — อยู่ใน week3-containerize/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>cd frontend
+npm install
+npm run dev
 
 # จะเห็น:
 #   VITE v5.x  ready in xxx ms
-#   ➜  Local:   http://localhost:5173/
-#   ➜  Network: use --host to expose</code></pre>
+#   ➜  Local:   http://localhost:5173/</code></pre>
         </div>
-
-        <p>เปิด browser ไปที่ <strong>http://localhost:5173</strong></p>
 
         <div class="verify">
           <span class="verify-icon">✅</span>
           <div>
-            <div class="verify-title">ตรวจสอบ</div>
+            <div class="verify-title">ตรวจสอบที่ http://localhost:5173</div>
             <ul>
               <li>เห็น Header "📦 StockPro" + ปุ่ม "+ เพิ่มสินค้า"</li>
-              <li>เห็น Stats Dashboard 4 card (สินค้าทั้งหมด, สต็อกใกล้หมด, จำนวนรวม, มูลค่ารวม)</li>
-              <li>เห็น product card 10 ใบ (seed data จาก backend)</li>
-              <li>พิมพ์ "mac" ในช่องค้นหา → เห็นเฉพาะ MacBook Air M3 ทันที</li>
+              <li>เห็น Dashboard 4 card (สินค้าทั้งหมด / ใกล้หมด / จำนวนรวม / มูลค่ารวม)</li>
+              <li>เห็น product card 10 ใบ จาก seed data</li>
+              <li>พิมพ์ "mac" ในช่องค้นหา → เห็นเฉพาะ MacBook Air M3</li>
               <li>กรอง "Electronics" → เห็นเฉพาะสินค้าหมวด Electronics</li>
               <li>กด "+ เพิ่มสินค้า" → เห็น Modal form ขึ้นมา</li>
-              <li>เพิ่มสินค้าใหม่ → เห็นสินค้าปรากฏใน grid ทันที</li>
+              <li>เพิ่มสินค้าใหม่ → card ปรากฏใน grid ทันที</li>
               <li>กด ✏️ แก้ไข → Modal เปิดพร้อมข้อมูลเดิม</li>
               <li>กด 🗑️ ลบ → เห็น confirm dialog ถามก่อนลบ</li>
             </ul>
@@ -1065,7 +841,7 @@ onMounted(fetchProducts)</code></pre>
           <span class="alert-icon">🎉</span>
           <div>
             <strong>Part 2 เสร็จสมบูรณ์!</strong>
-            ตอนนี้ frontend ทำงานได้เต็มรูปแบบแล้ว — ไปต่อ Part 3 เพื่อ Containerize ด้วย Docker
+            Frontend แบบ Component-Based Architecture ทำงานได้แล้ว — ไปต่อ Part 3 เพื่อ Containerize ด้วย Docker
           </div>
         </div>
       </div>

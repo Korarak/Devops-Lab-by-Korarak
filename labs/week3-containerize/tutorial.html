@@ -172,8 +172,19 @@
 <span class="tree">│</span>
 <span class="tree">├──</span> <span class="dir">frontend/</span>               <span class="desc"># Vue 3 + Vite SPA</span>
 <span class="tree">│   ├──</span> <span class="dir">src/</span>
-<span class="tree">│   │   ├──</span> <span class="file">App.vue</span>         <span class="desc"># UI ทั้งหมดอยู่ที่นี่ (template+script+style)</span>
-<span class="tree">│   │   └──</span> <span class="file">main.js</span>         <span class="desc"># entry point: mount App เข้า #app</span>
+<span class="tree">│   │   ├──</span> <span class="file">App.vue</span>         <span class="desc"># root component: รวม components ทั้งหมด</span>
+<span class="tree">│   │   ├──</span> <span class="file">main.js</span>         <span class="desc"># entry point: mount App เข้า #app</span>
+<span class="tree">│   │   ├──</span> <span class="dir">composables/</span>
+<span class="tree">│   │   │   └──</span> <span class="file">useProducts.js</span>  <span class="desc"># state + computed + API methods ทั้งหมด</span>
+<span class="tree">│   │   └──</span> <span class="dir">components/</span>
+<span class="tree">│   │       ├──</span> <span class="file">AppHeader.vue</span>       <span class="desc"># header + ปุ่มเพิ่มสินค้า</span>
+<span class="tree">│   │       ├──</span> <span class="file">StatsGrid.vue</span>       <span class="desc"># dashboard 4 card</span>
+<span class="tree">│   │       ├──</span> <span class="file">LowStockAlert.vue</span>   <span class="desc"># แจ้งเตือนสต็อกใกล้หมด</span>
+<span class="tree">│   │       ├──</span> <span class="file">ProductToolbar.vue</span>  <span class="desc"># search + filter</span>
+<span class="tree">│   │       ├──</span> <span class="file">ProductGrid.vue</span>     <span class="desc"># grid wrapper + loading/empty states</span>
+<span class="tree">│   │       ├──</span> <span class="file">ProductCard.vue</span>     <span class="desc"># card สินค้าแต่ละชิ้น</span>
+<span class="tree">│   │       ├──</span> <span class="file">ProductModal.vue</span>    <span class="desc"># modal เพิ่ม/แก้ไขสินค้า</span>
+<span class="tree">│   │       └──</span> <span class="file">DeleteConfirm.vue</span>   <span class="desc"># dialog ยืนยันการลบ</span>
 <span class="tree">│   ├──</span> <span class="file">index.html</span>          <span class="desc"># HTML template (Vite inject script ที่นี่)</span>
 <span class="tree">│   ├──</span> <span class="file">vite.config.js</span>      <span class="desc"># proxy /api → backend:3001</span>
 <span class="tree">│   ├──</span> <span class="file">package.json</span>        <span class="desc"># vue, vite, @vitejs/plugin-vue</span>
@@ -232,13 +243,13 @@
       <div class="pc-body">
         <div class="pc-num">Part 2 · Steps 6–10</div>
         <div class="pc-title">🌿 Vue 3 Frontend</div>
-        <div class="pc-desc">ทำความเข้าใจ Vue 3 Composition API ใน App.vue ทีละส่วน</div>
+        <div class="pc-desc">เรียนรู้ Component-Based Architecture ผ่านไฟล์เล็กๆ ที่มีหน้าที่ชัดเจน</div>
         <ul class="pc-steps">
-          <li>main.js + vite.config.js</li>
-          <li>Script Setup: State (ref)</li>
-          <li>Script Setup: Computed</li>
-          <li>Script Setup: Methods</li>
-          <li>ทดสอบ Frontend dev server</li>
+          <li>โครงสร้าง + vite.config.js + main.js</li>
+          <li>composables/useProducts.js</li>
+          <li>Components: Header + Stats + Toolbar</li>
+          <li>Components: Card + Grid + Modal + Confirm</li>
+          <li>App.vue assembly + ทดสอบ</li>
         </ul>
         <div class="pc-btn">เริ่ม Part 2 →</div>
       </div>

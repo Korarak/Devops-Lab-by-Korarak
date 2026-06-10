@@ -199,18 +199,27 @@ pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!impo
       <div class="pipe-node deploy">🚀 Deploy<br><small>SSH</small></div>
     </div>
 
-    <h4>โครงสร้างไฟล์ที่เพิ่มมาใน Week 4</h4>
+    <h4>โครงสร้างไฟล์ทั้งหมด (Week 3 base + สิ่งที่เพิ่มใน Week 4)</h4>
     <div class="file-tree">
-stockpro/  <span class="ft-dim">(โปรเจกต์จาก Week 3)</span><br>
-├── <span class="ft-new">.github/</span>                  <span class="ft-dim">← ใหม่ทั้งหมด</span><br>
+stockpro/<br>
+├── <span class="ft-new">.github/</span>                        <span class="ft-dim">← ใหม่ใน Week 4</span><br>
 │   └── <span class="ft-new">workflows/</span><br>
-│       ├── <span class="ft-new">ci.yml</span>             <span class="ft-dim">← CI Pipeline (step 8)</span><br>
-│       └── <span class="ft-new">cd.yml</span>             <span class="ft-dim">← CD Pipeline (step 11)</span><br>
+│       ├── <span class="ft-new">ci.yml</span>                 <span class="ft-dim">← CI Pipeline (step 8)</span><br>
+│       └── <span class="ft-new">cd.yml</span>                 <span class="ft-dim">← CD Pipeline (step 11)</span><br>
 ├── backend/<br>
-│   ├── <span class="ft-chg">index.js</span>               <span class="ft-dim">← เพิ่ม /api/stats + ปรับ /health</span><br>
-│   └── <span class="ft-chg">package.json</span>           <span class="ft-dim">← เพิ่ม eslint script</span><br>
-├── <span class="ft-new">README.md</span>                  <span class="ft-dim">← ใหม่ (มี Status Badges)</span><br>
-└── <span class="ft-dim">... ไฟล์เดิม Week 3 ไม่เปลี่ยน</span>
+│   ├── <span class="ft-chg">index.js</span>                   <span class="ft-dim">← เพิ่ม /api/stats + ปรับ /health</span><br>
+│   └── <span class="ft-chg">package.json</span>               <span class="ft-dim">← เพิ่ม eslint script</span><br>
+├── frontend/<br>
+│   └── src/<br>
+│       ├── <span class="ft-dim">App.vue</span>                <span class="ft-dim">← root (얇게 ~50 บรรทัด)</span><br>
+│       ├── <span class="ft-dim">composables/useProducts.js</span>  <span class="ft-dim">← state + API ทั้งหมด</span><br>
+│       └── <span class="ft-dim">components/</span>            <span class="ft-dim">← 7 components แยกไฟล์</span><br>
+│           ├── <span class="ft-dim">AppHeader.vue</span>      <span class="ft-dim">· StatsGrid.vue</span><br>
+│           ├── <span class="ft-dim">LowStockAlert.vue</span>  <span class="ft-dim">· ProductToolbar.vue</span><br>
+│           ├── <span class="ft-dim">ProductGrid.vue</span>    <span class="ft-dim">· ProductCard.vue</span><br>
+│           ├── <span class="ft-dim">ProductModal.vue</span>   <span class="ft-dim">· DeleteConfirm.vue</span><br>
+├── <span class="ft-new">README.md</span>                       <span class="ft-dim">← ใหม่ (มี Status Badges)</span><br>
+└── <span class="ft-dim">docker-compose.yml · docker-compose.prod.yml · .gitignore ...</span>
     </div>
 
     <div class="alert info">

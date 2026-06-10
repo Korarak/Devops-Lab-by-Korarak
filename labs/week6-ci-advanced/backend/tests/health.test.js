@@ -8,6 +8,12 @@ describe('GET /health', () => {
     expect(res.body).toHaveProperty('status', 'ok');
   });
 
+  test('returns service containing TaskFlow', async () => {
+    const res = await request(app).get('/health');
+    expect(res.body).toHaveProperty('service');
+    expect(res.body.service).toContain('TaskFlow');
+  });
+
   test('returns version field', async () => {
     const res = await request(app).get('/health');
     expect(res.body).toHaveProperty('version');

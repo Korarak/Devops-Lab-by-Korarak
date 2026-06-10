@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 2 of 3 — Vue 3 Frontend · TaskFlow Components · Steps 6–10 | DevOps 30901-2008</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+      --green: #059669; --green-light: #d1fae5;
+      --vue: #42b883; --vue-light: #f0fdf4;
+      --amber: #d97706; --amber-light: #fef3c7;
+      --info: #2563eb; --info-light: #dbeafe;
+      --danger: #dc2626; --danger-light: #fee2e2;
+      --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+      --bg: #f5f3ff; --sidebar-width: 260px; --header-height: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; font-size: 16px; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: var(--header-height); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .top-bar a { font-weight: 700; color: var(--primary); font-size: .88rem; text-decoration: none; white-space: nowrap; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),#a78bfa); border-radius: 4px; transition: width .4s ease; width: 0; }
+    .progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    .hero {
+      background: linear-gradient(135deg,#1e1b4b 0%,#6d28d9 60%,#42b883 100%);
+      color: #fff; padding: 2.5rem 2rem 2rem; text-align: center;
+    }
+    .hero .badge { display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .3rem 1.1rem; font-size: .82rem; margin-bottom: .75rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: .3rem; }
+    .hero .subtitle { font-size: .95rem; opacity: .85; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; gap: 2rem; align-items: flex-start; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; position: sticky; top: calc(var(--header-height) + .75rem); max-height: calc(100vh - var(--header-height) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
+    .sb-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .sb-head { background: linear-gradient(135deg,#1e1b4b,var(--primary)); color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .toc-section { padding: .55rem 1.2rem .2rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .3rem; }
+    .toc-link { display: flex; align-items: center; gap: .5rem; padding: .38rem 1.2rem .38rem 1.4rem; font-size: .83rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; transition: all .2s; }
+    .toc-link:hover { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); }
+    .toc-link.active { background: var(--primary-light); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .toc-link.done .dot { background: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; transition: background .3s; }
+
+    .main { flex: 1; min-width: 0; }
+
+    .step-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; overflow: hidden; }
+    .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),#a78bfa); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 1.1rem; font-weight: 700; }
+    .step-badge { margin-left: auto; font-size: .72rem; font-weight: 700; padding: .25rem .7rem; border-radius: 20px; white-space: nowrap; }
+    .step-badge.setup   { background: #f1f5f9; color: #475569; }
+    .step-badge.compose { background: var(--primary-light); color: var(--primary-dark); }
+    .step-badge.vue     { background: var(--vue-light); color: #065f46; }
+    .step-badge.test    { background: var(--amber-light); color: #92400e; }
+    .step-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+
+    .file-path { display: inline-flex; align-items: center; gap: .4rem; background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .3rem .8rem; border-radius: 6px; margin-bottom: .5rem; }
+    .file-path .fp-label { color: #64748b; }
+    .file-path .fp-size { color: #fbbf24; font-size: .72rem; margin-left: .4rem; }
+
+    .code-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+    .code-label { background: #1e293b; color: #64748b; font-size: .72rem; font-family: 'JetBrains Mono', monospace; padding: .4rem 1rem; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .code-label span { color: #94a3b8; }
+    pre[class*="language-"] { margin: 0 !important; border-radius: 0 !important; font-size: .83rem !important; line-height: 1.65 !important; }
+    .copy-btn { background: #334155; border: none; color: #94a3b8; padding: .25rem .65rem; border-radius: 5px; font-size: .72rem; cursor: pointer; transition: all .2s; }
+    .copy-btn:hover { background: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    .alert { border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; font-size: .92rem; }
+    .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alert.info    { background: var(--info-light); border-left: 4px solid var(--info); }
+    .alert.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+    .alert.success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .alert.tip     { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .alert.vue     { background: var(--vue-light); border-left: 4px solid var(--vue); }
+    .alert strong  { display: block; margin-bottom: .2rem; }
+
+    .verify { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .75rem; }
+    .verify-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .verify-title { font-weight: 700; color: var(--green); margin-bottom: .25rem; }
+    .verify ul { list-style: none; display: grid; gap: .25rem; }
+    .verify ul li { font-size: .88rem; display: flex; gap: .5rem; }
+    .verify ul li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .line-explain { display: grid; gap: .5rem; }
+    .le-row { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: flex-start; font-size: .88rem; }
+    .le-code { background: #1e293b; color: #86efac; font-family: 'JetBrains Mono', monospace; font-size: .78rem; padding: .2rem .6rem; border-radius: 5px; white-space: nowrap; }
+    .le-desc { color: #475569; padding-top: .1rem; }
+
+    /* File tree */
+    .comp-map { background: #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 2; color: #e2e8f0; overflow-x: auto; white-space: pre; }
+    .cm-file { color: #86efac; font-weight: 600; }
+    .cm-size { color: #fbbf24; }
+    .cm-desc { color: #64748b; }
+    .cm-tree { color: #475569; }
+
+    .part-nav { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+    .nav-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .9rem; text-decoration: none; transition: all .2s; }
+    .nav-btn.prev { background: #f1f5f9; color: #334155; }
+    .nav-btn.prev:hover { background: #e2e8f0; }
+    .nav-btn.next { background: var(--info); color: #fff; }
+    .nav-btn.next:hover { background: #1d4ed8; }
+
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="tutorial-part1.html">← Part 1</a>
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressLabel">0 / 5</span>
+</div>
+
+<div class="hero">
+  <div class="badge">Part 2 of 3 · Steps 6–10</div>
+  <h1>🌿 Vue 3 Frontend — TaskFlow</h1>
+  <p class="subtitle">useTasks Composable · 7 Components · 3-Filter System</p>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-head">📋 Part 2: Vue Frontend</div>
+      <div class="toc-section">Steps</div>
+      <a class="toc-link" href="#s6"  id="toc-6"><span class="dot"></span>6. โครงสร้าง + Config</a>
+      <a class="toc-link" href="#s7"  id="toc-7"><span class="dot"></span>7. useTasks.js</a>
+      <a class="toc-link" href="#s8"  id="toc-8"><span class="dot"></span>8. Header + Stats + Toolbar</a>
+      <a class="toc-link" href="#s9"  id="toc-9"><span class="dot"></span>9. Card + Grid + Modal + Confirm</a>
+      <a class="toc-link" href="#s10" id="toc-10"><span class="dot"></span>10. App.vue + ทดสอบ</a>
+      <div style="padding:.9rem 1.2rem;border-top:1px solid var(--border);display:grid;gap:.5rem;">
+        <a href="tutorial-part1.html" style="display:block;background:#f1f5f9;color:#334155;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">← Part 1: Backend</a>
+        <a href="tutorial-part3.html" style="display:block;background:var(--info);color:#fff;text-align:center;padding:.45rem;border-radius:8px;font-weight:700;font-size:.82rem;text-decoration:none;">Part 3: CI Pipeline →</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div class="step-title">โครงสร้าง Frontend + Config</div>
+        <div class="step-badge setup">Overview</div>
+      </div>
+      <div class="step-body">
+        <p>Frontend ของ TaskFlow ใช้ <strong>7 components</strong> แต่ละไฟล์มีหน้าที่เดียว — ใช้ theme สี <strong>purple/indigo</strong> แทน green ของ StockPro</p>
+
+        <div class="alert tip">
+          <span class="alert-icon">🎨</span>
+          <div>
+            <strong>ทำไม TaskFlow ใช้ Purple แทน Green?</strong>
+            StockPro (สินค้า) → green เพื่อสื่อถึง "สุขภาพ" ของ inventory<br>
+            TaskFlow (งาน) → purple/indigo เพื่อสื่อถึง "ความคิดสร้างสรรค์" และ "productivity"<br>
+            ค่าสีหลัก: <code>#7c3aed</code> (primary), <code>#6d28d9</code> (primary-dark), <code>#ede9fe</code> (primary-light)
+          </div>
+        </div>
+
+        <p><strong>โครงสร้างไฟล์ frontend/src/ ทั้งหมด:</strong></p>
+        <pre class="comp-map"><span class="cm-tree">frontend/src/</span>
+<span class="cm-tree">├──</span> <span class="cm-file">App.vue</span>                     <span class="cm-size">~60 บรรทัด</span>  <span class="cm-desc"># root: ประกอบ components ทั้งหมด</span>
+<span class="cm-tree">├──</span> <span class="cm-file">main.js</span>                     <span class="cm-size">3 บรรทัด</span>   <span class="cm-desc"># entry point</span>
+<span class="cm-tree">│</span>
+<span class="cm-tree">├──</span> <span class="cm-file">composables/</span>
+<span class="cm-tree">│   └──</span> <span class="cm-file">useTasks.js</span>             <span class="cm-size">~130 บรรทัด</span> <span class="cm-desc"># state + computed + API + 3 watchers</span>
+<span class="cm-tree">│</span>
+<span class="cm-tree">└──</span> <span class="cm-file">components/</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">AppHeader.vue</span>           <span class="cm-size">~40 บรรทัด</span>  <span class="cm-desc"># header + ปุ่ม "+ เพิ่มงาน" สีม่วง</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">StatsGrid.vue</span>           <span class="cm-size">~80 บรรทัด</span>  <span class="cm-desc"># dashboard 4 cards + overdue warning</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">TaskToolbar.vue</span>         <span class="cm-size">~65 บรรทัด</span>  <span class="cm-desc"># search + status filter + priority filter</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">TaskGrid.vue</span>            <span class="cm-size">~40 บรรทัด</span>  <span class="cm-desc"># grid wrapper + loading/empty states</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">TaskCard.vue</span>            <span class="cm-size">~105 บรรทัด</span> <span class="cm-desc"># card งานแต่ละชิ้น + badges</span>
+    <span class="cm-tree">├──</span> <span class="cm-file">TaskModal.vue</span>           <span class="cm-size">~145 บรรทัด</span> <span class="cm-desc"># modal เพิ่ม/แก้ไขงาน (6 fields)</span>
+    <span class="cm-tree">└──</span> <span class="cm-file">DeleteConfirm.vue</span>       <span class="cm-size">~55 บรรทัด</span>  <span class="cm-desc"># dialog ยืนยันการลบงาน</span></pre>
+
+        <div class="alert vue">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>ต่างจาก StockPro (Week 3) อย่างไร?</strong>
+            Week 3 มี 8 components (รวม LowStockAlert) → Week 5 มี 7 components (ไม่มี alert แยก)<br>
+            Composable มี <strong>3 watchers</strong> (search + statusFilter + priorityFilter) แทนที่จะเป็น 2<br>
+            Computed <code>filtered</code> มี <strong>3 conditions</strong> แทนที่จะเป็น 2<br>
+            Stats มี <code>overdue</code> field พิเศษ — คำนวณจาก <code>isOverdue()</code> helper
+          </div>
+        </div>
+
+        <p><strong>vite.config.js — proxy config:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> frontend/vite.config.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/vite.config.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    proxy: { '/api': 'http://localhost:3001' }
+  }
+})</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">proxy: {'/api': ...}</span><span class="le-desc">Dev server forward /api/* → localhost:3001 — ป้องกัน CORS ตอน develop local</span></div>
+        </div>
+
+        <p><strong>main.js — Entry Point:</strong></p>
+        <div class="file-path"><span class="fp-label">ไฟล์:</span> frontend/src/main.js</div>
+        <div class="code-wrap">
+          <div class="code-label"><span>frontend/src/main.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { createApp } from 'vue'
+import App from './App.vue'
+
+createApp(App).mount('#app')</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div class="step-title">composables/useTasks.js — State และ Logic ทั้งหมด</div>
+        <div class="step-badge compose">Composable</div>
+      </div>
+      <div class="step-body">
+        <p><strong>Composable</strong> คือ function ที่รวม state + computed + methods ไว้ด้วยกัน — App.vue เพียง <code>destructure</code> เอาสิ่งที่ต้องการมาใช้</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/composables/useTasks.js<span class="fp-size">~130 บรรทัด</span></div>
+
+        <p><strong>ส่วนที่ 1 — State:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — State ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { ref, computed, watch } from 'vue'
+
+export function useTasks() {
+
+  // ── State ────────────────────────────────────────────────────────
+  const tasks          = ref([])         // รายการงานจาก API
+  const loading        = ref(true)       // กำลังโหลดอยู่หรือไม่
+  const search         = ref('')         // ข้อความค้นหา
+  const statusFilter   = ref('')         // status ที่เลือก
+  const priorityFilter = ref('')         // priority ที่เลือก
+  const showModal      = ref(false)      // แสดง/ซ่อน modal เพิ่ม/แก้ไข
+  const editingId      = ref(null)       // null = Add, มีค่า = Edit
+  const confirmDelete  = ref(null)       // task ที่กำลังจะลบ
+
+  const emptyForm = () => ({
+    title:       '',
+    status:      'todo',
+    priority:    'medium',
+    assignee:    '',
+    due_date:    '',
+    description: '',
+  })
+
+  const form = ref(emptyForm())          // ข้อมูลที่ส่งให้ TaskModal</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">statusFilter + priorityFilter</span><span class="le-desc">2 filter state แทนที่จะเป็น catFilter เดียว — เพิ่ม complexity ของ composable</span></div>
+          <div class="le-row"><span class="le-code">emptyForm()</span><span class="le-desc">function สร้าง form ว่าง — มี due_date เป็น '' (string ว่าง) แทน null เพื่อ input[type=date]</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 2 — isOverdue Helper:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — isOverdue helper</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── Helper ────────────────────────────────────────────────────────
+  const isOverdue = (t) =>
+    t.due_date && new Date(t.due_date) &lt; new Date() && t.status !== 'done'</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">t.due_date &&</span><span class="le-desc">ตรวจว่ามี due_date ก่อน — ถ้าไม่มีวันกำหนดส่งไม่นับว่า overdue</span></div>
+          <div class="le-row"><span class="le-code">new Date(t.due_date) &lt; new Date()</span><span class="le-desc">เปรียบเทียบวันกำหนดส่ง กับ วันนี้ — ถ้าน้อยกว่าหมายความว่าผ่านมาแล้ว</span></div>
+          <div class="le-row"><span class="le-code">t.status !== 'done'</span><span class="le-desc">งานที่ done แล้วไม่นับว่า overdue แม้จะผ่านวันกำหนดส่งแล้วก็ตาม</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 3 — Computed (3 conditions ใน filtered):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — Computed</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── Computed ─────────────────────────────────────────────────────
+  const filtered = computed(() => {
+    const s = search.value.toLowerCase()
+    return tasks.value.filter(t => {
+      const matchS        = !s || t.title.toLowerCase().includes(s) ||
+                            (t.description || '').toLowerCase().includes(s)
+      const matchStatus   = !statusFilter.value   || t.status   === statusFilter.value
+      const matchPriority = !priorityFilter.value || t.priority === priorityFilter.value
+      return matchS && matchStatus && matchPriority   // AND ทั้ง 3 conditions
+    })
+  })
+
+  const stats = computed(() => ({
+    total:       tasks.value.length,
+    todo:        tasks.value.filter(t => t.status === 'todo').length,
+    in_progress: tasks.value.filter(t => t.status === 'in-progress').length,
+    done:        tasks.value.filter(t => t.status === 'done').length,
+    overdue:     tasks.value.filter(t => isOverdue(t)).length,
+  }))</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">matchS && matchStatus && matchPriority</span><span class="le-desc">AND ทั้ง 3 — task ต้องผ่านทุก filter จึงจะแสดง (ต่างจาก StockPro ที่มีแค่ 2)</span></div>
+          <div class="le-row"><span class="le-code">!statusFilter.value</span><span class="le-desc">ถ้าไม่เลือก filter → condition เป็น true เสมอ → แสดงทุก task</span></div>
+          <div class="le-row"><span class="le-code">overdue: tasks.value.filter(...)</span><span class="le-desc">นับงานที่ overdue จาก isOverdue helper — ใช้ใน StatsGrid แสดง warning</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 4 — Methods (fetchTasks, openAdd, openEdit, saveTask, deleteTask):</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — API Methods</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  async function fetchTasks() {
+    loading.value = true
+    const q = new URLSearchParams()
+    if (search.value)         q.set('search',   search.value)
+    if (statusFilter.value)   q.set('status',   statusFilter.value)
+    if (priorityFilter.value) q.set('priority', priorityFilter.value)
+    try {
+      const res  = await fetch(`/api/tasks?${q}`)
+      tasks.value = await res.json()
+    } catch {
+      tasks.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function openAdd() {
+    editingId.value = null
+    form.value = emptyForm()
+    showModal.value = true
+  }
+
+  function openEdit(t) {
+    editingId.value = t.id
+    form.value = {
+      title:       t.title,
+      status:      t.status,
+      priority:    t.priority,
+      assignee:    t.assignee    || '',
+      due_date:    t.due_date    ? t.due_date.slice(0, 10) : '',
+      description: t.description || '',
+    }
+    showModal.value = true
+  }
+
+  async function saveTask(formData) {
+    const url    = editingId.value ? `/api/tasks/${editingId.value}` : '/api/tasks'
+    const method = editingId.value ? 'PUT' : 'POST'
+    await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...formData, due_date: formData.due_date || null })
+    })
+    showModal.value = false
+    fetchTasks()
+  }
+
+  async function deleteTask(id) {
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+    confirmDelete.value = null
+    fetchTasks()
+  }</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">t.due_date.slice(0, 10)</span><span class="le-desc">ตัดเวลาออก เหลือแค่ YYYY-MM-DD — <code>input[type=date]</code> ต้องการ format นี้</span></div>
+          <div class="le-row"><span class="le-code">due_date || null</span><span class="le-desc">ส่ง null ถ้า due_date ว่าง — ไม่ส่ง empty string ไปให้ DB</span></div>
+        </div>
+
+        <p><strong>ส่วนที่ 5 — Watchers (3 ตัว) + Return:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>useTasks.js — Watchers + Return</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>  // ── Watchers ──────────────────────────────────────────────────────
+  let debounceTimer = null
+  watch(search, () => {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(fetchTasks, 280)   // รอ 280ms หลังพิมพ์หยุด
+  })
+
+  watch(statusFilter,   fetchTasks)   // fetch ทันทีเมื่อเลือก status
+  watch(priorityFilter, fetchTasks)   // fetch ทันทีเมื่อเลือก priority
+
+  return {
+    tasks, loading, search, statusFilter, priorityFilter,
+    showModal, editingId, confirmDelete, form,
+    filtered, stats,
+    fetchTasks, openAdd, openEdit, saveTask, deleteTask,
+  }
+}</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">watch(search, debounce 280ms)</span><span class="le-desc">พิมพ์ทีละ character → ไม่ fetch ทุก keystroke — รอ 280ms หลังหยุดพิมพ์แล้วค่อย fetch</span></div>
+          <div class="le-row"><span class="le-code">watch(statusFilter, fetchTasks)</span><span class="le-desc">เลือก dropdown → fetch ทันที ไม่ต้อง debounce เพราะ user เลือกครั้งเดียว</span></div>
+          <div class="le-row"><span class="le-code">watch(priorityFilter, fetchTasks)</span><span class="le-desc">เหมือน statusFilter — เพิ่มจาก Week 3 ที่มีแค่ catFilter</span></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🔄</span>
+          <div>
+            <strong>Computed filtered vs fetchTasks</strong>
+            <code>filtered</code> computed กรอง tasks ใน memory — ไม่ส่ง request ไป server<br>
+            <code>fetchTasks</code> ส่ง query parameters ไป API — server filter ใน PostgreSQL<br>
+            ทั้งคู่ทำงานพร้อมกัน: API filter ลด payload, computed filter ทำให้ UI responsive
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div class="step-title">AppHeader + StatsGrid + TaskToolbar</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>3 components ส่วนบน — Header ปุ่มสีม่วง, Stats 4 card + overdue warning, Toolbar 3 filter dropdowns</p>
+
+        <!-- AppHeader -->
+        <p><strong>1. AppHeader.vue — Logo TaskFlow + ปุ่มสีม่วง</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/AppHeader.vue<span class="fp-size">~40 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>AppHeader.vue — template + script</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;header class="app-header"&gt;
+    &lt;div class="logo"&gt;
+      &lt;span class="logo-icon"&gt;📋&lt;/span&gt;
+      &lt;div&gt;
+        &lt;div class="logo-name"&gt;TaskFlow&lt;/div&gt;
+        &lt;div class="logo-sub"&gt;ระบบจัดการงาน&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;button class="btn-add" @click="$emit('add')"&gt;+ เพิ่มงาน&lt;/button&gt;
+  &lt;/header&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineEmits(['add'])
+&lt;/script&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">logo-name: TaskFlow</span><span class="le-desc">ชื่อระบบ สีม่วง #5b21b6 — ต่างจาก StockPro ที่ใช้ green</span></div>
+          <div class="le-row"><span class="le-code">btn-add: background #7c3aed</span><span class="le-desc">ปุ่มสีม่วง primary — hover เป็น #6d28d9 (primary-dark)</span></div>
+          <div class="le-row"><span class="le-code">$emit('add')</span><span class="le-desc">ส่ง event ขึ้น App.vue → เรียก openAdd() ใน composable → showModal = true</span></div>
+        </div>
+
+        <!-- StatsGrid -->
+        <p style="margin-top:.5rem;"><strong>2. StatsGrid.vue — Dashboard 4 Cards + Overdue Warning</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/StatsGrid.vue<span class="fp-size">~80 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>StatsGrid.vue — template (4 cards)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div&gt;
+    &lt;div class="stats-grid"&gt;
+      &lt;!-- งานทั้งหมด --&gt;
+      &lt;div class="stat-card"&gt;
+        &lt;div class="stat-icon si-purple"&gt;📋&lt;/div&gt;
+        &lt;div class="stat-body"&gt;
+          &lt;div class="stat-val" style="color:#7c3aed"&gt;{{ stats.total }}&lt;/div&gt;
+          &lt;div class="stat-label"&gt;งานทั้งหมด&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- รอดำเนินการ --&gt;
+      &lt;div class="stat-card"&gt;
+        &lt;div class="stat-icon si-amber"&gt;📌&lt;/div&gt;
+        &lt;div class="stat-body"&gt;
+          &lt;div class="stat-val" style="color:#d97706"&gt;{{ stats.todo }}&lt;/div&gt;
+          &lt;div class="stat-label"&gt;รอดำเนินการ&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- กำลังทำ --&gt;
+      &lt;div class="stat-card"&gt;
+        &lt;div class="stat-icon si-blue"&gt;⚡&lt;/div&gt;
+        &lt;div class="stat-body"&gt;
+          &lt;div class="stat-val" style="color:#2563eb"&gt;{{ stats.in_progress }}&lt;/div&gt;
+          &lt;div class="stat-label"&gt;กำลังทำ&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- เสร็จสิ้น --&gt;
+      &lt;div class="stat-card"&gt;
+        &lt;div class="stat-icon si-green"&gt;✅&lt;/div&gt;
+        &lt;div class="stat-body"&gt;
+          &lt;div class="stat-val" style="color:#059669"&gt;{{ stats.done }}&lt;/div&gt;
+          &lt;div class="stat-label"&gt;เสร็จสิ้น&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Overdue warning — แสดงเฉพาะเมื่อมีงานเกินกำหนด --&gt;
+    &lt;div class="overdue-warning" v-if="stats.overdue &gt; 0"&gt;
+      ⚠️ เกินกำหนด &lt;strong&gt;{{ stats.overdue }} งาน&lt;/strong&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({ stats: { type: Object, required: true } })
+&lt;/script&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">4 cards: total/todo/in_progress/done</span><span class="le-desc">แต่ละ card มีสีต่างกัน: purple/amber/blue/green ตาม semantic ของ status</span></div>
+          <div class="le-row"><span class="le-code">v-if="stats.overdue &gt; 0"</span><span class="le-desc">แสดง overdue warning เฉพาะเมื่อมีงานเกินกำหนดที่ยังไม่ done</span></div>
+          <div class="le-row"><span class="le-code">defineProps({ stats })</span><span class="le-desc">รับ stats object จาก App.vue — มี total, todo, in_progress, done, overdue</span></div>
+        </div>
+
+        <!-- TaskToolbar -->
+        <p style="margin-top:.5rem;"><strong>3. TaskToolbar.vue — 3 Filter Inputs</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/TaskToolbar.vue<span class="fp-size">~65 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskToolbar.vue — template (3 controls)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div class="toolbar"&gt;
+    &lt;!-- 1. Search input --&gt;
+    &lt;input
+      :value="search"
+      @input="$emit('update:search', $event.target.value)"
+      class="input-search"
+      placeholder="🔍 ค้นหาชื่องาน หรือคำอธิบาย..."
+    /&gt;
+
+    &lt;!-- 2. Status dropdown --&gt;
+    &lt;select
+      :value="statusFilter"
+      @change="$emit('update:statusFilter', $event.target.value)"
+      class="input-select"
+    &gt;
+      &lt;option value=""&gt;ทุก Status&lt;/option&gt;
+      &lt;option value="todo"&gt;รอดำเนินการ&lt;/option&gt;
+      &lt;option value="in-progress"&gt;กำลังทำ&lt;/option&gt;
+      &lt;option value="done"&gt;เสร็จสิ้น&lt;/option&gt;
+    &lt;/select&gt;
+
+    &lt;!-- 3. Priority dropdown --&gt;
+    &lt;select
+      :value="priorityFilter"
+      @change="$emit('update:priorityFilter', $event.target.value)"
+      class="input-select"
+    &gt;
+      &lt;option value=""&gt;ทุก Priority&lt;/option&gt;
+      &lt;option value="low"&gt;ต่ำ&lt;/option&gt;
+      &lt;option value="medium"&gt;ปานกลาง&lt;/option&gt;
+      &lt;option value="high"&gt;สูง&lt;/option&gt;
+    &lt;/select&gt;
+
+    &lt;span class="result-count" v-if="!loading"&gt;
+      แสดง {{ filteredCount }} / {{ totalCount }} รายการ
+    &lt;/span&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskToolbar.vue — script setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>defineProps({
+  search:         { type: String,  required: true },
+  statusFilter:   { type: String,  required: true },
+  priorityFilter: { type: String,  required: true },
+  loading:        { type: Boolean, required: true },
+  filteredCount:  { type: Number,  required: true },
+  totalCount:     { type: Number,  required: true },
+})
+defineEmits(['update:search', 'update:statusFilter', 'update:priorityFilter'])</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">:value + @change $emit</span><span class="le-desc">v-model pattern สำหรับ custom component — ใน App.vue ใช้ <code>v-model:statusFilter="statusFilter"</code></span></div>
+          <div class="le-row"><span class="le-code">3 emits</span><span class="le-desc">ต่างจาก StockPro ที่มี 2 — เพิ่ม update:priorityFilter สำหรับ priority dropdown</span></div>
+          <div class="le-row"><span class="le-code">font-family: inherit</span><span class="le-desc">input และ select ใช้ font-family เดียวกับ body (Sarabun) — ทำให้ภาษาไทยแสดงถูกต้อง</span></div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div>
+            <strong>Props vs Emits — สูตรจำง่าย</strong>
+            <strong>Props</strong> → ข้อมูลจาก parent ลงมา child: <code>:search="search"</code><br>
+            <strong>Emits</strong> → event จาก child ขึ้นไป parent: <code>@update:search="search = $event"</code><br>
+            <strong>v-model:search</strong> → Vue แปลงเป็น prop + emit อัตโนมัติ (syntax sugar)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div class="step-title">TaskCard + TaskGrid + TaskModal + DeleteConfirm</div>
+        <div class="step-badge vue">Vue 3</div>
+      </div>
+      <div class="step-body">
+        <p>4 components สำหรับจัดการงาน — TaskCard มี badge status/priority, priority border color, overdue indicator</p>
+
+        <!-- TaskCard -->
+        <p><strong>1. TaskCard.vue — Card งานแต่ละชิ้น</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/TaskCard.vue<span class="fp-size">~105 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskCard.vue — template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- :class เพิ่ม border-left สีตาม priority และ opacity ถ้า done --&gt;
+&lt;div class="task-card"
+  :class="[priorityBorderClass(task.priority), { 'card-done': task.status === 'done' }]"&gt;
+
+  &lt;div class="card-top"&gt;
+    &lt;!-- Status + Priority badges --&gt;
+    &lt;div class="badge-row"&gt;
+      &lt;span class="badge" :class="statusClass(task.status)"&gt;
+        {{ statusLabel(task.status) }}
+      &lt;/span&gt;
+      &lt;span class="badge" :class="priorityClass(task.priority)"&gt;
+        {{ priorityLabel(task.priority) }}
+      &lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div class="task-title"&gt;{{ task.title }}&lt;/div&gt;
+    &lt;div class="task-desc" v-if="task.description"&gt;{{ task.description }}&lt;/div&gt;
+
+    &lt;!-- Assignee + Due Date --&gt;
+    &lt;div class="task-meta"&gt;
+      &lt;span class="meta-item" v-if="task.assignee"&gt;👤 {{ task.assignee }}&lt;/span&gt;
+      &lt;span
+        class="meta-item"
+        :class="{ 'overdue-text': isOverdue(task) }"
+        v-if="task.due_date"
+      &gt;📅 {{ formatDate(task.due_date) }}&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class="card-footer"&gt;
+    &lt;button class="btn-edit" @click="$emit('edit', task)"&gt;✏️ แก้ไข&lt;/button&gt;
+    &lt;button class="btn-del"  @click="$emit('delete', task)"&gt;🗑️ ลบ&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskCard.vue — helper functions</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>defineProps({ task: { type: Object, required: true } })
+defineEmits(['edit', 'delete'])
+
+// Status: CSS class
+function statusClass(s)   {
+  return { 'todo': 's-todo', 'in-progress': 's-prog', 'done': 's-done' }[s] || 's-todo'
+}
+// Status: ป้ายภาษาไทย
+function statusLabel(s)   {
+  return { 'todo': 'รอดำเนินการ', 'in-progress': 'กำลังทำ', 'done': 'เสร็จสิ้น' }[s] || s
+}
+// Priority: CSS class สำหรับ badge
+function priorityClass(p) {
+  return { 'low': 'p-low', 'medium': 'p-med', 'high': 'p-high' }[p] || 'p-med'
+}
+// Priority: ป้ายภาษาไทย
+function priorityLabel(p) {
+  return { 'low': 'ต่ำ', 'medium': 'ปานกลาง', 'high': 'สูง' }[p] || p
+}
+// Priority: สีขอบ card ด้านซ้าย
+function priorityBorderClass(p) {
+  return { 'low': 'border-low', 'medium': 'border-med', 'high': 'border-high' }[p] || 'border-med'
+}
+// Helper overdue (เหมือนใน composable)
+function isOverdue(t) {
+  return t.due_date && new Date(t.due_date) &lt; new Date() && t.status !== 'done'
+}
+// Format วันที่เป็น DD MMM YYYY ภาษาไทย
+function formatDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('th-TH', {
+    year: 'numeric', month: 'short', day: 'numeric'
+  })
+}</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">priorityBorderClass</span><span class="le-desc">border-low (gray) / border-med (blue) / border-high (red) — ขอบซ้าย 4px บ่งบอก priority ทันที</span></div>
+          <div class="le-row"><span class="le-code">overdue-text</span><span class="le-desc">สีแดง #dc2626 บน due_date — แสดงให้เห็นทันทีว่างานนี้เกินกำหนดแล้ว</span></div>
+          <div class="le-row"><span class="le-code">card-done: opacity .7</span><span class="le-desc">งานที่ done จะจางลง — visual cue บอกว่าเสร็จแล้ว</span></div>
+          <div class="le-row"><span class="le-code">toLocaleDateString('th-TH')</span><span class="le-desc">แสดงวันที่เป็นภาษาไทย เช่น "10 มิ.ย. 2569"</span></div>
+        </div>
+
+        <!-- TaskGrid -->
+        <p style="margin-top:.5rem;"><strong>2. TaskGrid.vue — Grid Wrapper + States</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/TaskGrid.vue<span class="fp-size">~40 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskGrid.vue — template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;!-- Loading state --&gt;
+&lt;div class="state-box" v-if="loading"&gt;
+  &lt;div class="state-icon"&gt;⏳&lt;/div&gt;กำลังโหลดข้อมูลงาน...
+&lt;/div&gt;
+
+&lt;!-- Empty state --&gt;
+&lt;div class="state-box" v-else-if="tasks.length === 0"&gt;
+  &lt;div class="state-icon"&gt;📭&lt;/div&gt;
+  &lt;div&gt;{{ isFiltered ? 'ลองเปลี่ยน keyword หรือ filter'
+                     : 'กดปุ่ม "+ เพิ่มงาน" เพื่อเริ่มต้น' }}&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Task grid --&gt;
+&lt;div class="task-grid" v-else&gt;
+  &lt;TaskCard
+    v-for="t in tasks"
+    :key="t.id"
+    :task="t"
+    @edit="$emit('edit', t)"
+    @delete="$emit('request-delete', t)"
+  /&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">v-for="t in tasks" :key="t.id"</span><span class="le-desc">render TaskCard ทุกรายการ — tasks ที่รับมาคือ <code>filtered</code> จาก composable ไม่ใช่ tasks raw</span></div>
+          <div class="le-row"><span class="le-code">@delete="$emit('request-delete', t)"</span><span class="le-desc">รับ event จาก TaskCard แล้ว re-emit ขึ้น App.vue — chain of events</span></div>
+        </div>
+
+        <!-- TaskModal -->
+        <p style="margin-top:.5rem;"><strong>3. TaskModal.vue — Form 6 Fields</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/TaskModal.vue<span class="fp-size">~145 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskModal.vue — script setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { reactive } from 'vue'
+
+const props = defineProps({
+  editingId:   { default: null },
+  initialForm: { type: Object, required: true },
+})
+const emit = defineEmits(['save', 'close'])
+
+// copy ค่าเริ่มต้นจาก props → local reactive object
+// ไม่แก้ props โดยตรง (Vue rule: one-way data flow)
+const localForm = reactive({ ...props.initialForm })
+
+function onSubmit() {
+  emit('save', { ...localForm })
+}</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>TaskModal.vue — form fields (6 fields)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;form @submit.prevent="onSubmit"&gt;
+
+  &lt;!-- 1. Title --&gt;
+  &lt;div class="form-group"&gt;
+    &lt;label class="form-label"&gt;ชื่องาน *&lt;/label&gt;
+    &lt;input class="form-input" v-model="localForm.title"
+           placeholder="เช่น ออกแบบ UI สำหรับ Dashboard" required /&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 2+3. Status &amp; Priority (2 columns) --&gt;
+  &lt;div class="form-row"&gt;
+    &lt;div class="form-group"&gt;
+      &lt;label class="form-label"&gt;Status&lt;/label&gt;
+      &lt;select class="form-input" v-model="localForm.status"&gt;
+        &lt;option value="todo"&gt;รอดำเนินการ&lt;/option&gt;
+        &lt;option value="in-progress"&gt;กำลังทำ&lt;/option&gt;
+        &lt;option value="done"&gt;เสร็จสิ้น&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/div&gt;
+    &lt;div class="form-group"&gt;
+      &lt;label class="form-label"&gt;Priority&lt;/label&gt;
+      &lt;select class="form-input" v-model="localForm.priority"&gt;
+        &lt;option value="low"&gt;ต่ำ&lt;/option&gt;
+        &lt;option value="medium"&gt;ปานกลาง&lt;/option&gt;
+        &lt;option value="high"&gt;สูง&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 4+5. Assignee &amp; Due Date (2 columns) --&gt;
+  &lt;div class="form-row"&gt;
+    &lt;div class="form-group"&gt;
+      &lt;label class="form-label"&gt;ผู้รับผิดชอบ&lt;/label&gt;
+      &lt;input class="form-input" v-model="localForm.assignee"
+             placeholder="เช่น สมชาย" /&gt;
+    &lt;/div&gt;
+    &lt;div class="form-group"&gt;
+      &lt;label class="form-label"&gt;วันกำหนดส่ง&lt;/label&gt;
+      &lt;input class="form-input" type="date" v-model="localForm.due_date" /&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 6. Description --&gt;
+  &lt;div class="form-group"&gt;
+    &lt;label class="form-label"&gt;คำอธิบาย&lt;/label&gt;
+    &lt;textarea class="form-input" v-model="localForm.description"
+              rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
+              style="resize:vertical"&gt;&lt;/textarea&gt;
+  &lt;/div&gt;
+
+  &lt;div class="modal-footer"&gt;
+    &lt;button type="button" class="btn-cancel" @click="$emit('close')"&gt;ยกเลิก&lt;/button&gt;
+    &lt;button type="submit" class="btn-save"&gt;
+      {{ editingId ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มงาน' }}
+    &lt;/button&gt;
+  &lt;/div&gt;
+&lt;/form&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">reactive({ ...props.initialForm })</span><span class="le-desc">spread copy props → object ใหม่ที่ไม่ link กับ props — แก้ form ได้อิสระ</span></div>
+          <div class="le-row"><span class="le-code">input type="date"</span><span class="le-desc">browser date picker สำหรับ due_date — format YYYY-MM-DD ตรงกับที่ openEdit() เตรียมไว้</span></div>
+          <div class="le-row"><span class="le-code">font-family: inherit</span><span class="le-desc">input/select/textarea ใช้ font Sarabun เหมือน body — ภาษาไทยแสดงถูกต้อง</span></div>
+          <div class="le-row"><span class="le-code">@submit.prevent</span><span class="le-desc">prevent ป้องกัน reload — เรียก onSubmit() ซึ่ง emit 'save' พร้อม localForm</span></div>
+        </div>
+
+        <!-- DeleteConfirm -->
+        <p style="margin-top:.5rem;"><strong>4. DeleteConfirm.vue — Dialog ยืนยันการลบงาน</strong></p>
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/components/DeleteConfirm.vue<span class="fp-size">~55 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>DeleteConfirm.vue — เนื้อหาทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div class="overlay" @click.self="$emit('cancel')"&gt;
+    &lt;div class="modal confirm"&gt;
+      &lt;div class="confirm-title"&gt;ยืนยันการลบงาน&lt;/div&gt;
+      &lt;div class="confirm-desc"&gt;
+        คุณต้องการลบงาน &lt;strong&gt;{{ task.title }}&lt;/strong&gt; หรือไม่?
+        &lt;br&gt;การลบไม่สามารถย้อนกลับได้
+      &lt;/div&gt;
+      &lt;div class="confirm-actions"&gt;
+        &lt;button class="btn-cancel" @click="$emit('cancel')"&gt;ยกเลิก&lt;/button&gt;
+        &lt;button class="btn-delete" @click="$emit('confirm')"&gt;ลบงาน&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({ task: { type: Object, required: true } })
+defineEmits(['confirm', 'cancel'])
+&lt;/script&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">task.title</span><span class="le-desc">แสดงชื่องานที่กำลังจะลบ — ให้ user ยืนยันว่าลบถูกงาน</span></div>
+          <div class="le-row"><span class="le-code">@click.self="$emit('cancel')"</span><span class="le-desc">.self = ปิด dialog เมื่อคลิก overlay นอก modal เท่านั้น (ไม่ปิดถ้าคลิกใน dialog)</span></div>
+          <div class="le-row"><span class="le-code">emit('confirm') / emit('cancel')</span><span class="le-desc">App.vue รับ: confirm → deleteTask(id), cancel → confirmDelete = null</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="step-card" id="s10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div class="step-title">App.vue + npm run dev + ทดสอบ</div>
+        <div class="step-badge test">Test</div>
+      </div>
+      <div class="step-body">
+        <p>App.vue ทำหน้าที่เป็น <strong>assembler</strong> — import ทุกอย่าง, ประกอบ components, ส่ง props, รับ emits</p>
+
+        <div class="file-path"><span class="fp-label">เปิดไฟล์:</span> frontend/src/App.vue<span class="fp-size">~60 บรรทัด</span></div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — script setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>import { onMounted } from 'vue'
+import { useTasks }     from './composables/useTasks.js'
+import AppHeader        from './components/AppHeader.vue'
+import StatsGrid        from './components/StatsGrid.vue'
+import TaskToolbar      from './components/TaskToolbar.vue'
+import TaskGrid         from './components/TaskGrid.vue'
+import TaskModal        from './components/TaskModal.vue'
+import DeleteConfirm    from './components/DeleteConfirm.vue'
+
+// destructure ทุกอย่างจาก useTasks composable
+const {
+  tasks, loading, search, statusFilter, priorityFilter,
+  showModal, editingId, confirmDelete, form,
+  filtered, stats,
+  fetchTasks, openAdd, openEdit, saveTask, deleteTask,
+} = useTasks()
+
+onMounted(fetchTasks)   // fetch ครั้งแรกเมื่อ App mount</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span>App.vue — template ทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-html"><code>&lt;template&gt;
+  &lt;div&gt;
+    &lt;AppHeader @add="openAdd" /&gt;
+
+    &lt;main class="main"&gt;
+      &lt;StatsGrid :stats="stats" /&gt;
+
+      &lt;TaskToolbar
+        v-model:search="search"
+        v-model:statusFilter="statusFilter"
+        v-model:priorityFilter="priorityFilter"
+        :loading="loading"
+        :filtered-count="filtered.length"
+        :total-count="tasks.length"
+      /&gt;
+
+      &lt;TaskGrid
+        :tasks="filtered"
+        :loading="loading"
+        :is-filtered="!!(search || statusFilter || priorityFilter)"
+        @edit="openEdit"
+        @request-delete="t =&gt; (confirmDelete = t)"
+      /&gt;
+    &lt;/main&gt;
+
+    &lt;!-- v-if: mount ใหม่ทุกครั้ง → localForm ใน Modal reset เสมอ --&gt;
+    &lt;TaskModal
+      v-if="showModal"
+      :editing-id="editingId"
+      :initial-form="form"
+      @save="saveTask"
+      @close="showModal = false"
+    /&gt;
+    &lt;DeleteConfirm
+      v-if="confirmDelete"
+      :task="confirmDelete"
+      @confirm="deleteTask(confirmDelete.id)"
+      @cancel="confirmDelete = null"
+    /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+        </div>
+        <div class="line-explain">
+          <div class="le-row"><span class="le-code">v-model:search="search"</span><span class="le-desc">TaskToolbar เปลี่ยน search → emit update:search → search ref เปลี่ยน → watch → debounce → fetchTasks</span></div>
+          <div class="le-row"><span class="le-code">v-model:statusFilter</span><span class="le-desc">เหมือน search แต่ใช้ watch(statusFilter) ที่ไม่มี debounce — fetch ทันที</span></div>
+          <div class="le-row"><span class="le-code">:tasks="filtered"</span><span class="le-desc">ส่ง filtered (ไม่ใช่ tasks raw) ให้ TaskGrid — grid แสดงเฉพาะที่ผ่าน filter</span></div>
+          <div class="le-row"><span class="le-code">@request-delete="t =&gt; confirmDelete = t"</span><span class="le-desc">set confirmDelete → DeleteConfirm แสดงขึ้น (v-if="confirmDelete")</span></div>
+          <div class="le-row"><span class="le-code">v-if="showModal"</span><span class="le-desc">destroy + re-mount TaskModal ทุกครั้ง → localForm = reactive({ ...initialForm }) เสมอ</span></div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1rem 0;">
+
+        <p><strong>ขั้นตอนที่ 1 — ตรวจสอบว่า Backend ทำงานอยู่:</strong></p>
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>ต้องรัน Backend ก่อน</strong>
+            เปิด terminal แรก: <code>cd backend &amp;&amp; node index.js</code> ค้างไว้<br>
+            Backend ต้องรันอยู่ที่ port 3001 ก่อน frontend จะ fetch ข้อมูลได้
+          </div>
+        </div>
+
+        <p><strong>ขั้นตอนที่ 2 — ติดตั้ง + รัน Frontend:</strong></p>
+        <div class="code-wrap">
+          <div class="code-label"><span>PowerShell — อยู่ใน week5-ci-pipeline/</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-powershell"><code>cd frontend
+npm install
+npm run dev
+
+# ควรเห็น:
+#   VITE v5.x  ready in xxx ms
+#   ➜  Local:   http://localhost:5173/</code></pre>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบที่ http://localhost:5173</div>
+            <ul>
+              <li>Header แสดง "📋 TaskFlow" พร้อมปุ่มสีม่วง "+ เพิ่มงาน"</li>
+              <li>Dashboard แสดง 4 stat cards พร้อมตัวเลขที่ถูกต้อง (total/todo/in_progress/done)</li>
+              <li>Task cards 10 ใบแสดงพร้อม status badge (สี) และ priority badge</li>
+              <li>Overdue warning แสดงถ้ามีงานที่ due_date ผ่านมาแล้วและ status ไม่ใช่ done</li>
+              <li>พิมพ์ "ออกแบบ" ในช่องค้นหา → filter เหลือเฉพาะงานที่มีคำนั้น</li>
+              <li>เลือก "กำลังทำ" ใน status dropdown → เห็นเฉพาะงาน in-progress</li>
+              <li>เลือก "สูง" ใน priority dropdown → เห็นเฉพาะงาน high priority</li>
+              <li>กด "+ เพิ่มงาน" → modal เปิด มี 6 fields รวม due_date date picker</li>
+              <li>กด ✏️ แก้ไขงาน → modal เปิดพร้อมข้อมูลเดิม (รวมวันที่)</li>
+              <li>กด 🗑️ ลบงาน → dialog ยืนยันแสดงชื่องาน</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">🎨</span>
+          <div>
+            <strong>ทดสอบ Filter 3 ตัวพร้อมกัน</strong>
+            ลองเลือก status "กำลังทำ" + priority "สูง" → ควรเห็นเฉพาะงานที่เป็น in-progress และ high priority<br>
+            ถ้า filter combination ไม่มีผลลัพธ์ → TaskGrid แสดง "ลองเปลี่ยน keyword หรือ filter"
+          </div>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎉</span>
+          <div>
+            <strong>Part 2 เสร็จสมบูรณ์!</strong>
+            Vue 3 Frontend ทำงานได้พร้อม 7 components, 3-filter system และ overdue tracking<br>
+            ไปต่อ Part 3 เพื่อสร้าง CI Pipeline ด้วย GitHub Actions: ESLint → Jest → Docker Build
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="part-nav">
+      <a href="tutorial-part1.html" class="nav-btn prev">← Part 1: Backend</a>
+      <a href="tutorial-part3.html" class="nav-btn next">Part 3: CI Pipeline →</a>
+    </div>
+
+  </main>
+</div>
+
+<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:.84rem;background:#fff;border-top:1px solid #e2e8f0;margin-top:1rem;">
+  📘 วิชา 30901-2008 · Lab Week 5 Part 2/3
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  const TOTAL = 5;
+  const KEY = 'w5p2-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+  function updateProgress() {
+    const pct = Math.round(done.length / TOTAL * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + TOTAL;
+    for (let i = 6; i <= 10; i++) {
+      const el = document.getElementById('toc-' + i);
+      if (el) el.classList.toggle('done', done.includes(i));
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const m = e.target.id.match(/^s(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1]);
+          if (!done.includes(n)) { done.push(n); localStorage.setItem(KEY, JSON.stringify(done)); updateProgress(); }
+          document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+          const tl = document.getElementById('toc-' + n);
+          if (tl) tl.classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('[id^="s"]').forEach(el => observer.observe(el));
+  updateProgress();
+
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
