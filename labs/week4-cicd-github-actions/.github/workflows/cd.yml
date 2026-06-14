@@ -10,13 +10,11 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # Job 1: Build Docker images แล้ว push ไป Private Registry
+  # Job 1: Build Docker images แล้ว push ไปยัง Docker Hub
   # ─────────────────────────────────────────────────────────────
   build-and-push:
-    name: Build & Push Images
+    name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.tag }}
 
     steps:
       - name: Checkout code
@@ -32,13 +30,12 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
-      # Login เข้า Private Registry ด้วย Secrets ที่ตั้งค่าไว้
-      - name: Login to private registry
+      # Login เข้า Docker Hub (ไม่ต้องระบุ registry = Docker Hub อัตโนมัติ)
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_PASS }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Build และ push Backend image (2 tags: version + latest)
       - name: Build & push backend image
@@ -47,8 +44,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/stockpro-backend:${{ steps.version.outputs.tag }}
-            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-backend:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-backend:latest
 
       # Build และ push Frontend image
       - name: Build & push frontend image
@@ -57,27 +54,25 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:${{ steps.version.outputs.tag }}
-            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-frontend:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-frontend:latest
 
   # ─────────────────────────────────────────────────────────────
-  # Job 2: Deploy ไปยัง Server ผ่าน SSH (รอ Job 1 เสร็จก่อน)
+  # Job 2: SSH Deploy — จะเพิ่มใน Week 7 เมื่อมี Server ปลายทาง
   # ─────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to Server
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/stockpro
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            docker image prune -f
-            echo "✅ StockPro ${{ needs.build-and-push.outputs.version }} deployed at $(date)"
+  # deploy:
+  #   name: Deploy to Server
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy via SSH
+  #       uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.SERVER_HOST }}
+  #         username: ${{ secrets.SERVER_USER }}
+  #         key: ${{ secrets.SERVER_SSH_KEY }}
+  #         script: |
+  #           cd /opt/stockpro
+  #           docker compose -f docker-compose.prod.yml pull
+  #           docker compose -f docker-compose.prod.yml up -d --remove-orphans
+  #           docker image prune -f

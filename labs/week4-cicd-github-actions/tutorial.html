@@ -809,7 +809,14 @@ git pull origin develop</code></pre>
       <div class="alert-body"><strong>ไฟล์ใหม่: .github/workflows/cd.yml</strong></div>
     </div>
 
-    <p>CD workflow ทำงานเมื่อ merge เข้า <code class="inline-code">main</code> หรือ push tag <code class="inline-code">v*</code> โดย build Docker image → push Registry → SSH deploy</p>
+    <p>CD workflow ทำงานเมื่อ merge เข้า <code class="inline-code">main</code> หรือ push tag <code class="inline-code">v*</code> โดย build Docker image แล้ว push ขึ้น <strong>Docker Hub</strong> — Week 4 นี้ทำถึงแค่ push image ส่วน SSH Deploy ไปยัง server จริงจะเรียนใน Week 7</p>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Docker Hub vs Private Registry</strong>
+        Docker Hub คือ public registry ฟรีที่ <code class="inline-code">hub.docker.com</code> — ใช้ชื่อ image แบบ <code class="inline-code">username/image-name:tag</code> ไม่ต้องระบุ URL ของ registry ใน docker/login-action
+      </div>
+    </div>
 
     <div class="code-wrap">
       <span class="code-label">yaml · .github/workflows/cd.yml (พร้อม comment อธิบาย)</span>
@@ -819,17 +826,15 @@ git pull origin develop</code></pre>
 on:
   push:
     branches:
-      - main       # merge เข้า main → deploy production
+      - main       # merge เข้า main → build + push image
     tags:
       - 'v*'       # push tag v1.0.0 → build versioned image
 
 jobs:
-  # ── Job 1: Build + Push Docker images ─────────────────────────
+  # ── Job 1: Build + Push Docker images ไปยัง Docker Hub ──────────
   build-and-push:
-    name: Build & Push Images
+    name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.tag }}    # ส่งค่าออกให้ Job 2
 
     steps:
       - name: Checkout code
@@ -847,23 +852,22 @@ jobs:
           # GITHUB_REF ตัวอย่าง: refs/tags/v1.0.0
           # ${GITHUB_REF#refs/tags/} = ตัด prefix → เหลือ v1.0.0
 
-      # Login เข้า Private Registry ด้วย Secrets
-      - name: Login to private registry
+      # Login เข้า Docker Hub (ไม่ต้องระบุ registry = Docker Hub อัตโนมัติ)
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_PASS }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}    # ใช้ Access Token ไม่ใช่ password
 
-      # Build Backend image → push 2 tags (version + latest)
+      # Build Backend image → push 2 tags: version + latest
       - name: Build & push backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/stockpro-backend:${{ steps.version.outputs.tag }}
-            ${{ secrets.REGISTRY_URL }}/stockpro-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-backend:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-backend:latest
 
       # Build Frontend image → push
       - name: Build & push frontend image
@@ -872,28 +876,19 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:${{ steps.version.outputs.tag }}
-            ${{ secrets.REGISTRY_URL }}/stockpro-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-frontend:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/stockpro-frontend:latest
 
-  # ── Job 2: SSH Deploy (รอ Job 1 เสร็จก่อน) ───────────────────
-  deploy:
-    name: Deploy to Server
-    needs: build-and-push    # dependency — รอ Job 1
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1    # Action SSH สำเร็จรูป
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/stockpro
-            docker compose -f docker-compose.prod.yml pull    # ดึง image ใหม่
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            docker image prune -f    # ลบ image เก่า
-            echo "Deployed ${{ needs.build-and-push.outputs.version }} at $(date)"</code></pre>
+  # ── Job 2: SSH Deploy — จะเพิ่มใน Week 7 เมื่อมี Server ─────────
+  # deploy:
+  #   name: Deploy to Server
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.SERVER_HOST }}
+  #         ...    ← Week 7</code></pre>
     </div>
 
     <h4>เปรียบเทียบ CI vs CD</h4>
@@ -901,9 +896,9 @@ jobs:
       <thead><tr><th></th><th>CI (ci.yml)</th><th>CD (cd.yml)</th></tr></thead>
       <tbody>
         <tr><td>Trigger</td><td>push ไป feature/develop</td><td>merge เข้า main / git tag</td></tr>
-        <tr><td>จุดประสงค์</td><td>ตรวจสอบ code quality</td><td>deploy ไป production</td></tr>
-        <tr><td>Push Registry</td><td>❌</td><td>✅</td></tr>
-        <tr><td>SSH Deploy</td><td>❌</td><td>✅</td></tr>
+        <tr><td>จุดประสงค์</td><td>ตรวจสอบ code quality</td><td>build + push image</td></tr>
+        <tr><td>Push Registry</td><td>❌</td><td>✅ Docker Hub</td></tr>
+        <tr><td>SSH Deploy</td><td>❌</td><td>❌ (Week 7)</td></tr>
         <tr><td>ใช้ Secrets</td><td>ไม่จำเป็น</td><td>ต้องใช้</td></tr>
       </tbody>
     </table>
@@ -934,53 +929,50 @@ git push origin develop</code></pre>
       </div>
     </div>
 
-    <h4>Secrets ที่ต้องตั้งค่า</h4>
+    <h4>Secrets ที่ต้องตั้งค่า (Week 4 — Docker Hub)</h4>
     <table class="secrets-table">
       <thead><tr><th>Secret Name</th><th>ค่าที่ใส่</th><th>ใช้ใน</th></tr></thead>
       <tbody>
-        <tr><td><span class="secret-key">REGISTRY_URL</span></td><td><code class="inline-code">registry.lab.local:5000</code></td><td>docker login</td></tr>
-        <tr><td><span class="secret-key">REGISTRY_USER</span></td><td>username ของ registry</td><td>docker login</td></tr>
-        <tr><td><span class="secret-key">REGISTRY_PASS</span></td><td>password ของ registry</td><td>docker login</td></tr>
-        <tr><td><span class="secret-key">SERVER_HOST</span></td><td>IP address ของ server</td><td>SSH connect</td></tr>
-        <tr><td><span class="secret-key">SERVER_USER</span></td><td>SSH username เช่น <code class="inline-code">ubuntu</code></td><td>SSH connect</td></tr>
-        <tr><td><span class="secret-key">SERVER_SSH_KEY</span></td><td>SSH private key ทั้งหมด (รวม header)</td><td>SSH auth</td></tr>
+        <tr><td><span class="secret-key">DOCKERHUB_USERNAME</span></td><td>Docker Hub username เช่น <code class="inline-code">john123</code></td><td>ชื่อ image prefix + login</td></tr>
+        <tr><td><span class="secret-key">DOCKERHUB_TOKEN</span></td><td>Docker Hub Access Token (ดูขั้นตอนด้านล่าง)</td><td>docker login</td></tr>
       </tbody>
     </table>
 
-    <h4>วิธีเพิ่ม Secret</h4>
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div class="alert-body"><strong>Week 7 จะเพิ่ม Secrets สำหรับ SSH Deploy</strong>
+        เมื่อมี server ปลายทาง จะเพิ่ม <code class="inline-code">SERVER_HOST</code>, <code class="inline-code">SERVER_USER</code>, <code class="inline-code">SERVER_SSH_KEY</code> ใน Week 7
+      </div>
+    </div>
+
+    <h4>สร้าง Docker Hub Access Token</h4>
+    <ol>
+      <li>ไปที่ <strong>hub.docker.com</strong> → login → คลิกที่ username มุมบนขวา</li>
+      <li><strong>Account Settings</strong> → <strong>Personal access tokens</strong></li>
+      <li>คลิก <strong>Generate new token</strong></li>
+      <li>ตั้งชื่อ: <code class="inline-code">github-actions-stockpro</code> เลือก Permission: <strong>Read & Write</strong></li>
+      <li>คลิก <strong>Generate</strong> → copy token ทันที (จะไม่แสดงอีกครั้ง)</li>
+    </ol>
+
+    <h4>วิธีเพิ่ม Secret ใน GitHub</h4>
     <ol>
       <li>repo → <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong></li>
       <li>คลิก <strong>New repository secret</strong></li>
-      <li>ใส่ Name และ Secret value</li>
-      <li>คลิก <strong>Add secret</strong></li>
+      <li>เพิ่ม <code class="inline-code">DOCKERHUB_USERNAME</code> = Docker Hub username ของตัวเอง</li>
+      <li>เพิ่ม <code class="inline-code">DOCKERHUB_TOKEN</code> = Access Token ที่สร้างไว้</li>
     </ol>
-
-    <h4>สร้าง SSH Key Pair (ถ้ายังไม่มี)</h4>
-    <div class="code-wrap">
-      <span class="code-label">bash</span>
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      <pre><code class="language-bash"># สร้าง key pair ใหม่สำหรับ GitHub Actions
-ssh-keygen -t ed25519 -C "github-actions-stockpro" -f ~/.ssh/stockpro_deploy
-
-# Public key → copy ไปใส่บน server
-cat ~/.ssh/stockpro_deploy.pub
-# ใส่ในไฟล์ ~/.ssh/authorized_keys บน server
-
-# Private key → copy ทั้งหมดใส่ใน Secret: SERVER_SSH_KEY
-cat ~/.ssh/stockpro_deploy</code></pre>
-    </div>
 
     <div class="alert warning">
       <span class="alert-icon">⚠️</span>
-      <div class="alert-body"><strong>ห้าม commit private key ลงใน repo</strong>
-        ถ้า key หลุดขึ้น GitHub ให้ revoke ทันทีและสร้างใหม่ Private key ควรอยู่ใน Secrets เท่านั้น
+      <div class="alert-body"><strong>ใช้ Access Token ไม่ใช่ Password</strong>
+        Docker Hub แนะนำให้ใช้ Personal Access Token แทน password เพราะ revoke ได้ทันที ถ้าหลุด และจำกัด permission ได้
       </div>
     </div>
 
     <div class="verify">
       <div class="verify-title">✅ ตรวจสอบ</div>
       <ul>
-        <li>Settings → Secrets → Actions → เห็น secrets ทั้ง 6 ตัวในรายการ</li>
+        <li>Settings → Secrets → Actions → เห็น <code class="inline-code">DOCKERHUB_USERNAME</code> และ <code class="inline-code">DOCKERHUB_TOKEN</code></li>
         <li>ค่าของทุก secret ซ่อนอยู่ (•••••) ไม่แสดง plaintext</li>
       </ul>
     </div>
@@ -1008,14 +1000,14 @@ cat ~/.ssh/stockpro_deploy</code></pre>
     <h4>ดู CD Pipeline บน GitHub</h4>
     <ol>
       <li>Actions tab → เห็น "CD — Deploy StockPro" กำลังทำงาน</li>
-      <li>ขยาย Job "Build &amp; Push Images" → ดูแต่ละ step</li>
-      <li>Job "Deploy to Server" → ดู SSH script output</li>
+      <li>ขยาย Job "Build &amp; Push to Docker Hub" → ดูแต่ละ step</li>
+      <li>รอ 3-5 นาที → ✅ ทุก step ผ่าน</li>
     </ol>
 
-    <div class="alert info">
-      <span class="alert-icon">ℹ️</span>
-      <div class="alert-body"><strong>ถ้าไม่มี server จริง</strong>
-        Job "deploy" จะ fail เพราะ SSH connect ไม่ได้ แต่ Job "build-and-push" ยังทำงานได้ถูกต้อง ให้ focus ที่ Job แรกก่อน
+    <div class="alert success">
+      <span class="alert-icon">✅</span>
+      <div class="alert-body"><strong>ตรวจสอบ Docker Hub ว่า image ขึ้นจริง</strong>
+        ไปที่ <strong>hub.docker.com</strong> → repositories → ควรเห็น <code class="inline-code">username/stockpro-backend</code> และ <code class="inline-code">username/stockpro-frontend</code> พร้อม tag <code class="inline-code">latest</code>
       </div>
     </div>
 
@@ -1023,8 +1015,8 @@ cat ~/.ssh/stockpro_deploy</code></pre>
       <div class="verify-title">✅ ตรวจสอบ</div>
       <ul>
         <li>CD workflow ทริกเกอร์อัตโนมัติหลัง merge เข้า main</li>
-        <li>Job "Build &amp; Push Images" ผ่าน ✅</li>
-        <li>Registry มี image <code class="inline-code">stockpro-backend:latest</code> และ <code class="inline-code">stockpro-frontend:latest</code></li>
+        <li>Job "Build &amp; Push to Docker Hub" ผ่าน ✅</li>
+        <li>hub.docker.com → เห็น image <code class="inline-code">stockpro-backend:latest</code> และ <code class="inline-code">stockpro-frontend:latest</code></li>
       </ul>
     </div>
   </div>
@@ -1071,7 +1063,7 @@ git push origin v1.0.0</code></pre>
     <div class="alert tip">
       <span class="alert-icon">💡</span>
       <div class="alert-body"><strong>CD ทริกเกอร์ซ้ำ!</strong>
-        เมื่อ push tag <code class="inline-code">v1.0.0</code> CD จะ build image อีกครั้ง และ tag image ด้วย <code class="inline-code">v1.0.0</code> ด้วย ทำให้สามารถ rollback ไปเวอร์ชั่นเก่าได้ง่าย: <code class="inline-code">image: registry/stockpro-backend:v1.0.0</code>
+        เมื่อ push tag <code class="inline-code">v1.0.0</code> CD จะ build image อีกครั้ง และ push ขึ้น Docker Hub พร้อม 2 tags: <code class="inline-code">v1.0.0</code> และ <code class="inline-code">latest</code> ทำให้ rollback ได้ง่าย: <code class="inline-code">image: username/stockpro-backend:v1.0.0</code>
       </div>
     </div>
 
@@ -1080,7 +1072,7 @@ git push origin v1.0.0</code></pre>
       <ul>
         <li>GitHub → Releases แสดง v1.0.0 พร้อม release notes</li>
         <li>CD pipeline ทำงานอีกครั้งหลัง push tag</li>
-        <li>Registry มี image tag <code class="inline-code">v1.0.0</code> แยกจาก <code class="inline-code">latest</code></li>
+        <li>Docker Hub → เห็น image tag <code class="inline-code">v1.0.0</code> แยกจาก <code class="inline-code">latest</code></li>
       </ul>
     </div>
   </div>
@@ -1123,9 +1115,10 @@ git push -u origin feature/add-readme-badges
       <ul>
         <li>🔗 URL GitHub repo ที่มี main, develop, (feature branches เก่า)</li>
         <li>🤖 Screenshot: Actions tab แสดง CI ผ่าน ✅</li>
-        <li>🚀 Screenshot: Actions tab แสดง CD ทำงาน (Job build-and-push ผ่าน)</li>
-        <li>🔐 Screenshot: Settings → Secrets แสดง secrets ทั้ง 6 ตัว (ค่าซ่อนอยู่)</li>
-        <li>🏷️ GitHub Releases แสดง v1.0.0</li>
+        <li>🚀 Screenshot: Actions tab แสดง CD ทำงาน (Job "Build &amp; Push to Docker Hub" ผ่าน)</li>
+        <li>🔐 Screenshot: Settings → Secrets แสดง <code class="inline-code">DOCKERHUB_USERNAME</code> และ <code class="inline-code">DOCKERHUB_TOKEN</code> (ค่าซ่อนอยู่)</li>
+        <li>🐳 Screenshot: Docker Hub แสดง image <code class="inline-code">stockpro-backend</code> และ <code class="inline-code">stockpro-frontend</code></li>
+        <li>🏷️ GitHub Releases แสดง v1.0.0 และ Docker Hub มี image tag v1.0.0</li>
         <li>🟢 README.md มี Status Badge (เห็น badge ใน GitHub)</li>
         <li>🛡️ Branch Protection Rules ตั้งค่าสำหรับ main</li>
       </ul>
