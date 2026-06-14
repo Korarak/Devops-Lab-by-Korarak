@@ -211,7 +211,7 @@ stockpro/<br>
 │   └── <span class="ft-chg">package.json</span>               <span class="ft-dim">← เพิ่ม eslint script</span><br>
 ├── frontend/<br>
 │   └── src/<br>
-│       ├── <span class="ft-dim">App.vue</span>                <span class="ft-dim">← root (얇게 ~50 บรรทัด)</span><br>
+│       ├── <span class="ft-dim">App.vue</span>                <span class="ft-dim">← root (~50 บรรทัด)</span><br>
 │       ├── <span class="ft-dim">composables/useProducts.js</span>  <span class="ft-dim">← state + API ทั้งหมด</span><br>
 │       └── <span class="ft-dim">components/</span>            <span class="ft-dim">← 7 components แยกไฟล์</span><br>
 │           ├── <span class="ft-dim">AppHeader.vue</span>      <span class="ft-dim">· StatsGrid.vue</span><br>
@@ -219,7 +219,9 @@ stockpro/<br>
 │           ├── <span class="ft-dim">ProductGrid.vue</span>    <span class="ft-dim">· ProductCard.vue</span><br>
 │           ├── <span class="ft-dim">ProductModal.vue</span>   <span class="ft-dim">· DeleteConfirm.vue</span><br>
 ├── <span class="ft-new">README.md</span>                       <span class="ft-dim">← ใหม่ (มี Status Badges)</span><br>
-└── <span class="ft-dim">docker-compose.yml · docker-compose.prod.yml · .gitignore ...</span>
+├── <span class="ft-chg">docker-compose.yml</span>              <span class="ft-dim">← postgres 16, DB user ใหม่, port frontend 80, backend ไม่ expose</span><br>
+├── <span class="ft-chg">docker-compose.prod.yml</span>         <span class="ft-dim">← pull image จาก registry แทน build</span><br>
+└── <span class="ft-dim">.gitignore · .env.example ...</span>
     </div>
 
     <div class="alert info">
@@ -457,11 +459,11 @@ git branch
     <div class="step-time">⏱ 30 นาที</div>
   </div>
   <div class="step-body">
-    <p>แก้ไข <code class="inline-code">backend/index.js</code> — เพิ่ม 2 ส่วน: (1) ปรับ <code class="inline-code">/health</code> ให้แสดง version+uptime (2) เพิ่ม <code class="inline-code">/api/stats</code> ใหม่</p>
+    <p>แก้ไข <code class="inline-code">backend/index.js</code> — ทำ 3 อย่าง: (1) เพิ่ม <code class="inline-code">const START_AT = Date.now()</code> หลัง <code class="inline-code">const PORT</code> (2) <strong>แทนที่</strong> <code class="inline-code">/health</code> เดิมด้วย version ใหม่ที่แสดง version+uptime (3) เพิ่ม <code class="inline-code">/api/stats</code> ใหม่ต่อจาก /health</p>
 
     <div class="alert new">
       <span class="alert-icon">🆕</span>
-      <div class="alert-body"><strong>ไฟล์ที่แก้: backend/index.js</strong> — เพิ่มหลัง <code class="inline-code">const PORT = ...</code></div>
+      <div class="alert-body"><strong>ไฟล์ที่แก้: backend/index.js</strong> — เพิ่ม <code class="inline-code">START_AT</code> หลัง <code class="inline-code">const PORT</code>, แทนที่ <code class="inline-code">/health</code> เดิม, และเพิ่ม <code class="inline-code">/api/stats</code> ต่อจาก /health ก่อน routes /api/products</div>
     </div>
 
     <div class="code-wrap">
@@ -529,19 +531,27 @@ app.get('/api/stats', async (req, res) => {
     </ul>
 
     <h4>ทดสอบ</h4>
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-body"><strong>Week 4: Architecture เปลี่ยน — Backend ไม่ expose port 3001 ตรงๆ แล้ว</strong>
+        Week 3 เปิดทั้ง port 3001 (backend) และ 5173 (frontend) ใน Week 4 เปิดเฉพาะ port 80 (nginx) — ทุก API call วิ่งผ่าน nginx proxy เป็น pattern production ที่ถูกต้อง (<code class="inline-code">localhost/api/...</code> แทน <code class="inline-code">localhost:3001/api/...</code>)
+      </div>
+    </div>
     <div class="code-wrap">
       <span class="code-label">bash</span>
       <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       <pre><code class="language-bash">docker compose up -d
-curl http://localhost:3001/api/stats | python -m json.tool
-curl http://localhost:3001/health</code></pre>
+# เข้าผ่าน nginx port 80 (ไม่ใช่ :3001 โดยตรงอีกต่อไป)
+curl http://localhost/api/stats | python -m json.tool
+curl http://localhost/health</code></pre>
     </div>
 
     <div class="verify">
       <div class="verify-title">✅ ตรวจสอบ</div>
       <ul>
-        <li><code class="inline-code">/api/stats</code> ส่ง overview และ by_category กลับมา</li>
-        <li><code class="inline-code">/health</code> แสดง version และ uptime_s (วินาทีที่ server ทำงาน)</li>
+        <li><code class="inline-code">curl http://localhost/api/stats</code> ส่ง overview และ by_category กลับมา</li>
+        <li><code class="inline-code">curl http://localhost/health</code> แสดง version และ uptime_s (วินาทีที่ server ทำงาน)</li>
+        <li>แอป frontend เปิดได้ที่ <code class="inline-code">http://localhost</code> (port 80 — เปลี่ยนจาก 5173 ใน Week 3)</li>
       </ul>
     </div>
   </div>
