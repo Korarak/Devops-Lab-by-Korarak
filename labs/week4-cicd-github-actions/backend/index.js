@@ -115,7 +115,7 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     const { name, category, price, stock, description = '' } = req.body;
-    if (!name || !category || price == null || stock == null) {
+    if (!name || !category || price === null || price === undefined || stock === null || stock === undefined) {
       return res.status(400).json({ error: 'กรุณาระบุ name, category, price, stock' });
     }
     const { rows } = await pool.query(
