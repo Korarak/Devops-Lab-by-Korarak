@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ใบกิจกรรม TaskBoard — Part 2: Backend API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#0ea5e9;--primary-dark:#0284c7;--primary-light:#e0f2fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --green:#10b981;--green-light:#d1fae5;
+  --red:#ef4444;--red-light:#fee2e2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;transition:width .3s}
+.nav-top{position:absolute;top:1rem;left:1.25rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.site-header{background:linear-gradient(135deg,#1e3a5f,#065f46,#0c4a6e);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.part-nav{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding:1.25rem 2rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.4rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s;text-align:center}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:72px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:.95rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:#e0f2fe;border-left:4px solid var(--primary)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1.5rem}
+.verify-title{font-weight:800;color:#065f46;margin-bottom:.75rem;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.3rem}
+.checkpoint-score{display:inline-block;background:#065f46;color:#fff;border-radius:6px;padding:.2rem .6rem;font-size:.8rem;font-weight:700;margin-left:.5rem}
+.week-ref{display:inline-flex;align-items:center;gap:.35rem;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;margin-bottom:.75rem}
+.api-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.api-table th{background:var(--primary-light);color:var(--primary-dark);padding:.6rem .9rem;text-align:left;font-weight:700;border:1px solid #bae6fd}
+.api-table td{padding:.6rem .9rem;border:1px solid var(--border)}
+.api-table tr:nth-child(even) td{background:#f8fafc}
+.method{display:inline-block;border-radius:4px;padding:.15rem .5rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700}
+.get{background:#dbeafe;color:#1d4ed8}
+.post{background:#dcfce7;color:#15803d}
+.put{background:#fef9c3;color:#a16207}
+.del{background:#fee2e2;color:#b91c1c}
+.prereq-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.prereq-box h3{font-size:.95rem;font-weight:700;color:#92400e;margin-bottom:.75rem}
+.prereq-box li{font-size:.88rem;color:#78350f;margin-bottom:.3rem}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;max-height:none}}
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+
+<header class="site-header">
+  <div class="nav-top">
+    <a href="../index.html" class="back-link">← Labs Home</a>
+  </div>
+  <div class="part-badge">📋 ใบกิจกรรมพาทำ · DevOps 30901-2008</div>
+  <h1>TaskBoard — ระบบจัดการงาน</h1>
+  <p class="subtitle">Part 2 / 4 — Backend REST API (Express + PostgreSQL)</p>
+  <div class="header-meta">
+    <span class="meta-chip">🎯 อ้างอิง Week 2</span>
+    <span class="meta-chip">⏱ ~75 นาที</span>
+    <span class="meta-chip">📍 Checkpoint 2 / 4</span>
+    <span class="meta-chip">💯 30 คะแนน</span>
+  </div>
+</header>
+
+<nav class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1<br><small>GitHub Setup</small></a>
+  <a href="activity-part2.html" class="part-btn active">Part 2<br><small>Backend API</small></a>
+  <a href="activity-part3.html" class="part-btn">Part 3<br><small>Docker Hub</small></a>
+  <a href="activity-part4.html" class="part-btn">Part 4<br><small>CI/CD</small></a>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">📑 เนื้อหา Part 2</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#prereq"><span class="toc-num">⚡</span>Pre-requisite</a></li>
+        <li class="toc-item"><a href="#s1"><span class="toc-num">1</span>npm init + Install</a></li>
+        <li class="toc-item"><a href="#s2"><span class="toc-num">2</span>ไฟล์ .env</a></li>
+        <li class="toc-item"><a href="#s3"><span class="toc-num">3</span>src/db.js</a></li>
+        <li class="toc-item"><a href="#s4"><span class="toc-num">4</span>taskController.js</a></li>
+        <li class="toc-item"><a href="#s5"><span class="toc-num">5</span>taskRoutes.js</a></li>
+        <li class="toc-item"><a href="#s6"><span class="toc-num">6</span>src/app.js</a></li>
+        <li class="toc-item"><a href="#s7"><span class="toc-num">7</span>index.js</a></li>
+        <li class="toc-item"><a href="#s8"><span class="toc-num">8</span>ESLint Config</a></li>
+        <li class="toc-item"><a href="#s9"><span class="toc-num">9</span>ทดสอบ Local</a></li>
+        <li class="toc-item"><a href="#s10"><span class="toc-num">10</span>Commit & PR</a></li>
+        <li class="toc-item"><a href="#checkpoint2"><span class="toc-num">✅</span>Checkpoint 2</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">🗄️ Database Schema</div>
+      <pre style="font-size:.72rem;line-height:1.7;color:var(--text);white-space:pre-wrap">tasks
+───────────────
+id          SERIAL PK
+title       VARCHAR(200)
+description TEXT
+status      VARCHAR(20)
+  (todo|inprogress|done)
+priority    VARCHAR(10)
+  (low|medium|high)
+created_at  TIMESTAMPTZ
+updated_at  TIMESTAMPTZ</pre>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- Pre-requisite -->
+    <div class="prereq-box" id="prereq">
+      <h3>⚡ ก่อนเริ่ม — ตรวจสอบ Part 1 ผ่านแล้ว</h3>
+      <ul style="padding-left:1.2rem">
+        <li>อยู่ใน branch <code>feature/backend-setup</code> (รัน <code>git branch</code> ตรวจสอบ)</li>
+        <li>Terminal อยู่ใน folder <code>taskboard/</code> (root ของโปรเจค)</li>
+        <li>Docker Desktop เปิดอยู่ (จะใช้ PostgreSQL ใน Part 3 แต่ตอนนี้ test local ก่อน)</li>
+      </ul>
+    </div>
+
+    <!-- API Overview -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:2rem">
+      <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">📡 API ที่จะสร้าง</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Path</th><th>คำอธิบาย</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method get">GET</span></td><td>/health</td><td>Health check</td><td>200</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/tasks</td><td>ดึงงานทั้งหมด (filter ด้วย ?status=&priority=)</td><td>200</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/tasks/:id</td><td>ดึงงานตาม ID</td><td>200 / 404</td></tr>
+          <tr><td><span class="method post">POST</span></td><td>/api/tasks</td><td>สร้างงานใหม่</td><td>201</td></tr>
+          <tr><td><span class="method put">PUT</span></td><td>/api/tasks/:id</td><td>แก้ไขงาน</td><td>200 / 404</td></tr>
+          <tr><td><span class="method del">DELETE</span></td><td>/api/tasks/:id</td><td>ลบงาน</td><td>200 / 404</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- STEP 1: npm init -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">สร้าง package.json สำหรับ Backend</div>
+          <div style="font-size:.82rem;color:var(--muted)">npm init + ติดตั้ง dependencies</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Node.js + npm</span>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — จาก root ของโปรเจค</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">cd backend
+npm init -y</code></pre>
+        </div>
+        <p>ติดตั้ง packages ที่จำเป็น:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน backend/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">npm install express cors dotenv pg
+npm install --save-dev eslint nodemon</code></pre>
+        </div>
+        <p>แก้ไข <code>backend/package.json</code> ให้มี scripts ครบ:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/package.json</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-json">{
+  "name": "taskboard-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev":   "nodemon index.js",
+    "lint":  "eslint src/ index.js --ext .js"
+  },
+  "dependencies": {
+    "cors":    "^2.8.5",
+    "dotenv":  "^16.4.5",
+    "express": "^4.19.2",
+    "pg":      "^8.12.0"
+  },
+  "devDependencies": {
+    "eslint":  "^8.57.0",
+    "nodemon": "^3.1.4"
+  }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: .env -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">สร้างไฟล์ .env และ .env.example</div>
+          <div style="font-size:.82rem;color:var(--muted)">กำหนด Environment Variables</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Environment Variables</span>
+        <p>สร้างไฟล์ <code>backend/.env</code> (ห้าม commit ขึ้น GitHub!):</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/.env</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=taskboard
+DB_USER=taskuser
+DB_PASSWORD=taskpass123
+PORT=3001</code></pre>
+        </div>
+        <p>สร้างไฟล์ <code>backend/.env.example</code> (commit ได้ — เป็น template ให้คนอื่น):</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/.env.example</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">DB_HOST=db
+DB_PORT=5432
+DB_NAME=taskboard
+DB_USER=taskuser
+DB_PASSWORD=your_password_here
+PORT=3001</code></pre>
+        </div>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>.env กับ .env.example ต่างกันอย่างไร?</strong>
+            <code>.env</code> — ไฟล์จริง มี password จริง อยู่ใน .gitignore ห้าม commit<br>
+            <code>.env.example</code> — template ไม่มี password จริง commit ได้ ให้คนอื่น copy ไปใช้
+          </div>
+        </div>
+        <p>สร้างไฟล์ <code>frontend/.env.example</code> ด้วย:</p>
+        <div class="code-wrap">
+          <div class="code-label">frontend/.env.example</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">VITE_API_URL=http://localhost:3001</code></pre>
+        </div>
+        <p>สร้างไฟล์ <code>frontend/.env</code> (ห้าม commit):</p>
+        <div class="code-wrap">
+          <div class="code-label">frontend/.env</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">VITE_API_URL=http://localhost:3001</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: db.js -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">สร้าง src/db.js — PostgreSQL Connection</div>
+          <div style="font-size:.82rem;color:var(--muted)">Connection Pool ไปยังฐานข้อมูล</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — PostgreSQL + pg Pool</span>
+        <p>สร้างไฟล์ <code>backend/src/db.js</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/src/db.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">const { Pool } = require('pg');
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
+const pool = new Pool({
+  host:     process.env.DB_HOST,
+  port:     process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) console.error('❌ DB connection failed:', err.message);
+  else     console.log('✅ DB connected at:', res.rows[0].now);
+});
+
+module.exports = pool;</code></pre>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>Pool คืออะไร?</strong>
+            Pool คือกลุ่ม connection ที่ express ยืมใช้ได้พร้อมกันหลายตัว ดีกว่าสร้าง connection ใหม่ทุก request เพราะประหยัด resource (อ่านเพิ่มใน Week 2 Theory)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: taskController.js -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">สร้าง controllers/taskController.js</div>
+          <div style="font-size:.82rem;color:var(--muted)">Business Logic แยกออกจาก Route</div>
+        </div>
+        <div class="step-time">⏱ 15 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — REST API + MVC Pattern</span>
+        <p><strong>ทำไมต้องแยก Controller?</strong> ทำให้ route file ดูสะอาด ง่ายต่อการทดสอบ และ maintain — เป็น MVC Pattern ที่ใช้กันในอุตสาหกรรม</p>
+        <p>สร้างไฟล์ <code>backend/src/controllers/taskController.js</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/src/controllers/taskController.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">const pool = require('../db');
+
+// GET /api/tasks?status=&priority=
+const getAllTasks = async (req, res) => {
+  try {
+    const { status = '', priority = '' } = req.query;
+    const params = [];
+    let where = 'WHERE 1=1';
+
+    if (status) {
+      params.push(status);
+      where += ` AND status = $${params.length}`;
+    }
+    if (priority) {
+      params.push(priority);
+      where += ` AND priority = $${params.length}`;
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM tasks ${where} ORDER BY created_at DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// GET /api/tasks/:id
+const getTaskById = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM tasks WHERE id = $1', [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงานนี้' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// POST /api/tasks
+const createTask = async (req, res) => {
+  try {
+    const { title, description = '', status = 'todo', priority = 'medium' } = req.body;
+    if (!title) return res.status(400).json({ error: 'กรุณาระบุ title' });
+
+    const { rows } = await pool.query(
+      `INSERT INTO tasks (title, description, status, priority)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title.trim(), description.trim(), status, priority]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/tasks/:id
+const updateTask = async (req, res) => {
+  try {
+    const { title, description = '', status = 'todo', priority = 'medium' } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE tasks
+       SET title=$1, description=$2, status=$3, priority=$4, updated_at=NOW()
+       WHERE id=$5 RETURNING *`,
+      [title, description, status, priority, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงานนี้' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// DELETE /api/tasks/:id
+const deleteTask = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'DELETE FROM tasks WHERE id=$1 RETURNING *', [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'ไม่พบงานนี้' });
+    res.json({ message: 'ลบงานสำเร็จ', deleted: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { getAllTasks, getTaskById, createTask, updateTask, deleteTask };</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: taskRoutes.js -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">สร้าง routes/taskRoutes.js</div>
+          <div style="font-size:.82rem;color:var(--muted)">Route Definitions แยกออกมา</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Express Router</span>
+        <p>สร้างไฟล์ <code>backend/src/routes/taskRoutes.js</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/src/routes/taskRoutes.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">const express = require('express');
+const router  = express.Router();
+const {
+  getAllTasks,
+  getTaskById,
+  createTask,
+  updateTask,
+  deleteTask,
+} = require('../controllers/taskController');
+
+router.get('/',     getAllTasks);
+router.get('/:id',  getTaskById);
+router.post('/',    createTask);
+router.put('/:id',  updateTask);
+router.delete('/:id', deleteTask);
+
+module.exports = router;</code></pre>
+        </div>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>ทำไม routes แยกจาก controllers?</strong>
+            Routes บอกว่า "URL ไหนไปไหน" — Controllers บอกว่า "ทำอะไร" — แยกกันทำให้ทั้งสองไฟล์อ่านง่าย และเพิ่ม route ใหม่โดยไม่ยุ่งกับ logic
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: app.js -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">สร้าง src/app.js — Express App Setup</div>
+          <div style="font-size:.82rem;color:var(--muted)">ประกอบ middleware และ routes</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Express Middleware</span>
+        <p>สร้างไฟล์ <code>backend/src/app.js</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/src/app.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">const express    = require('express');
+const cors       = require('cors');
+const taskRoutes = require('./routes/taskRoutes');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Health Check
+app.get('/health', (req, res) => {
+  res.json({
+    status:    'ok',
+    service:   'TaskBoard API',
+    timestamp: new Date(),
+  });
+});
+
+// API Routes
+app.use('/api/tasks', taskRoutes);
+
+module.exports = app;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7: index.js -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div>
+          <div class="step-title">สร้าง index.js — Entry Point</div>
+          <div style="font-size:.82rem;color:var(--muted)">สร้าง table + seed data แล้วเริ่ม server</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Database Init + Seed</span>
+        <p>สร้างไฟล์ <code>backend/index.js</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/index.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">require('dotenv').config();
+const pool = require('./src/db');
+const app  = require('./src/app');
+
+const PORT = process.env.PORT || 3001;
+
+async function initDb() {
+  // สร้าง table ถ้ายังไม่มี
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id          SERIAL PRIMARY KEY,
+      title       VARCHAR(200) NOT NULL,
+      description TEXT         DEFAULT '',
+      status      VARCHAR(20)  NOT NULL DEFAULT 'todo',
+      priority    VARCHAR(10)  NOT NULL DEFAULT 'medium',
+      created_at  TIMESTAMPTZ  DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ  DEFAULT NOW()
+    )
+  `);
+  console.log('✅ Table tasks ready');
+
+  // Seed ถ้า table ว่าง
+  const { rows } = await pool.query('SELECT COUNT(*) FROM tasks');
+  if (parseInt(rows[0].count) === 0) {
+    await pool.query(`
+      INSERT INTO tasks (title, description, status, priority) VALUES
+      ('ติดตั้ง Docker Desktop',  'ดาวน์โหลดจาก docker.com และติดตั้ง', 'done',       'high'),
+      ('สร้าง GitHub Repository', 'สร้าง repo ชื่อ taskboard',           'done',       'high'),
+      ('เขียน Backend API',       'Express + PostgreSQL CRUD',             'inprogress', 'high'),
+      ('เขียน Frontend Vue',      'Vue 3 + Vite แสดงรายการงาน',           'todo',       'medium'),
+      ('สร้าง Dockerfile',        'Containerize backend และ frontend',     'todo',       'medium'),
+      ('เขียน CI/CD Pipeline',    'GitHub Actions build + push image',     'todo',       'low')
+    `);
+    console.log('🌱 Seed data inserted (6 tasks)');
+  }
+}
+
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 TaskBoard API running at http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ DB init failed:', err.message);
+    process.exit(1);
+  });</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8: ESLint -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div>
+          <div class="step-title">สร้าง .eslintrc.json</div>
+          <div style="font-size:.82rem;color:var(--muted)">Code Quality Tool</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — ESLint ใน CI Pipeline</span>
+        <p>สร้างไฟล์ <code>backend/.eslintrc.json</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/.eslintrc.json</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-json">{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off"
+  }
+}</code></pre>
+        </div>
+        <p>ทดสอบ lint:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน backend/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">npm run lint</code></pre>
+        </div>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ถ้าผ่าน</strong> จะไม่มี error ในช่อง terminal — ถ้ามีข้อความสีแดง ให้แก้ตาม error ที่แจ้ง
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9: Test Local -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div>
+          <div class="step-title">ทดสอบ Backend (ต้องมี PostgreSQL)</div>
+          <div style="font-size:.82rem;color:var(--muted)">รัน local แล้วทดสอบด้วย curl</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 2 — Test API ด้วย curl</span>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>ยังไม่มี PostgreSQL?</strong>
+            ทดสอบ local ได้ด้วยการรัน PostgreSQL ผ่าน Docker: <br>
+            <code>docker run -d --name pglocal -e POSTGRES_DB=taskboard -e POSTGRES_USER=taskuser -e POSTGRES_PASSWORD=taskpass123 -p 5432:5432 postgres:16-alpine</code>
+          </div>
+        </div>
+        <p>เริ่ม backend server:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน backend/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">npm run dev</code></pre>
+        </div>
+        <p>เปิด Terminal ใหม่แล้วทดสอบ API:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — ทดสอบ API</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># Health check
+curl http://localhost:3001/health
+
+# ดึงรายการงานทั้งหมด
+curl http://localhost:3001/api/tasks
+
+# สร้างงานใหม่
+curl -X POST http://localhost:3001/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Task","priority":"high"}'
+
+# แก้ไขงาน (เปลี่ยน 1 เป็น id ที่ได้จาก POST)
+curl -X PUT http://localhost:3001/api/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Task Updated","status":"inprogress","priority":"high"}'
+
+# ลบงาน
+curl -X DELETE http://localhost:3001/api/tasks/1</code></pre>
+        </div>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ผลที่คาดว่าจะเห็น</strong>
+            GET /health → <code>{"status":"ok","service":"TaskBoard API",...}</code><br>
+            GET /api/tasks → array ของ tasks 6 รายการ (seed data)<br>
+            POST → object ของ task ใหม่ที่มี id
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10: Commit & PR -->
+    <div class="step-card" id="s10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div>
+          <div class="step-title">Commit, Push, และเปิด Pull Request</div>
+          <div style="font-size:.82rem;color:var(--muted)">บันทึกงานและ merge เข้า develop</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — Pull Request Workflow</span>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># ตรวจสอบไฟล์ที่เปลี่ยน
+git status
+
+# เพิ่มเฉพาะไฟล์ backend (ไม่เพิ่ม .env และ node_modules)
+git add backend/src/ backend/index.js backend/package.json backend/.env.example backend/.eslintrc.json
+git add frontend/.env.example
+
+# Commit
+git commit -m "feat: add backend REST API with controller-route pattern"
+
+# Push ขึ้น feature branch
+git push origin feature/backend-setup</code></pre>
+        </div>
+        <p>จากนั้นเปิด Pull Request บน GitHub:</p>
+        <ol>
+          <li>ไปที่ GitHub repo → คลิก <strong>Compare &amp; pull request</strong></li>
+          <li>Base: <strong>develop</strong> ← Compare: <strong>feature/backend-setup</strong></li>
+          <li>Title: <code>feat: add backend REST API</code></li>
+          <li>คลิก <strong>Create pull request</strong></li>
+          <li>Merge PR (ตอนนี้ไม่มี CI ยังไม่ต้องรอ ทำใน Part 4)</li>
+        </ol>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>สร้าง feature branch สำหรับ frontend</strong>
+            หลัง merge แล้ว สร้าง branch ใหม่สำหรับ Part 3:<br>
+            <code>git checkout develop &amp;&amp; git pull &amp;&amp; git checkout -b feature/dockerize</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECKPOINT 2 -->
+    <div class="verify" id="checkpoint2">
+      <div class="verify-title">
+        🏁 Checkpoint 2 — Backend API
+        <span class="checkpoint-score">30 คะแนน</span>
+      </div>
+      <p style="font-size:.88rem;color:#047857;margin-bottom:.75rem">ก่อนไป Part 3 ตรวจสอบให้ครบทุกข้อ:</p>
+      <ul>
+        <li>✅ โครงสร้าง <code>backend/src/controllers/</code>, <code>backend/src/routes/</code> ถูกต้อง</li>
+        <li>✅ <code>.env</code> ไม่ถูก commit (git status ไม่แสดง .env)</li>
+        <li>✅ <code>.env.example</code> ถูก commit แล้ว</li>
+        <li>✅ <code>npm run lint</code> ผ่านโดยไม่มี error</li>
+        <li>✅ <code>GET /health</code> → <code>{"status":"ok",...}</code></li>
+        <li>✅ <code>GET /api/tasks</code> → ได้ array ≥1 รายการ</li>
+        <li>✅ POST สร้างงานใหม่ได้ (status 201)</li>
+        <li>✅ PUT แก้ไขงานได้ (status 200)</li>
+        <li>✅ DELETE ลบงานได้ (status 200)</li>
+        <li>✅ PR เข้า develop ถูก merge แล้ว</li>
+      </ul>
+      <div style="margin-top:1rem;padding:1rem;background:#fff;border-radius:8px;border:1px solid #6ee7b7">
+        <strong style="color:#065f46">📸 จุดบันทึกภาพเพื่อส่งงาน:</strong>
+        <ol style="padding-left:1.2rem;margin-top:.5rem;font-size:.88rem;color:#047857">
+          <li>Screenshot terminal แสดง curl GET /health และ GET /api/tasks (เห็น response)</li>
+          <li>Screenshot terminal แสดง <code>npm run lint</code> ผ่าน (ไม่มี error)</li>
+          <li>Screenshot GitHub PR ที่ merge สำเร็จแล้ว</li>
+          <li>Screenshot GitHub ยืนยันว่า .env ไม่อยู่ใน commit history</li>
+        </ol>
+      </div>
+      <div style="margin-top:1rem;text-align:right">
+        <a href="activity-part3.html" style="display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;text-decoration:none;font-size:.9rem">
+          ไป Part 3 — Docker &amp; Docker Hub →
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+window.addEventListener('scroll',()=>{
+  const d=document.documentElement;
+  const pct=(d.scrollTop/(d.scrollHeight-d.clientHeight))*100;
+  document.getElementById('pbar').style.width=pct+'%';
+});
+function copyCode(btn){
+  const code=btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+const sections=document.querySelectorAll('[id]');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.toc-item a').forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0% -60%'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
