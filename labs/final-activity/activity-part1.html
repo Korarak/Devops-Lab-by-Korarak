@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ใบกิจกรรม TaskBoard — Part 1: GitHub & Project Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#0ea5e9;--primary-dark:#0284c7;--primary-light:#e0f2fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --green:#10b981;--green-light:#d1fae5;
+  --red:#ef4444;--red-light:#fee2e2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0;transition:width .3s}
+.nav-top{position:absolute;top:1rem;left:1.25rem;display:flex;gap:.5rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.site-header{background:linear-gradient(135deg,#0c4a6e,#075985,#0369a1);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.part-nav{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding:1.25rem 2rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.4rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:72px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.overview-box{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:2px solid #7dd3fc;border-radius:16px;padding:1.5rem;margin-bottom:2rem}
+.overview-box h2{color:#0c4a6e;font-size:1.1rem;font-weight:800;margin-bottom:1rem}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;margin-top:1rem}
+.tech-item{background:#fff;border:1px solid #bae6fd;border-radius:10px;padding:.75rem 1rem;display:flex;gap:.6rem;align-items:center}
+.tech-icon{font-size:1.3rem;flex-shrink:0}
+.tech-label{font-size:.82rem;font-weight:700;color:#0c4a6e}
+.tech-sub{font-size:.75rem;color:#0369a1;margin-top:.05rem}
+.master-checklist{background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:1.25rem;margin-bottom:2rem}
+.master-checklist h3{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.cl-section{margin-bottom:1rem}
+.cl-section-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.5rem;padding-bottom:.3rem;border-bottom:1px solid var(--border)}
+.cl-item{display:flex;align-items:flex-start;gap:.6rem;padding:.3rem 0;font-size:.87rem}
+.cl-item input[type=checkbox]{margin-top:.2rem;width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer}
+.cl-item label{cursor:pointer;line-height:1.5}
+.cl-item label.done{text-decoration:line-through;color:var(--muted)}
+.score-badge{display:inline-block;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.1rem .5rem;font-size:.75rem;font-weight:700;margin-left:.4rem}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:.95rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:#e0f2fe;border-left:4px solid var(--primary)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1.5rem}
+.verify-title{font-weight:800;color:#065f46;margin-bottom:.75rem;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.3rem}
+.checkpoint-score{display:inline-block;background:#065f46;color:#fff;border-radius:6px;padding:.2rem .6rem;font-size:.8rem;font-weight:700;margin-left:.5rem}
+.file-tree{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:2;margin:1rem 0}
+.ft-dir{color:#38bdf8;font-weight:600}
+.ft-file{color:#e2e8f0}
+.ft-new{color:#34d399;font-weight:600}
+.ft-comment{color:#475569;font-style:italic}
+.week-ref{display:inline-flex;align-items:center;gap:.35rem;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;margin-bottom:.75rem}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;max-height:none}
+  .tech-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+
+<header class="site-header">
+  <div class="nav-top">
+    <a href="../index.html" class="back-link">← Labs Home</a>
+  </div>
+  <div class="part-badge">📋 ใบกิจกรรมพาทำ · DevOps 30901-2008</div>
+  <h1>TaskBoard — ระบบจัดการงาน</h1>
+  <p class="subtitle">Part 1 / 4 — GitHub Repository & Project Structure</p>
+  <div class="header-meta">
+    <span class="meta-chip">🎯 อ้างอิง Week 1</span>
+    <span class="meta-chip">⏱ ~45 นาที</span>
+    <span class="meta-chip">📍 Checkpoint 1 / 4</span>
+    <span class="meta-chip">💯 15 คะแนน</span>
+  </div>
+</header>
+
+<nav class="part-nav">
+  <a href="activity-part1.html" class="part-btn active">Part 1<br><small>GitHub Setup</small></a>
+  <a href="activity-part2.html" class="part-btn">Part 2<br><small>Backend API</small></a>
+  <a href="activity-part3.html" class="part-btn">Part 3<br><small>Docker Hub</small></a>
+  <a href="activity-part4.html" class="part-btn">Part 4<br><small>CI/CD</small></a>
+</nav>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">📑 เนื้อหา Part 1</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#overview"><span class="toc-num">🔭</span>ภาพรวมโปรเจค</a></li>
+        <li class="toc-item"><a href="#checklist"><span class="toc-num">✅</span>Master Checklist</a></li>
+        <li class="toc-item"><a href="#s1"><span class="toc-num">1</span>เตรียม Tools</a></li>
+        <li class="toc-item"><a href="#s2"><span class="toc-num">2</span>สร้าง GitHub Repo</a></li>
+        <li class="toc-item"><a href="#s3"><span class="toc-num">3</span>Clone & Folder Structure</a></li>
+        <li class="toc-item"><a href="#s4"><span class="toc-num">4</span>สร้าง .gitignore</a></li>
+        <li class="toc-item"><a href="#s5"><span class="toc-num">5</span>สร้าง README.md</a></li>
+        <li class="toc-item"><a href="#s6"><span class="toc-num">6</span>Initial Commit & Push</a></li>
+        <li class="toc-item"><a href="#s7"><span class="toc-num">7</span>สร้าง Branch develop</a></li>
+        <li class="toc-item"><a href="#checkpoint1"><span class="toc-num">✅</span>Checkpoint 1</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">📊 คะแนนรวม</div>
+      <div style="font-size:.85rem;line-height:2">
+        <div>Part 1 GitHub: <strong>15 คะแนน</strong></div>
+        <div>Part 2 Backend: <strong>30 คะแนน</strong></div>
+        <div>Part 3 Docker: <strong>30 คะแนน</strong></div>
+        <div>Part 4 CI/CD: <strong>25 คะแนน</strong></div>
+        <div style="border-top:1px solid var(--border);margin-top:.5rem;padding-top:.5rem;font-weight:700">รวม: 100 คะแนน</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <!-- OVERVIEW -->
+    <div class="overview-box" id="overview">
+      <h2>🗂️ ภาพรวมโปรเจค — TaskBoard</h2>
+      <p>สร้างเว็บแอป <strong>CRUD ธรรมดา</strong> สำหรับจัดการงาน (Task) โดยไม่มีระบบ Login โปรเจคนี้รวมความรู้จาก <strong>Week 1–4</strong> และส่งผลงานผ่าน GitHub, Docker Hub, และ GitHub Actions</p>
+      <div class="tech-grid">
+        <div class="tech-item"><span class="tech-icon">⚙️</span><div><div class="tech-label">Express.js</div><div class="tech-sub">Backend REST API</div></div></div>
+        <div class="tech-item"><span class="tech-icon">🗄️</span><div><div class="tech-label">PostgreSQL</div><div class="tech-sub">ฐานข้อมูล</div></div></div>
+        <div class="tech-item"><span class="tech-icon">⚡</span><div><div class="tech-label">Vue 3 + Vite</div><div class="tech-sub">Frontend SPA</div></div></div>
+        <div class="tech-item"><span class="tech-icon">🐳</span><div><div class="tech-label">Docker Desktop</div><div class="tech-sub">Containerize + Run</div></div></div>
+        <div class="tech-item"><span class="tech-icon">🐙</span><div><div class="tech-label">GitHub</div><div class="tech-sub">Source Control</div></div></div>
+        <div class="tech-item"><span class="tech-icon">🔁</span><div><div class="tech-label">GitHub Actions</div><div class="tech-sub">CI/CD Pipeline</div></div></div>
+      </div>
+
+      <div style="margin-top:1.25rem">
+        <h4 style="font-size:.9rem;font-weight:700;color:#0c4a6e;margin-bottom:.5rem">📐 โครงสร้างโปรเจคที่จะสร้าง</h4>
+        <div class="file-tree">
+<span class="ft-dir">taskboard/</span>
+├── <span class="ft-dir">.github/workflows/</span>
+│   ├── <span class="ft-new">ci.yml</span>         <span class="ft-comment">← Part 4: lint + docker build</span>
+│   └── <span class="ft-new">cd.yml</span>         <span class="ft-comment">← Part 4: push to Docker Hub</span>
+├── <span class="ft-dir">backend/</span>
+│   ├── <span class="ft-dir">src/</span>
+│   │   ├── <span class="ft-dir">controllers/</span>
+│   │   │   └── <span class="ft-new">taskController.js</span>  <span class="ft-comment">← Part 2</span>
+│   │   ├── <span class="ft-dir">routes/</span>
+│   │   │   └── <span class="ft-new">taskRoutes.js</span>      <span class="ft-comment">← Part 2</span>
+│   │   ├── <span class="ft-new">db.js</span>              <span class="ft-comment">← Part 2</span>
+│   │   └── <span class="ft-new">app.js</span>             <span class="ft-comment">← Part 2</span>
+│   ├── <span class="ft-new">index.js</span>           <span class="ft-comment">← Entry point</span>
+│   ├── <span class="ft-new">.env</span>               <span class="ft-comment">← (อย่า commit!)</span>
+│   ├── <span class="ft-new">.env.example</span>
+│   ├── <span class="ft-new">Dockerfile</span>         <span class="ft-comment">← Part 3</span>
+│   ├── <span class="ft-new">.dockerignore</span>
+│   ├── <span class="ft-new">.eslintrc.json</span>
+│   └── <span class="ft-new">package.json</span>
+├── <span class="ft-dir">frontend/</span>
+│   ├── <span class="ft-dir">src/</span>
+│   │   ├── <span class="ft-dir">components/</span>
+│   │   │   ├── <span class="ft-new">TaskCard.vue</span>
+│   │   │   └── <span class="ft-new">TaskModal.vue</span>
+│   │   ├── <span class="ft-new">App.vue</span>
+│   │   └── <span class="ft-new">main.js</span>
+│   ├── <span class="ft-new">index.html</span>
+│   ├── <span class="ft-new">.env</span>               <span class="ft-comment">← (อย่า commit!)</span>
+│   ├── <span class="ft-new">.env.example</span>
+│   ├── <span class="ft-new">Dockerfile</span>         <span class="ft-comment">← Part 3</span>
+│   ├── <span class="ft-new">nginx.conf</span>
+│   └── <span class="ft-new">package.json</span>
+├── <span class="ft-new">docker-compose.yml</span>     <span class="ft-comment">← Part 3</span>
+├── <span class="ft-new">docker-compose.prod.yml</span>
+├── <span class="ft-new">.gitignore</span>
+└── <span class="ft-new">README.md</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MASTER CHECKLIST -->
+    <div class="master-checklist" id="checklist">
+      <h3>✅ Master Checklist — ส่วนประกอบโปรเจคทั้งหมด</h3>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">ติ๊กถูกเมื่อทำสำเร็จแต่ละส่วน ครูจะตรวจตาม checklist นี้</p>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 1 — GitHub Setup <span class="score-badge">15 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="c1" onchange="saveCheck(this)"><label for="c1">GitHub repository ชื่อ <code>taskboard</code> ถูกสร้างแล้ว</label></div>
+        <div class="cl-item"><input type="checkbox" id="c2" onchange="saveCheck(this)"><label for="c2">Folder structure แยก <code>backend/</code> และ <code>frontend/</code></label></div>
+        <div class="cl-item"><input type="checkbox" id="c3" onchange="saveCheck(this)"><label for="c3">.gitignore มีรายการ node_modules, .env, dist</label></div>
+        <div class="cl-item"><input type="checkbox" id="c4" onchange="saveCheck(this)"><label for="c4">README.md มีชื่อโปรเจค + วิธีรัน</label></div>
+        <div class="cl-item"><input type="checkbox" id="c5" onchange="saveCheck(this)"><label for="c5">Initial commit push ขึ้น <code>main</code> branch แล้ว</label></div>
+        <div class="cl-item"><input type="checkbox" id="c6" onchange="saveCheck(this)"><label for="c6">มี branch <code>develop</code> บน GitHub</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 2 — Backend API <span class="score-badge">30 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="c7" onchange="saveCheck(this)"><label for="c7">โครงสร้างแยก controller, routes, db.js, app.js</label></div>
+        <div class="cl-item"><input type="checkbox" id="c8" onchange="saveCheck(this)"><label for="c8">.env แยก backend ถูกต้อง (ไม่ commit ขึ้น GitHub)</label></div>
+        <div class="cl-item"><input type="checkbox" id="c9" onchange="saveCheck(this)"><label for="c9">GET /health ตอบ 200 OK</label></div>
+        <div class="cl-item"><input type="checkbox" id="c10" onchange="saveCheck(this)"><label for="c10">CRUD ครบ: GET/POST/PUT/DELETE /api/tasks</label></div>
+        <div class="cl-item"><input type="checkbox" id="c11" onchange="saveCheck(this)"><label for="c11">ฐานข้อมูล PostgreSQL สร้าง table tasks อัตโนมัติ</label></div>
+        <div class="cl-item"><input type="checkbox" id="c12" onchange="saveCheck(this)"><label for="c12">ESLint config มีและผ่านโดยไม่มี error</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 3 — Docker & Docker Hub <span class="score-badge">30 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="c13" onchange="saveCheck(this)"><label for="c13">backend/Dockerfile build ผ่าน</label></div>
+        <div class="cl-item"><input type="checkbox" id="c14" onchange="saveCheck(this)"><label for="c14">frontend/Dockerfile build ผ่าน (multi-stage)</label></div>
+        <div class="cl-item"><input type="checkbox" id="c15" onchange="saveCheck(this)"><label for="c15">docker-compose.yml มี 3 services: db, backend, frontend</label></div>
+        <div class="cl-item"><input type="checkbox" id="c16" onchange="saveCheck(this)"><label for="c16"><code>docker compose up --build</code> รันผ่านไม่มี error</label></div>
+        <div class="cl-item"><input type="checkbox" id="c17" onchange="saveCheck(this)"><label for="c17">Image push ขึ้น Docker Hub ครบ 2 image</label></div>
+        <div class="cl-item"><input type="checkbox" id="c18" onchange="saveCheck(this)"><label for="c18">docker-compose.prod.yml pull image จาก Docker Hub</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 4 — CI/CD <span class="score-badge">25 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="c19" onchange="saveCheck(this)"><label for="c19">GitHub Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN ตั้งแล้ว</label></div>
+        <div class="cl-item"><input type="checkbox" id="c20" onchange="saveCheck(this)"><label for="c20">ci.yml: trigger บน feature/* และ develop, ผ่านใน Actions</label></div>
+        <div class="cl-item"><input type="checkbox" id="c21" onchange="saveCheck(this)"><label for="c21">cd.yml: trigger บน main, push image ไป Docker Hub สำเร็จ</label></div>
+        <div class="cl-item"><input type="checkbox" id="c22" onchange="saveCheck(this)"><label for="c22">ประวัติ GitHub Actions แสดง run ที่ผ่าน (สีเขียว)</label></div>
+        <div class="cl-item"><input type="checkbox" id="c23" onchange="saveCheck(this)"><label for="c23">README มี Status Badge แสดงสถานะ CI</label></div>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">เตรียม Tools ให้พร้อม</div>
+          <div style="font-size:.82rem;color:var(--muted)">ตรวจสอบก่อนเริ่ม</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — Git Fundamentals</span>
+        <p>ตรวจสอบว่าติดตั้ง tools ครบก่อนเริ่ม เปิด Terminal/PowerShell แล้วพิมพ์ทีละคำสั่ง:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git --version       # ต้องได้ git version 2.x.x
+node --version      # ต้องได้ v18.x.x หรือสูงกว่า
+npm --version       # ต้องได้ 9.x.x หรือสูงกว่า
+docker --version    # ต้องได้ Docker version 24.x.x หรือสูงกว่า
+docker compose version  # ต้องได้ v2.x.x</code></pre>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>Docker Desktop ต้องเปิดอยู่</strong>
+            ตรวจสอบ icon Docker ที่ Taskbar ถ้าไม่มี ให้เปิดโปรแกรม Docker Desktop ก่อน แล้วรอจน icon เปลี่ยนเป็น <strong>Engine running</strong>
+          </div>
+        </div>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>ต้องมี Docker Hub Account</strong>
+            ถ้ายังไม่มี ให้สมัครที่ <strong>hub.docker.com</strong> ก่อน จด username ไว้ จะใช้ใน Part 3–4
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">สร้าง GitHub Repository</div>
+          <div style="font-size:.82rem;color:var(--muted)">สร้าง repo บน GitHub.com</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — GitHub Workflow</span>
+        <ol>
+          <li>เข้า <strong>github.com</strong> แล้ว Login</li>
+          <li>คลิก <strong>New repository</strong> (ปุ่ม + มุมขวาบน)</li>
+          <li>ตั้งค่าดังนี้:
+            <ul>
+              <li><strong>Repository name:</strong> <code>taskboard</code></li>
+              <li><strong>Visibility:</strong> Public</li>
+              <li>ติ๊ก <strong>Add a README file</strong></li>
+              <li>ติ๊ก <strong>Add .gitignore</strong> → เลือก <code>Node</code></li>
+            </ul>
+          </li>
+          <li>คลิก <strong>Create repository</strong></li>
+        </ol>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ตรวจเช็ค</strong>
+            หลังสร้าง คุณจะเห็น URL ในรูปแบบ <code>https://github.com/&lt;username&gt;/taskboard</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Clone และสร้าง Folder Structure</div>
+          <div style="font-size:.82rem;color:var(--muted)">clone repo + สร้างโฟลเดอร์โปรเจค</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — git clone</span>
+        <p>เปิด Terminal แล้วเลือกที่เก็บโปรเจค (เช่น <code>D:\projects</code>) แล้วรัน:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git clone https://github.com/&lt;your-username&gt;/taskboard.git
+cd taskboard</code></pre>
+        </div>
+        <p>สร้างโครงสร้างโฟลเดอร์ด้วยคำสั่งเดียว:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal (Windows PowerShell)</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># สร้างโฟลเดอร์ทั้งหมดพร้อมกัน
+mkdir backend\src\controllers, backend\src\routes
+mkdir frontend\src\components
+mkdir .github\workflows</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label">Terminal (macOS/Linux)</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">mkdir -p backend/src/{controllers,routes}
+mkdir -p frontend/src/components
+mkdir -p .github/workflows</code></pre>
+        </div>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>แนะนำ: เปิดด้วย VS Code</strong>
+            พิมพ์ <code>code .</code> ใน terminal เพื่อเปิดโฟลเดอร์ทั้งหมดใน VS Code ได้เลย
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">สร้าง .gitignore</div>
+          <div style="font-size:.82rem;color:var(--muted)">ป้องกันไม่ให้ push ไฟล์ที่ไม่ควร</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — .gitignore</span>
+        <p>แก้ไขไฟล์ <code>.gitignore</code> ที่ root ของโปรเจค (GitHub สร้างให้แล้ว) ให้ครอบคลุมทั้ง backend และ frontend:</p>
+        <div class="code-wrap">
+          <div class="code-label">.gitignore</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># Dependencies
+node_modules/
+
+# Environment variables — ห้าม commit เด็ดขาด!
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# Docker
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db</code></pre>
+        </div>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>สำคัญมาก: ห้าม commit ไฟล์ .env</strong>
+            ไฟล์ .env เก็บ password ฐานข้อมูล ถ้า push ขึ้น GitHub สาธารณะ จะถูก bot ขโมยข้อมูลภายใน 30 นาที!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">สร้าง README.md</div>
+          <div style="font-size:.82rem;color:var(--muted)">เอกสารโปรเจค</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — GitHub Profile & README</span>
+        <p>แก้ไขไฟล์ <code>README.md</code> ให้มีเนื้อหาพื้นฐาน (CI badge จะเพิ่มใน Part 4):</p>
+        <div class="code-wrap">
+          <div class="code-label">README.md</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-markdown"># TaskBoard — ระบบจัดการงาน
+
+![CI](https://github.com/&lt;username&gt;/taskboard/actions/workflows/ci.yml/badge.svg)
+
+ระบบ CRUD สำหรับจัดการงาน สร้างด้วย Express.js + PostgreSQL + Vue 3
+
+## Tech Stack
+- **Backend:** Node.js + Express.js + PostgreSQL
+- **Frontend:** Vue 3 + Vite
+- **Container:** Docker + Docker Compose
+- **CI/CD:** GitHub Actions
+
+## วิธีรัน (Local)
+```bash
+# Clone
+git clone https://github.com/&lt;username&gt;/taskboard.git
+cd taskboard
+
+# รัน ด้วย Docker Compose
+docker compose up --build
+```
+เข้า http://localhost เพื่อดู Frontend
+
+## API Endpoints
+| Method | Path | คำอธิบาย |
+|--------|------|----------|
+| GET | /health | Health check |
+| GET | /api/tasks | ดึงงานทั้งหมด |
+| POST | /api/tasks | สร้างงานใหม่ |
+| PUT | /api/tasks/:id | แก้ไขงาน |
+| DELETE | /api/tasks/:id | ลบงาน |</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">Initial Commit &amp; Push</div>
+          <div style="font-size:.82rem;color:var(--muted)">บันทึกงานขึ้น GitHub ครั้งแรก</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — git add / commit / push</span>
+        <p>บันทึกการเปลี่ยนแปลงและ push ขึ้น GitHub:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git add .gitignore README.md
+git commit -m "feat: initial project structure"
+git push origin main</code></pre>
+        </div>
+        <p>ตรวจสอบผลบน GitHub โดยเปิด <code>https://github.com/&lt;username&gt;/taskboard</code></p>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>Commit Message Convention</strong>
+            ใช้รูปแบบ <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>chore:</code> นำหน้า เพื่อให้อ่านง่าย — เป็น Conventional Commits ที่ใช้ในอุตสาหกรรม
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div>
+          <div class="step-title">สร้าง Branch develop และ feature</div>
+          <div style="font-size:.82rem;color:var(--muted)">จัดการ branch ตาม GitFlow</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 1 — Branching Strategy</span>
+        <p>โปรเจคนี้ใช้ <strong>GitFlow</strong> แบบย่อ: <code>main</code> → <code>develop</code> → <code>feature/*</code></p>
+
+        <div style="background:#0f172a;border-radius:10px;padding:1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2">
+          <div style="color:#94a3b8">main     ──●────────────────────────●── (stable)</div>
+          <div style="color:#38bdf8">develop      ╲──────────────────●╱    (integration)</div>
+          <div style="color:#34d399">feature/backend       ╲──────●╱          (your work)</div>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># สร้าง develop branch แล้ว push
+git checkout -b develop
+git push -u origin develop
+
+# สร้าง feature branch สำหรับ Part 2
+git checkout -b feature/backend-setup
+# (ตอนนี้อยู่บน feature/backend-setup แล้ว)</code></pre>
+        </div>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ตรวจเช็ค branch บน GitHub</strong>
+            ไปที่ GitHub repo → ดูที่ dropdown "<strong>main ▼</strong>" ควรเห็น: main, develop, feature/backend-setup
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECKPOINT 1 -->
+    <div class="verify" id="checkpoint1">
+      <div class="verify-title">
+        🏁 Checkpoint 1 — GitHub Setup
+        <span class="checkpoint-score">15 คะแนน</span>
+      </div>
+      <p style="font-size:.88rem;color:#047857;margin-bottom:.75rem">ก่อนไป Part 2 ตรวจสอบให้ครบทุกข้อ:</p>
+      <ul>
+        <li>✅ GitHub repository <code>taskboard</code> ถูกสร้างและ <strong>Public</strong></li>
+        <li>✅ Clone มาที่เครื่องแล้ว อยู่ใน folder <code>taskboard/</code></li>
+        <li>✅ มีโฟลเดอร์ <code>backend/src/controllers/</code>, <code>backend/src/routes/</code>, <code>frontend/src/components/</code>, <code>.github/workflows/</code></li>
+        <li>✅ <code>.gitignore</code> มี node_modules, .env, dist</li>
+        <li>✅ <code>README.md</code> มีชื่อโปรเจค + API table</li>
+        <li>✅ Commit แรก push ขึ้น <code>main</code> ใน GitHub แล้ว</li>
+        <li>✅ Branch <code>develop</code> และ <code>feature/backend-setup</code> มีบน GitHub</li>
+        <li>✅ ปัจจุบัน checkout อยู่บน <code>feature/backend-setup</code></li>
+      </ul>
+      <div style="margin-top:1rem;padding:1rem;background:#fff;border-radius:8px;border:1px solid #6ee7b7">
+        <strong style="color:#065f46">📸 จุดบันทึกภาพเพื่อส่งงาน:</strong>
+        <ol style="padding-left:1.2rem;margin-top:.5rem;font-size:.88rem;color:#047857">
+          <li>Screenshot GitHub repo หน้า main แสดง file tree (README + .gitignore)</li>
+          <li>Screenshot branch dropdown แสดง main, develop, feature/backend-setup</li>
+          <li>Screenshot terminal แสดง <code>git log --oneline</code> (เห็น commit แรก)</li>
+        </ol>
+      </div>
+      <div style="margin-top:1rem;text-align:right">
+        <a href="activity-part2.html" style="display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;text-decoration:none;font-size:.9rem">
+          ไป Part 2 — Backend API →
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script>
+// Progress bar
+window.addEventListener('scroll',()=>{
+  const d=document.documentElement;
+  const pct=(d.scrollTop/(d.scrollHeight-d.clientHeight))*100;
+  document.getElementById('pbar').style.width=pct+'%';
+});
+
+// Copy buttons
+function copyCode(btn){
+  const code=btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+
+// Checklist persistence
+function saveCheck(cb){
+  localStorage.setItem('taskboard_'+cb.id, cb.checked);
+  cb.nextElementSibling.classList.toggle('done', cb.checked);
+}
+document.querySelectorAll('.cl-item input[type=checkbox]').forEach(cb=>{
+  if(localStorage.getItem('taskboard_'+cb.id)==='true'){
+    cb.checked=true;
+    cb.nextElementSibling.classList.add('done');
+  }
+  cb.addEventListener('change',()=>saveCheck(cb));
+});
+
+// Active TOC
+const sections=document.querySelectorAll('[id]');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.toc-item a').forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0% -60%'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
