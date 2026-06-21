@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ใบกิจกรรม TaskBoard — Part 4: CI/CD Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#0ea5e9;--primary-dark:#0284c7;--primary-light:#e0f2fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --green:#10b981;--green-light:#d1fae5;
+  --red:#ef4444;--red-light:#fee2e2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--accent));width:0;transition:width .3s}
+.nav-top{position:absolute;top:1rem;left:1.25rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25)}
+.site-header{background:linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.part-nav{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding:1.25rem 2rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.4rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s;text-align:center}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:72px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#4c1d95);color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:.95rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:#e0f2fe;border-left:4px solid var(--primary)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1.5rem}
+.verify-title{font-weight:800;color:#065f46;margin-bottom:.75rem;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.3rem}
+.checkpoint-score{display:inline-block;background:#065f46;color:#fff;border-radius:6px;padding:.2rem .6rem;font-size:.8rem;font-weight:700;margin-left:.5rem}
+.week-ref{display:inline-flex;align-items:center;gap:.35rem;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;margin-bottom:.75rem}
+.pipeline-flow{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1rem 0;padding:1.25rem;background:#f8fafc;border-radius:12px;border:1px solid var(--border)}
+.pipe-node{background:#fff;border:2px solid var(--border);border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;text-align:center;min-width:110px}
+.pipe-node.trigger{border-color:var(--accent);background:var(--accent-light);color:#92400e}
+.pipe-node.ci{border-color:var(--primary);background:var(--primary-light);color:#0c4a6e}
+.pipe-node.cd{border-color:var(--green);background:var(--green-light);color:#065f46}
+.pipe-node.hub{border-color:var(--purple);background:var(--purple-light);color:#4c1d95}
+.pipe-arrow{color:var(--muted);font-weight:700;font-size:1.2rem}
+.secrets-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.secrets-table th{background:var(--primary-light);color:var(--primary-dark);padding:.6rem .9rem;text-align:left;font-weight:700;border:1px solid #bae6fd}
+.secrets-table td{padding:.6rem .9rem;border:1px solid var(--border)}
+.secrets-table tr:nth-child(even) td{background:#f8fafc}
+.secret-key{font-family:'JetBrains Mono',monospace;background:#f1f5f9;padding:.15rem .4rem;border-radius:4px;font-size:.82em}
+.rubric-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.rubric-table th{background:var(--text);color:#fff;padding:.7rem 1rem;text-align:left;font-weight:700}
+.rubric-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border)}
+.rubric-table tr:nth-child(even) td{background:#f8fafc}
+.rubric-table .score-col{text-align:center;font-weight:700;color:var(--primary-dark)}
+.rubric-table .total-row td{background:var(--accent-light);font-weight:800;color:#92400e}
+.prereq-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.prereq-box h3{font-size:.95rem;font-weight:700;color:#92400e;margin-bottom:.75rem}
+.final-checklist{background:#fff;border:2px solid var(--green);border-radius:16px;padding:1.5rem;margin-top:2rem}
+.final-checklist h2{font-size:1.1rem;font-weight:800;color:#065f46;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+.cl-section{margin-bottom:1.25rem}
+.cl-section-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.5rem;padding-bottom:.3rem;border-bottom:1px solid var(--border)}
+.cl-item{display:flex;align-items:flex-start;gap:.6rem;padding:.3rem 0;font-size:.87rem}
+.cl-item input[type=checkbox]{margin-top:.2rem;width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer}
+.cl-item label{cursor:pointer;line-height:1.5}
+.cl-item label.done{text-decoration:line-through;color:var(--muted)}
+.score-badge{display:inline-block;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.1rem .5rem;font-size:.75rem;font-weight:700;margin-left:.4rem}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;max-height:none}.pipeline-flow{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+
+<header class="site-header">
+  <div class="nav-top">
+    <a href="../index.html" class="back-link">← Labs Home</a>
+  </div>
+  <div class="part-badge">📋 ใบกิจกรรมพาทำ · DevOps 30901-2008</div>
+  <h1>TaskBoard — ระบบจัดการงาน</h1>
+  <p class="subtitle">Part 4 / 4 — CI/CD Pipeline + Final Checklist + Rubric</p>
+  <div class="header-meta">
+    <span class="meta-chip">🎯 อ้างอิง Week 4</span>
+    <span class="meta-chip">⏱ ~60 นาที</span>
+    <span class="meta-chip">📍 Checkpoint 4 / 4</span>
+    <span class="meta-chip">💯 25 คะแนน</span>
+  </div>
+</header>
+
+<nav class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1<br><small>GitHub Setup</small></a>
+  <a href="activity-part2.html" class="part-btn">Part 2<br><small>Backend API</small></a>
+  <a href="activity-part3.html" class="part-btn">Part 3<br><small>Docker Hub</small></a>
+  <a href="activity-part4.html" class="part-btn active">Part 4<br><small>CI/CD</small></a>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">📑 เนื้อหา Part 4</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#prereq"><span class="toc-num">⚡</span>Pre-requisite</a></li>
+        <li class="toc-item"><a href="#pipeline"><span class="toc-num">🔁</span>Pipeline Overview</a></li>
+        <li class="toc-item"><a href="#s1"><span class="toc-num">1</span>GitHub Secrets</a></li>
+        <li class="toc-item"><a href="#s2"><span class="toc-num">2</span>ci.yml</a></li>
+        <li class="toc-item"><a href="#s3"><span class="toc-num">3</span>ทดสอบ CI</a></li>
+        <li class="toc-item"><a href="#s4"><span class="toc-num">4</span>cd.yml</a></li>
+        <li class="toc-item"><a href="#s5"><span class="toc-num">5</span>ทดสอบ CD</a></li>
+        <li class="toc-item"><a href="#s6"><span class="toc-num">6</span>Status Badge</a></li>
+        <li class="toc-item"><a href="#checkpoint4"><span class="toc-num">✅</span>Checkpoint 4</a></li>
+        <li class="toc-item"><a href="#final-checklist"><span class="toc-num">📋</span>Final Checklist</a></li>
+        <li class="toc-item"><a href="#rubric"><span class="toc-num">💯</span>Rubric</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- Pre-requisite -->
+    <div class="prereq-box" id="prereq">
+      <h3>⚡ ก่อนเริ่ม — ตรวจสอบ Part 3 ผ่านแล้ว</h3>
+      <ul style="padding-left:1.2rem">
+        <li>Branch <code>develop</code> มีโค้ด Dockerfiles และ docker-compose.yml ครบแล้ว</li>
+        <li>สร้าง branch ใหม่: <code>git checkout develop &amp;&amp; git pull &amp;&amp; git checkout -b feature/cicd</code></li>
+        <li>Docker Hub account พร้อม — ต้องมี <strong>Access Token</strong> (ไม่ใช่ password ธรรมดา)</li>
+      </ul>
+    </div>
+
+    <!-- Pipeline Overview -->
+    <div class="step-card" id="pipeline">
+      <div class="step-header">
+        <div class="step-num">🔁</div>
+        <div><div class="step-title">ภาพรวม CI/CD Pipeline</div></div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — GitHub Actions Workflow</span>
+
+        <h4>CI Pipeline (ci.yml)</h4>
+        <div class="pipeline-flow">
+          <div class="pipe-node trigger">Push feature/*<br><small>หรือ develop</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node ci">🔍 Lint<br><small>ESLint backend</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node ci">🏗️ Build Frontend<br><small>npm run build</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node ci">🐳 Docker Build<br><small>smoke test</small></div>
+        </div>
+
+        <h4>CD Pipeline (cd.yml)</h4>
+        <div class="pipeline-flow">
+          <div class="pipe-node trigger">Push main<br><small>หลัง PR merge</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node cd">🔑 Login<br><small>Docker Hub</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node cd">🏗️ Build &amp; Tag<br><small>backend + frontend</small></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node hub">📦 Push<br><small>Docker Hub :latest</small></div>
+        </div>
+
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>CI กับ CD ต่างกันอย่างไร?</strong>
+            <strong>CI (Continuous Integration)</strong> — ตรวจสอบโค้ดทุกครั้งที่ push ว่า lint ผ่านและ build ได้<br>
+            <strong>CD (Continuous Delivery)</strong> — เมื่อ merge เข้า main ทำ image พร้อม deploy จริง และ push ขึ้น Registry อัตโนมัติ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: GitHub Secrets -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">ตั้ง GitHub Secrets</div>
+          <div style="font-size:.82rem;color:var(--muted)">เก็บ credentials อย่างปลอดภัย</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — GitHub Secrets</span>
+        <p>Secrets คือ environment variables ที่เก็บใน GitHub อย่างปลอดภัย — ไม่แสดงใน log ไม่ต้อง hardcode ใน code</p>
+
+        <h4>ขั้นตอน 1: สร้าง Docker Hub Access Token</h4>
+        <ol>
+          <li>เข้า <strong>hub.docker.com</strong> → Account Settings</li>
+          <li>เลือก <strong>Security</strong> → <strong>New Access Token</strong></li>
+          <li>ตั้งชื่อ: <code>github-actions-taskboard</code></li>
+          <li>Permissions: <strong>Read, Write, Delete</strong></li>
+          <li>คลิก <strong>Generate</strong> แล้วคัดลอก token ไว้ (แสดงครั้งเดียว!)</li>
+        </ol>
+
+        <h4>ขั้นตอน 2: เพิ่ม Secrets ใน GitHub Repository</h4>
+        <ol>
+          <li>ไปที่ GitHub repo <strong>taskboard</strong></li>
+          <li>คลิก <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong></li>
+          <li>คลิก <strong>New repository secret</strong> แล้วเพิ่มครบทั้งสอง:</li>
+        </ol>
+        <table class="secrets-table">
+          <thead><tr><th>Secret Name</th><th>Value</th><th>ใช้ทำอะไร</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="secret-key">DOCKERHUB_USERNAME</span></td>
+              <td>Docker Hub username ของคุณ</td>
+              <td>ชื่อ user สำหรับ login</td>
+            </tr>
+            <tr>
+              <td><span class="secret-key">DOCKERHUB_TOKEN</span></td>
+              <td>Access Token ที่สร้างในขั้นตอนก่อน</td>
+              <td>รหัสผ่าน (ปลอดภัยกว่า password)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>ใช้ Access Token ไม่ใช่ Password!</strong>
+            Docker Hub แนะนำ Access Token เพราะสามารถ revoke ได้ทีละ token และกำหนด scope ได้ ถ้า token รั่วก็ลบแค่ token นั้น ไม่ต้องเปลี่ยน password ทั้งหมด
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: ci.yml -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">สร้าง .github/workflows/ci.yml</div>
+          <div style="font-size:.82rem;color:var(--muted)">CI: Lint + Build + Docker Build Test</div>
+        </div>
+        <div class="step-time">⏱ 15 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — GitHub Actions Workflow YAML</span>
+        <p>สร้างไฟล์ <code>.github/workflows/ci.yml</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">.github/workflows/ci.yml</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-yaml">name: CI — TaskBoard
+
+# ────────────────────────────────────────────────
+# Trigger: push ไปยัง feature/* หรือ develop
+#          หรือ PR เข้า develop/main
+# ────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest   # ใช้ GitHub-hosted runner (Ubuntu)
+
+    steps:
+      # Step 1: ดึง source code จาก GitHub มาที่ Runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: ติดตั้ง Node.js เวอร์ชัน 20
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'             # cache node_modules ให้ build เร็วขึ้น
+          cache-dependency-path: backend/package-lock.json
+
+      # ── Backend ──────────────────────────────
+      - name: Install backend dependencies
+        working-directory: backend   # เปลี่ยน directory ก่อนรัน
+        run: npm ci                  # ci = clean install (เร็วกว่า npm install)
+
+      - name: Lint backend code
+        working-directory: backend
+        run: npm run lint            # ถ้า ESLint error → job fail → CI ไม่ผ่าน
+
+      # ── Frontend ──────────────────────────────
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (production)
+        working-directory: frontend
+        run: npm run build           # สร้าง dist/ — ถ้า build fail → CI ไม่ผ่าน
+
+      # ── Docker Smoke Test ─────────────────────
+      - name: Docker build test (backend)
+        run: docker build -t taskboard-backend:ci ./backend
+
+      - name: Docker build test (frontend)
+        run: docker build -t taskboard-frontend:ci ./frontend</code></pre>
+        </div>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>อธิบายแต่ละ keyword ใน YAML:</strong>
+            <code>name:</code> ชื่อที่แสดงใน GitHub Actions UI<br>
+            <code>on:</code> เงื่อนไข trigger<br>
+            <code>jobs:</code> กลุ่มงาน (parallel ได้)<br>
+            <code>steps:</code> ลำดับขั้นตอนใน job<br>
+            <code>uses:</code> ใช้ Action สำเร็จรูปจาก GitHub Marketplace<br>
+            <code>run:</code> รัน shell command
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: ทดสอบ CI -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">ทดสอบ CI Pipeline</div>
+          <div style="font-size:.82rem;color:var(--muted)">Push แล้วดูผลใน GitHub Actions</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git add .github/workflows/ci.yml
+git commit -m "feat: add CI workflow (lint + build + docker)"
+git push origin feature/cicd</code></pre>
+        </div>
+        <p>ไปดูผลใน GitHub:</p>
+        <ol>
+          <li>เปิด GitHub repo → คลิก tab <strong>Actions</strong></li>
+          <li>ดู workflow "<strong>CI — TaskBoard</strong>" ที่กำลัง run</li>
+          <li>คลิกเข้าไปดูแต่ละ step — รอจน ✅ สีเขียวทุก step</li>
+        </ol>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>CI ผ่านแล้ว!</strong> จะเห็น green checkmark ✅ ที่ commit และใน Actions tab
+          </div>
+        </div>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>ถ้า CI ล้มเหลว (❌ แดง)?</strong>
+            คลิกที่ step ที่ fail → ดู error message → แก้ไขตาม error → push ใหม่ → CI จะ trigger อัตโนมัติ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: cd.yml -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">สร้าง .github/workflows/cd.yml</div>
+          <div style="font-size:.82rem;color:var(--muted)">CD: Build & Push to Docker Hub</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — CD Pipeline + Docker Hub Push</span>
+        <p>สร้างไฟล์ <code>.github/workflows/cd.yml</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">.github/workflows/cd.yml</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-yaml">name: CD — Deploy TaskBoard
+
+# ────────────────────────────────────────────────
+# Trigger: push ไปยัง main เท่านั้น (หลัง PR merge)
+# ────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Build & Push to Docker Hub
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: ดึง source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Login เข้า Docker Hub ด้วย Secret
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}   # ดึงจาก GitHub Secrets
+          password: ${{ secrets.DOCKERHUB_TOKEN }}      # ไม่มีใครเห็นค่านี้ใน log
+
+      # Step 3: Build และ Push Backend Image
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend          # ใช้ backend/Dockerfile
+          push: true                  # push ขึ้น registry จริง
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/taskboard-backend:latest
+
+      # Step 4: Build และ Push Frontend Image
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/taskboard-frontend:latest</code></pre>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>docker/build-push-action@v5 ดีกว่า docker build + docker push อย่างไร?</strong>
+            Action นี้รองรับ BuildKit (build เร็วกว่า), multi-platform build, และ cache layer โดยอัตโนมัติ — ประหยัดเวลาใน CI
+          </div>
+        </div>
+        <p>Commit workflow ใหม่:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git add .github/workflows/cd.yml
+git commit -m "feat: add CD workflow (build & push to Docker Hub)"
+git push origin feature/cicd</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: ทดสอบ CD -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">ทดสอบ CD Pipeline — Merge เข้า main</div>
+          <div style="font-size:.82rem;color:var(--muted)">Merge PR แล้วดู image บน Docker Hub</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — GitFlow: feature → develop → main</span>
+        <p>ทำตามขั้นตอน GitFlow:</p>
+        <ol>
+          <li>เปิด PR: <strong>feature/cicd → develop</strong> บน GitHub แล้ว merge</li>
+          <li>เปิด PR: <strong>develop → main</strong> แล้ว merge</li>
+          <li>ดู tab <strong>Actions</strong> — จะเห็น workflow "<strong>CD — Deploy TaskBoard</strong>" เริ่ม run</li>
+          <li>รอจน CD ผ่าน (ประมาณ 2–5 นาที)</li>
+        </ol>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ยืนยัน CD ทำงาน:</strong>
+            เข้า Docker Hub → Repositories → <code>taskboard-backend</code> และ <code>taskboard-frontend</code> → ดู "Last pushed" ต้องเป็นเวลาล่าสุด
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: Status Badge -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">เพิ่ม CI Status Badge ใน README</div>
+          <div style="font-size:.82rem;color:var(--muted)">แสดงสถานะ pipeline แบบ real-time</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 4 — GitHub Actions Badge</span>
+        <p>แก้ไข <code>README.md</code> ให้มี badge:</p>
+        <div class="code-wrap">
+          <div class="code-label">README.md — เพิ่มต้นไฟล์ (แทน &lt;username&gt;)</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-markdown">![CI](https://github.com/&lt;username&gt;/taskboard/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/&lt;username&gt;/taskboard/actions/workflows/cd.yml/badge.svg)</code></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — commit badge</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git add README.md
+git commit -m "docs: add CI/CD status badges to README"
+git push origin main</code></pre>
+        </div>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ผลที่คาดว่าจะเห็น</strong>
+            GitHub repo หน้าแรก จะเห็น badge สีเขียว <code>passing</code> สองอัน แสดงสถานะ CI และ CD
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECKPOINT 4 -->
+    <div class="verify" id="checkpoint4">
+      <div class="verify-title">
+        🏁 Checkpoint 4 — CI/CD Pipeline
+        <span class="checkpoint-score">25 คะแนน</span>
+      </div>
+      <ul>
+        <li>✅ GitHub Secrets: <code>DOCKERHUB_USERNAME</code> และ <code>DOCKERHUB_TOKEN</code> ตั้งแล้ว</li>
+        <li>✅ <code>ci.yml</code> trigger บน <code>feature/**</code> และ <code>develop</code></li>
+        <li>✅ CI มี steps: Install → Lint → Build frontend → Docker build</li>
+        <li>✅ Push feature/cicd → GitHub Actions แสดง CI run ✅ สีเขียว</li>
+        <li>✅ <code>cd.yml</code> trigger บน <code>main</code> เท่านั้น</li>
+        <li>✅ CD มี steps: Login Docker Hub → Build & Push backend → Build & Push frontend</li>
+        <li>✅ Merge develop → main → CD run ✅ image push ขึ้น Docker Hub</li>
+        <li>✅ Docker Hub: taskboard-backend:latest และ taskboard-frontend:latest อัปเดตแล้ว</li>
+        <li>✅ README มี CI และ CD badge แสดงสถานะ</li>
+      </ul>
+      <div style="margin-top:1rem;padding:1rem;background:#fff;border-radius:8px;border:1px solid #6ee7b7">
+        <strong style="color:#065f46">📸 จุดบันทึกภาพเพื่อส่งงาน:</strong>
+        <ol style="padding-left:1.2rem;margin-top:.5rem;font-size:.88rem;color:#047857">
+          <li>Screenshot GitHub Actions tab แสดง CI run ✅ สีเขียว (เห็น step details)</li>
+          <li>Screenshot GitHub Actions tab แสดง CD run ✅ สีเขียว (เห็น Build & Push step)</li>
+          <li>Screenshot Docker Hub แสดง image 2 อัน พร้อม "Last pushed" เวลาล่าสุด</li>
+          <li>Screenshot GitHub repo หน้า README แสดง CI/CD Badge สีเขียว</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- FINAL CHECKLIST -->
+    <div class="final-checklist" id="final-checklist">
+      <h2>✅ Final Checklist — ตรวจก่อนส่งงาน</h2>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.25rem">ติ๊กครบทุกข้อก่อนส่ง รวม 4 ส่วน</p>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 1 — GitHub Setup <span class="score-badge">15 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="f1" onchange="saveCheck(this)"><label for="f1">GitHub repository <code>taskboard</code> เป็น Public ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f2" onchange="saveCheck(this)"><label for="f2">โครงสร้าง backend/src/controllers/, backend/src/routes/, .github/workflows/ ถูกต้อง ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f3" onchange="saveCheck(this)"><label for="f3">.gitignore ครอบคลุม node_modules, .env, dist ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f4" onchange="saveCheck(this)"><label for="f4">README.md มีชื่อโปรเจค, API table, วิธีรัน ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f5" onchange="saveCheck(this)"><label for="f5">มี branch main, develop และ commit history ≥3 commits ✓</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 2 — Backend API <span class="score-badge">30 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="f6" onchange="saveCheck(this)"><label for="f6">แยก controller (taskController.js) จาก route (taskRoutes.js) จาก app setup (app.js) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f7" onchange="saveCheck(this)"><label for="f7">.env ไม่อยู่ใน git history (ตรวจด้วย <code>git log --all --full-history -- backend/.env</code>) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f8" onchange="saveCheck(this)"><label for="f8">.env.example มีใน repo ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f9" onchange="saveCheck(this)"><label for="f9">GET /health ตอบ 200 ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f10" onchange="saveCheck(this)"><label for="f10">CRUD ครบ: GET, POST, PUT, DELETE /api/tasks ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f11" onchange="saveCheck(this)"><label for="f11">PostgreSQL สร้าง table อัตโนมัติ (initDb function) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f12" onchange="saveCheck(this)"><label for="f12">npm run lint ผ่านโดยไม่มี error ✓</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 3 — Docker & Docker Hub <span class="score-badge">30 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="f13" onchange="saveCheck(this)"><label for="f13">backend/Dockerfile: COPY package*.json → npm ci → COPY . . ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f14" onchange="saveCheck(this)"><label for="f14">frontend/Dockerfile: Multi-stage (node:20-alpine → nginx:alpine) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f15" onchange="saveCheck(this)"><label for="f15">docker-compose.yml: 3 services (db, backend, frontend) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f16" onchange="saveCheck(this)"><label for="f16">db มี healthcheck, backend depends_on db condition: service_healthy ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f17" onchange="saveCheck(this)"><label for="f17">backend ไม่มี ports: (ไม่เปิด port ออกนอก) ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f18" onchange="saveCheck(this)"><label for="f18">docker compose up --build → http://localhost CRUD ได้ ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f19" onchange="saveCheck(this)"><label for="f19">Docker Hub: taskboard-backend:latest และ taskboard-frontend:latest ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f20" onchange="saveCheck(this)"><label for="f20">docker-compose.prod.yml pull จาก Docker Hub ✓</label></div>
+      </div>
+
+      <div class="cl-section">
+        <div class="cl-section-title">Part 4 — CI/CD <span class="score-badge">25 คะแนน</span></div>
+        <div class="cl-item"><input type="checkbox" id="f21" onchange="saveCheck(this)"><label for="f21">Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN ตั้งใน GitHub Secrets ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f22" onchange="saveCheck(this)"><label for="f22">ci.yml trigger บน feature/**, develop — steps: lint + build frontend + docker build ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f23" onchange="saveCheck(this)"><label for="f23">cd.yml trigger บน main — steps: login + build-push-action backend + frontend ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f24" onchange="saveCheck(this)"><label for="f24">GitHub Actions history แสดง CI run ✅ (เขียว) อย่างน้อย 1 run ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f25" onchange="saveCheck(this)"><label for="f25">GitHub Actions history แสดง CD run ✅ (เขียว) อย่างน้อย 1 run ✓</label></div>
+        <div class="cl-item"><input type="checkbox" id="f26" onchange="saveCheck(this)"><label for="f26">README มี CI/CD Status Badge ✓</label></div>
+      </div>
+    </div>
+
+    <!-- RUBRIC -->
+    <div class="step-card" id="rubric" style="margin-top:2rem">
+      <div class="step-header">
+        <div class="step-num">💯</div>
+        <div><div class="step-title">Rubric — เกณฑ์การให้คะแนน</div></div>
+      </div>
+      <div class="step-body">
+        <table class="rubric-table">
+          <thead>
+            <tr><th>หัวข้อ</th><th>รายละเอียด</th><th>คะแนน</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3" style="background:#f8fafc;font-weight:700;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em">Part 1 — GitHub Setup (15 คะแนน)</td>
+            </tr>
+            <tr><td>Repository</td><td>GitHub repo สร้างถูกต้อง, Public, มี .gitignore ครอบคลุม</td><td class="score-col">5</td></tr>
+            <tr><td>Structure</td><td>Folder structure แยก backend/src/controllers, routes ถูกต้อง</td><td class="score-col">5</td></tr>
+            <tr><td>Git Workflow</td><td>มี branch develop, commit message ถูก convention, ≥3 commits</td><td class="score-col">5</td></tr>
+
+            <tr>
+              <td colspan="3" style="background:#f8fafc;font-weight:700;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em">Part 2 — Backend API (30 คะแนน)</td>
+            </tr>
+            <tr><td>Architecture</td><td>แยก controller / routes / db.js / app.js / index.js ถูกต้อง</td><td class="score-col">8</td></tr>
+            <tr><td>CRUD API</td><td>GET/POST/PUT/DELETE /api/tasks ทำงานถูกต้อง พร้อม filter</td><td class="score-col">10</td></tr>
+            <tr><td>Database</td><td>PostgreSQL เชื่อมต่อได้, table สร้างอัตโนมัติ, seed data</td><td class="score-col">7</td></tr>
+            <tr><td>.env &amp; ESLint</td><td>.env ไม่ commit, .env.example มี, npm run lint ผ่าน</td><td class="score-col">5</td></tr>
+
+            <tr>
+              <td colspan="3" style="background:#f8fafc;font-weight:700;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em">Part 3 — Docker & Docker Hub (30 คะแนน)</td>
+            </tr>
+            <tr><td>Backend Dockerfile</td><td>Cache layer ถูกต้อง (package*.json ก่อน npm ci)</td><td class="score-col">6</td></tr>
+            <tr><td>Frontend Dockerfile</td><td>Multi-stage build (node:20-alpine → nginx:alpine)</td><td class="score-col">6</td></tr>
+            <tr><td>docker-compose.yml</td><td>3 services, healthcheck db, depends_on, backend ไม่มี ports</td><td class="score-col">8</td></tr>
+            <tr><td>Functional</td><td>docker compose up → CRUD ใช้งานได้จริงผ่าน browser</td><td class="score-col">5</td></tr>
+            <tr><td>Docker Hub</td><td>image 2 อัน push ขึ้น Hub, docker-compose.prod.yml pull ได้</td><td class="score-col">5</td></tr>
+
+            <tr>
+              <td colspan="3" style="background:#f8fafc;font-weight:700;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em">Part 4 — CI/CD (25 คะแนน)</td>
+            </tr>
+            <tr><td>GitHub Secrets</td><td>DOCKERHUB_USERNAME, DOCKERHUB_TOKEN ตั้งถูกต้อง</td><td class="score-col">3</td></tr>
+            <tr><td>ci.yml</td><td>trigger ถูก, steps: lint + build + docker build, ผ่าน ✅</td><td class="score-col">10</td></tr>
+            <tr><td>cd.yml</td><td>trigger main, login → build-push-action, image push Hub ✅</td><td class="score-col">10</td></tr>
+            <tr><td>Badge</td><td>README มี CI/CD badge สีเขียว</td><td class="score-col">2</td></tr>
+
+            <tr class="total-row">
+              <td colspan="2" style="font-size:1rem">รวมทั้งหมด</td>
+              <td class="score-col" style="font-size:1.1rem">100</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>หัก 50% ถ้า:</strong>
+            พบ .env จริง (มี password) อยู่ใน GitHub repository — ถือว่า Security Fail ร้ายแรง
+          </div>
+        </div>
+
+        <div class="alert info">
+          <div class="alert-icon">📌</div>
+          <div class="alert-body">
+            <strong>การส่งงาน</strong>
+            ส่ง GitHub Repository URL + ไฟล์ PDF Screenshots ตามจุดตรวจเช็คในแต่ละ Part (รวม 12–15 screenshots)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete Box -->
+    <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid var(--green);border-radius:16px;padding:2rem;text-align:center;margin-top:2rem">
+      <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
+      <h2 style="color:#065f46;margin-bottom:.75rem">โปรเจค TaskBoard สำเร็จแล้ว!</h2>
+      <p style="color:#047857;max-width:500px;margin:0 auto 1.5rem">คุณได้สร้าง Full-Stack Web Application ที่รันบน Docker, มี Image บน Docker Hub, และมี CI/CD Pipeline บน GitHub Actions — ครบทุกทักษะจาก Week 1–4 !</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a href="activity-part1.html" style="display:inline-block;background:#fff;color:#065f46;border:2px solid var(--green);border-radius:10px;padding:.6rem 1.25rem;font-weight:700;text-decoration:none;font-size:.9rem">← ทบทวน Part 1</a>
+        <a href="../index.html" style="display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;text-decoration:none;font-size:.9rem">กลับ Labs Home →</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script>
+window.addEventListener('scroll',()=>{
+  const d=document.documentElement;
+  const pct=(d.scrollTop/(d.scrollHeight-d.clientHeight))*100;
+  document.getElementById('pbar').style.width=pct+'%';
+});
+function copyCode(btn){
+  const code=btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+function saveCheck(cb){
+  localStorage.setItem('taskboard_final_'+cb.id, cb.checked);
+  cb.nextElementSibling.classList.toggle('done', cb.checked);
+}
+document.querySelectorAll('.cl-item input[type=checkbox]').forEach(cb=>{
+  if(localStorage.getItem('taskboard_final_'+cb.id)==='true'){
+    cb.checked=true;
+    cb.nextElementSibling.classList.add('done');
+  }
+  cb.addEventListener('change',()=>saveCheck(cb));
+});
+const sections=document.querySelectorAll('[id]');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.toc-item a').forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0% -60%'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>

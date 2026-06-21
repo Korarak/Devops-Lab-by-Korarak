@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ใบกิจกรรม TaskBoard — Part 3: Docker & Docker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#0ea5e9;--primary-dark:#0284c7;--primary-light:#e0f2fe;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --green:#10b981;--green-light:#d1fae5;
+  --red:#ef4444;--red-light:#fee2e2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+  --docker:#2496ed;--docker-light:#dbeeff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+code,pre{font-family:'JetBrains Mono',monospace}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--docker),var(--primary));width:0;transition:width .3s}
+.nav-top{position:absolute;top:1rem;left:1.25rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25)}
+.site-header{background:linear-gradient(135deg,#1a3a5c,#1e3a8a,#1d4ed8);color:#fff;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:1rem;backdrop-filter:blur(10px)}
+.site-header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+.site-header .subtitle{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.35rem .85rem;font-size:.82rem;backdrop-filter:blur(10px)}
+.part-nav{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding:1.25rem 2rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.4rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s;text-align:center}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:2rem;max-width:1300px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:72px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem}
+.sidebar-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.85rem}
+.toc-list{list-style:none}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.38rem .6rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2496ed,#1d4ed8);color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem}
+.step-body h4{font-size:.95rem;font-weight:700;margin:1.25rem 0 .5rem;color:var(--primary-dark)}
+.step-body p{margin-bottom:1rem;line-height:1.8}
+.step-body ul,.step-body ol{padding-left:1.4rem;margin-bottom:1rem}
+.step-body li{margin-bottom:.35rem;line-height:1.75}
+.code-wrap{position:relative;margin:1rem 0;border-radius:10px;overflow:hidden}
+.code-label{position:absolute;top:0;left:0;background:rgba(255,255,255,.1);color:#94a3b8;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-bottom-right-radius:6px;font-family:'JetBrains Mono',monospace;z-index:2}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#94a3b8;border-radius:6px;padding:.25rem .65rem;font-size:.72rem;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.22);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff;border-color:#10b981}
+pre[class*=language-]{margin:0;border-radius:0;padding:2.5rem 1.25rem .9rem!important;font-size:.84rem;line-height:1.6}
+.inline-code{background:#f1f5f9;color:#0f172a;padding:.15rem .4rem;border-radius:4px;font-size:.87em;font-family:'JetBrains Mono',monospace}
+.alert{border-radius:10px;padding:1rem 1.15rem;margin:1rem 0;display:flex;gap:.75rem;align-items:flex-start}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.alert-body{flex:1}
+.alert-body strong{display:block;font-weight:700;margin-bottom:.2rem}
+.alert.info{background:#e0f2fe;border-left:4px solid var(--primary)}
+.alert.warning{background:#fef3c7;border-left:4px solid var(--accent)}
+.alert.success{background:#d1fae5;border-left:4px solid var(--green)}
+.alert.tip{background:#ede9fe;border-left:4px solid var(--purple)}
+.verify{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1.5rem}
+.verify-title{font-weight:800;color:#065f46;margin-bottom:.75rem;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.verify ul{padding-left:1.3rem}
+.verify li{font-size:.9rem;color:#047857;margin-bottom:.3rem}
+.checkpoint-score{display:inline-block;background:#065f46;color:#fff;border-radius:6px;padding:.2rem .6rem;font-size:.8rem;font-weight:700;margin-left:.5rem}
+.week-ref{display:inline-flex;align-items:center;gap:.35rem;background:var(--accent-light);color:#92400e;border-radius:6px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;margin-bottom:.75rem}
+.arch-box{background:#0f172a;border-radius:14px;padding:1.5rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#e2e8f0;line-height:2}
+.arch-service{color:#38bdf8;font-weight:700}
+.arch-port{color:#f59e0b}
+.arch-image{color:#34d399}
+.arch-arrow{color:#64748b}
+.prereq-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.prereq-box h3{font-size:.95rem;font-weight:700;color:#92400e;margin-bottom:.75rem}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;max-height:none}}
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+
+<header class="site-header">
+  <div class="nav-top">
+    <a href="../index.html" class="back-link">← Labs Home</a>
+  </div>
+  <div class="part-badge">📋 ใบกิจกรรมพาทำ · DevOps 30901-2008</div>
+  <h1>TaskBoard — ระบบจัดการงาน</h1>
+  <p class="subtitle">Part 3 / 4 — Dockerize + Docker Hub + Vue Frontend</p>
+  <div class="header-meta">
+    <span class="meta-chip">🎯 อ้างอิง Week 3</span>
+    <span class="meta-chip">⏱ ~90 นาที</span>
+    <span class="meta-chip">📍 Checkpoint 3 / 4</span>
+    <span class="meta-chip">💯 30 คะแนน</span>
+  </div>
+</header>
+
+<nav class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1<br><small>GitHub Setup</small></a>
+  <a href="activity-part2.html" class="part-btn">Part 2<br><small>Backend API</small></a>
+  <a href="activity-part3.html" class="part-btn active">Part 3<br><small>Docker Hub</small></a>
+  <a href="activity-part4.html" class="part-btn">Part 4<br><small>CI/CD</small></a>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">📑 เนื้อหา Part 3</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#prereq"><span class="toc-num">⚡</span>Pre-requisite</a></li>
+        <li class="toc-item"><a href="#arch"><span class="toc-num">🏗️</span>Docker Architecture</a></li>
+        <li class="toc-item"><a href="#s1"><span class="toc-num">1</span>Backend Dockerfile</a></li>
+        <li class="toc-item"><a href="#s2"><span class="toc-num">2</span>Frontend Setup (Vue)</a></li>
+        <li class="toc-item"><a href="#s3"><span class="toc-num">3</span>Frontend Dockerfile</a></li>
+        <li class="toc-item"><a href="#s4"><span class="toc-num">4</span>nginx.conf</a></li>
+        <li class="toc-item"><a href="#s5"><span class="toc-num">5</span>docker-compose.yml</a></li>
+        <li class="toc-item"><a href="#s6"><span class="toc-num">6</span>docker compose up</a></li>
+        <li class="toc-item"><a href="#s7"><span class="toc-num">7</span>Push ไป Docker Hub</a></li>
+        <li class="toc-item"><a href="#s8"><span class="toc-num">8</span>docker-compose.prod.yml</a></li>
+        <li class="toc-item"><a href="#s9"><span class="toc-num">9</span>Commit & PR</a></li>
+        <li class="toc-item"><a href="#checkpoint3"><span class="toc-num">✅</span>Checkpoint 3</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">🐳 Images ที่จะสร้าง</div>
+      <div style="font-size:.82rem;line-height:2">
+        <div>📦 <code>&lt;user&gt;/taskboard-backend</code></div>
+        <div>📦 <code>&lt;user&gt;/taskboard-frontend</code></div>
+        <div style="margin-top:.5rem;font-size:.78rem;color:var(--muted)">Push ขึ้น Docker Hub ทั้งคู่</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- Pre-requisite -->
+    <div class="prereq-box" id="prereq">
+      <h3>⚡ ก่อนเริ่ม — ตรวจสอบ Part 2 ผ่านแล้ว</h3>
+      <ul style="padding-left:1.2rem">
+        <li>Branch <code>develop</code> มีโค้ด backend ครบแล้ว (PR merge แล้ว)</li>
+        <li>สร้าง branch ใหม่: <code>git checkout develop &amp;&amp; git pull &amp;&amp; git checkout -b feature/dockerize</code></li>
+        <li>Docker Desktop เปิดอยู่ (icon ที่ Taskbar = Engine running)</li>
+        <li>มี Docker Hub account พร้อม username และ password</li>
+      </ul>
+    </div>
+
+    <!-- Architecture -->
+    <div class="step-card" id="arch">
+      <div class="step-header">
+        <div class="step-num">🏗️</div>
+        <div>
+          <div class="step-title">Docker Architecture ของโปรเจค</div>
+        </div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Docker Compose Services</span>
+        <div class="arch-box">
+<span style="color:#94a3b8">Browser → </span><span class="arch-service">frontend</span><span class="arch-port"> :80</span> <span class="arch-arrow">──nginx proxy──▶</span> <span class="arch-service">backend</span><span class="arch-port"> :3001</span>
+<span style="color:#475569">                                                     │</span>
+<span style="color:#475569">                                                     ▼</span>
+<span style="color:#475569">                                               </span><span class="arch-service">db</span><span class="arch-port"> :5432</span><span style="color:#475569"> (PostgreSQL)</span>
+
+<span style="color:#64748b">─────────────────────────────────────────────────────</span>
+docker-compose.yml
+  services:
+    <span class="arch-service">db</span>        image: <span class="arch-image">postgres:16-alpine</span>   <span class="arch-arrow">← ไม่มี Dockerfile</span>
+    <span class="arch-service">backend</span>   build: <span class="arch-image">./backend</span>           <span class="arch-arrow">← จาก Dockerfile</span>
+    <span class="arch-service">frontend</span>  build: <span class="arch-image">./frontend</span>          <span class="arch-arrow">← จาก Dockerfile</span>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>Nginx ทำหน้าที่อะไร?</strong>
+            Frontend (Vue) เป็น static file หลัง build ไม่ต้องการ Node.js รัน Nginx (web server เบา) serve ไฟล์แทน และทำ reverse proxy ส่ง request <code>/api/*</code> ไปที่ backend
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Backend Dockerfile -->
+    <div class="step-card" id="s1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">สร้าง Backend Dockerfile และ .dockerignore</div>
+          <div style="font-size:.82rem;color:var(--muted)">Containerize Express API</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Dockerfile Best Practices</span>
+        <p>สร้างไฟล์ <code>backend/Dockerfile</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/Dockerfile</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-docker">FROM node:20-alpine
+WORKDIR /app
+
+# Copy package files ก่อน (ใช้ cache layer)
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy source code
+COPY . .
+
+EXPOSE 3001
+CMD ["node", "index.js"]</code></pre>
+        </div>
+        <p>สร้างไฟล์ <code>backend/.dockerignore</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">backend/.dockerignore</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">node_modules
+.env
+.env.*
+*.log
+.git</code></pre>
+        </div>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>ทำไม COPY package*.json ก่อน?</strong>
+            Docker Cache — ถ้า package.json ไม่เปลี่ยน layer <code>npm ci</code> จะใช้ cache เดิม ทำให้ build ครั้งต่อไปเร็วขึ้นมาก
+          </div>
+        </div>
+        <p>ทดสอบ build backend image:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker build -t taskboard-backend:test ./backend
+# ต้องเห็น: Successfully tagged taskboard-backend:test</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Frontend Setup -->
+    <div class="step-card" id="s2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">สร้าง Frontend Vue 3 + Vite</div>
+          <div style="font-size:.82rem;color:var(--muted)">สร้างหน้าเว็บแสดงและจัดการงาน</div>
+        </div>
+        <div class="step-time">⏱ 20 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Vue 3 + Vite Frontend</span>
+        <p>สร้าง Vue project ใน folder frontend:</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">npm create vite@latest frontend -- --template vue
+cd frontend
+npm install
+cd ..</code></pre>
+        </div>
+
+        <h4>สร้าง frontend/package.json scripts (ตรวจสอบให้มี build)</h4>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — ตรวจสอบ</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">cd frontend
+npm run build    # ต้องสำเร็จ สร้าง dist/ folder
+cd ..</code></pre>
+        </div>
+
+        <h4>สร้าง frontend/src/main.js</h4>
+        <div class="code-wrap">
+          <div class="code-label">frontend/src/main.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">import { createApp } from 'vue'
+import App from './App.vue'
+
+createApp(App).mount('#app')</code></pre>
+        </div>
+
+        <h4>สร้าง frontend/src/App.vue — หน้าหลัก CRUD</h4>
+        <div class="code-wrap">
+          <div class="code-label">frontend/src/App.vue</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-html">&lt;template&gt;
+  &lt;div class="container"&gt;
+    &lt;h1&gt;📋 TaskBoard&lt;/h1&gt;
+
+    &lt;!-- Form เพิ่มงาน --&gt;
+    &lt;div class="add-form"&gt;
+      &lt;input v-model="newTitle" placeholder="ชื่องาน..." @keyup.enter="addTask" /&gt;
+      &lt;select v-model="newPriority"&gt;
+        &lt;option value="low"&gt;Low&lt;/option&gt;
+        &lt;option value="medium" selected&gt;Medium&lt;/option&gt;
+        &lt;option value="high"&gt;High&lt;/option&gt;
+      &lt;/select&gt;
+      &lt;button @click="addTask"&gt;+ เพิ่มงาน&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Filter --&gt;
+    &lt;div class="filter-bar"&gt;
+      &lt;select v-model="filterStatus" @change="loadTasks"&gt;
+        &lt;option value=""&gt;ทุกสถานะ&lt;/option&gt;
+        &lt;option value="todo"&gt;Todo&lt;/option&gt;
+        &lt;option value="inprogress"&gt;In Progress&lt;/option&gt;
+        &lt;option value="done"&gt;Done&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- รายการงาน --&gt;
+    &lt;div v-if="loading" class="loading"&gt;กำลังโหลด...&lt;/div&gt;
+    &lt;div v-else class="task-list"&gt;
+      &lt;div v-for="task in tasks" :key="task.id" class="task-card" :class="task.priority"&gt;
+        &lt;div class="task-info"&gt;
+          &lt;span class="priority-badge"&gt;{{ task.priority }}&lt;/span&gt;
+          &lt;h3&gt;{{ task.title }}&lt;/h3&gt;
+          &lt;p v-if="task.description"&gt;{{ task.description }}&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class="task-actions"&gt;
+          &lt;select :value="task.status" @change="changeStatus(task, $event.target.value)"&gt;
+            &lt;option value="todo"&gt;Todo&lt;/option&gt;
+            &lt;option value="inprogress"&gt;In Progress&lt;/option&gt;
+            &lt;option value="done"&gt;Done&lt;/option&gt;
+          &lt;/select&gt;
+          &lt;button class="del-btn" @click="deleteTask(task.id)"&gt;ลบ&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;p v-if="tasks.length === 0" class="empty"&gt;ไม่มีงาน&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, onMounted } from 'vue'
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+const tasks        = ref([])
+const loading      = ref(false)
+const newTitle     = ref('')
+const newPriority  = ref('medium')
+const filterStatus = ref('')
+
+async function loadTasks() {
+  loading.value = true
+  const params = filterStatus.value ? `?status=${filterStatus.value}` : ''
+  const res    = await fetch(`${API}/api/tasks${params}`)
+  tasks.value  = await res.json()
+  loading.value = false
+}
+
+async function addTask() {
+  if (!newTitle.value.trim()) return
+  await fetch(`${API}/api/tasks`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ title: newTitle.value, priority: newPriority.value }),
+  })
+  newTitle.value = ''
+  loadTasks()
+}
+
+async function changeStatus(task, status) {
+  await fetch(`${API}/api/tasks/${task.id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ ...task, status }),
+  })
+  loadTasks()
+}
+
+async function deleteTask(id) {
+  if (!confirm('ลบงานนี้?')) return
+  await fetch(`${API}/api/tasks/${id}`, { method: 'DELETE' })
+  loadTasks()
+}
+
+onMounted(loadTasks)
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.container { max-width: 700px; margin: 2rem auto; padding: 0 1rem; font-family: sans-serif; }
+h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+.add-form { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.add-form input { flex: 1; padding: .5rem; border: 1px solid #ccc; border-radius: 6px; }
+.add-form select, .add-form button { padding: .5rem .75rem; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+.add-form button { background: #0ea5e9; color: #fff; border: none; font-weight: 700; }
+.filter-bar { margin-bottom: 1rem; }
+.task-list { display: flex; flex-direction: column; gap: .75rem; }
+.task-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.task-card.high { border-left: 4px solid #ef4444; }
+.task-card.medium { border-left: 4px solid #f59e0b; }
+.task-card.low { border-left: 4px solid #10b981; }
+.priority-badge { font-size: .72rem; font-weight: 700; padding: .1rem .4rem; border-radius: 4px; background: #f1f5f9; text-transform: uppercase; }
+.task-info h3 { margin: .25rem 0; font-size: 1rem; }
+.task-info p { font-size: .85rem; color: #64748b; margin: 0; }
+.task-actions { display: flex; flex-direction: column; gap: .35rem; flex-shrink: 0; }
+.task-actions select { padding: .3rem .5rem; border-radius: 6px; border: 1px solid #ccc; font-size: .82rem; }
+.del-btn { background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; padding: .3rem .6rem; cursor: pointer; font-size: .82rem; font-weight: 700; }
+.loading, .empty { text-align: center; color: #64748b; padding: 2rem; }
+&lt;/style&gt;</code></pre>
+        </div>
+        <h4>แก้ไข frontend/index.html ให้ title ถูกต้อง</h4>
+        <div class="code-wrap">
+          <div class="code-label">frontend/index.html — แก้ title เท่านั้น</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-html">&lt;title&gt;TaskBoard&lt;/title&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Frontend Dockerfile -->
+    <div class="step-card" id="s3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">สร้าง Frontend Dockerfile (Multi-stage)</div>
+          <div style="font-size:.82rem;color:var(--muted)">Build → Serve ด้วย Nginx</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Multi-stage Build</span>
+        <p>สร้างไฟล์ <code>frontend/Dockerfile</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">frontend/Dockerfile</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-docker"># Stage 1: Build Vue app
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Stage 2: Serve ด้วย Nginx (image เล็กมาก ~23MB)
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+        </div>
+        <p>สร้างไฟล์ <code>frontend/.dockerignore</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">frontend/.dockerignore</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">node_modules
+dist
+.env
+.env.*</code></pre>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>Multi-stage Build คืออะไร?</strong>
+            Stage 1 (builder) ใช้ node:20 ขนาดใหญ่เพื่อ build — Stage 2 (nginx:alpine) ขนาดเล็กเอา dist ไปเสิร์ฟเท่านั้น ไม่มี node_modules ในผล image ทำให้ image เล็กลง ~10x
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: nginx.conf -->
+    <div class="step-card" id="s4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">สร้าง nginx.conf</div>
+          <div style="font-size:.82rem;color:var(--muted)">Serve SPA + Reverse Proxy</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Nginx Reverse Proxy</span>
+        <p>สร้างไฟล์ <code>frontend/nginx.conf</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">frontend/nginx.conf</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-nginx">server {
+    listen 80;
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    # Reverse Proxy — ส่ง /api/* ไปที่ backend container
+    location /api/ {
+        proxy_pass         http://backend:3001;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+    }
+
+    # SPA fallback — ทุก path กลับมาที่ index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}</code></pre>
+        </div>
+        <div class="alert warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>ใน Docker frontend ต้องใช้ชื่อ service "backend"</strong>
+            Docker Compose ให้ container คุยกันได้ด้วยชื่อ service ใน yaml เช่น <code>http://backend:3001</code> ซึ่ง nginx จะแปลเป็น IP ของ backend container
+          </div>
+        </div>
+        <h4>แก้ไข frontend/vite.config.js</h4>
+        <div class="code-wrap">
+          <div class="code-label">frontend/vite.config.js</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-javascript">import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
+})</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: docker-compose.yml -->
+    <div class="step-card" id="s5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">สร้าง docker-compose.yml</div>
+          <div style="font-size:.82rem;color:var(--muted)">ประกอบ 3 services ให้ทำงานพร้อมกัน</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Docker Compose</span>
+        <p>สร้างไฟล์ <code>docker-compose.yml</code> ที่ root:</p>
+        <div class="code-wrap">
+          <div class="code-label">docker-compose.yml</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-yaml">services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       taskboard
+      POSTGRES_USER:     taskuser
+      POSTGRES_PASSWORD: taskpass123
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d taskboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     taskboard
+      DB_USER:     taskuser
+      DB_PASSWORD: taskpass123
+      PORT:        3001
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:</code></pre>
+        </div>
+        <div class="alert info">
+          <div class="alert-icon">💡</div>
+          <div class="alert-body">
+            <strong>สังเกต: backend ไม่เปิด port ให้ภายนอก!</strong>
+            backend ไม่มี <code>ports:</code> — เข้าถึงได้แค่ภายใน Docker network ผ่านชื่อ service "backend" เท่านั้น ปลอดภัยกว่าการเปิด port ออกมา
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: docker compose up -->
+    <div class="step-card" id="s6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">รัน docker compose up --build</div>
+          <div style="font-size:.82rem;color:var(--muted)">ทดสอบทุก service พร้อมกัน</div>
+        </div>
+        <div class="step-time">⏱ 10 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — docker compose up</span>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker compose up --build</code></pre>
+        </div>
+        <p>รอจนเห็น log ประมาณนี้:</p>
+        <div class="code-wrap">
+          <div class="code-label">Expected log output</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">backend-1   | ✅ DB connected at: 2026-xx-xx...
+backend-1   | ✅ Table tasks ready
+backend-1   | 🌱 Seed data inserted (6 tasks)
+backend-1   | 🚀 TaskBoard API running at http://localhost:3001
+frontend-1  | /docker-entrypoint.sh: Configuration complete; ready for start up</code></pre>
+        </div>
+        <p>เปิดเบราว์เซอร์ไปที่ <code>http://localhost</code> — ควรเห็นหน้า TaskBoard พร้อมรายการงาน</p>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ทดสอบ CRUD:</strong>
+            ลองเพิ่มงานใหม่ → เห็นในรายการ → เปลี่ยน status → ลบ — ถ้าทำได้ทุกอย่าง backend และ database ทำงานถูกต้องแล้ว
+          </div>
+        </div>
+        <p>หยุด services เมื่อทดสอบเสร็จ (Ctrl+C หรือ terminal ใหม่):</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker compose down</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7: Docker Hub -->
+    <div class="step-card" id="s7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div>
+          <div class="step-title">Push Images ไป Docker Hub</div>
+          <div style="font-size:.82rem;color:var(--muted)">สร้าง Docker Hub repos และ push</div>
+        </div>
+        <div class="step-time">⏱ 15 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Docker Registry + Push/Pull</span>
+        <h4>ขั้นตอน 1: Login ไป Docker Hub</h4>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker login
+# พิมพ์ Docker Hub username และ password</code></pre>
+        </div>
+        <h4>ขั้นตอน 2: Build และ Tag images ด้วยชื่อ Docker Hub username</h4>
+        <div class="code-wrap">
+          <div class="code-label">Terminal — แทน &lt;username&gt; ด้วย Docker Hub username ของคุณ</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash"># Build backend image พร้อม tag
+docker build -t &lt;username&gt;/taskboard-backend:latest ./backend
+
+# Build frontend image พร้อม tag
+docker build -t &lt;username&gt;/taskboard-frontend:latest ./frontend</code></pre>
+        </div>
+        <h4>ขั้นตอน 3: Push ไป Docker Hub</h4>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker push &lt;username&gt;/taskboard-backend:latest
+docker push &lt;username&gt;/taskboard-frontend:latest</code></pre>
+        </div>
+        <div class="alert success">
+          <div class="alert-icon">✅</div>
+          <div class="alert-body">
+            <strong>ตรวจเช็คบน Docker Hub</strong>
+            เปิด hub.docker.com → Repositories → ควรเห็น <code>taskboard-backend</code> และ <code>taskboard-frontend</code> พร้อม tag <code>latest</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8: docker-compose.prod.yml -->
+    <div class="step-card" id="s8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div>
+          <div class="step-title">สร้าง docker-compose.prod.yml</div>
+          <div style="font-size:.82rem;color:var(--muted)">Pull image จาก Docker Hub แทนการ build</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <span class="week-ref">📚 อ้างอิง Week 3 — Production Compose</span>
+        <p>สร้างไฟล์ <code>docker-compose.prod.yml</code>:</p>
+        <div class="code-wrap">
+          <div class="code-label">docker-compose.prod.yml — แทน &lt;username&gt;</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-yaml">services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       taskboard
+      POSTGRES_USER:     taskuser
+      POSTGRES_PASSWORD: taskpass123
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    image: &lt;username&gt;/taskboard-backend:latest
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_PORT:     5432
+      DB_NAME:     taskboard
+      DB_USER:     taskuser
+      DB_PASSWORD: taskpass123
+      PORT:        3001
+    depends_on:
+      - db
+
+  frontend:
+    image: &lt;username&gt;/taskboard-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:</code></pre>
+        </div>
+        <p>ทดสอบ pull และรัน (ลบ local images ก่อนเพื่อยืนยันว่า pull จาก Hub จริงๆ):</p>
+        <div class="code-wrap">
+          <div class="code-label">Terminal</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+# เปิด http://localhost ทดสอบ</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9: Commit & PR -->
+    <div class="step-card" id="s9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div>
+          <div class="step-title">Commit ทุกไฟล์และเปิด Pull Request</div>
+          <div style="font-size:.82rem;color:var(--muted)">บันทึก Docker setup ขึ้น GitHub</div>
+        </div>
+        <div class="step-time">⏱ 5 นาที</div>
+      </div>
+      <div class="step-body">
+        <div class="code-wrap">
+          <div class="code-label">Terminal — อยู่ใน root taskboard/</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code class="language-bash">git add backend/Dockerfile backend/.dockerignore
+git add frontend/src/ frontend/index.html frontend/nginx.conf
+git add frontend/Dockerfile frontend/.dockerignore frontend/vite.config.js
+git add frontend/package.json frontend/package-lock.json
+git add docker-compose.yml docker-compose.prod.yml
+git commit -m "feat: dockerize app with multi-stage build and docker-compose"
+git push origin feature/dockerize</code></pre>
+        </div>
+        <p>เปิด Pull Request: <strong>feature/dockerize → develop</strong> แล้ว merge</p>
+        <div class="alert tip">
+          <div class="alert-icon">💜</div>
+          <div class="alert-body">
+            <strong>เตรียม branch สำหรับ Part 4</strong><br>
+            <code>git checkout develop &amp;&amp; git pull &amp;&amp; git checkout -b feature/cicd</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECKPOINT 3 -->
+    <div class="verify" id="checkpoint3">
+      <div class="verify-title">
+        🏁 Checkpoint 3 — Docker & Docker Hub
+        <span class="checkpoint-score">30 คะแนน</span>
+      </div>
+      <p style="font-size:.88rem;color:#047857;margin-bottom:.75rem">ก่อนไป Part 4 ตรวจสอบให้ครบทุกข้อ:</p>
+      <ul>
+        <li>✅ <code>backend/Dockerfile</code> มี COPY package*.json ก่อน npm ci</li>
+        <li>✅ <code>frontend/Dockerfile</code> เป็น multi-stage (node:20-alpine → nginx:alpine)</li>
+        <li>✅ <code>docker-compose.yml</code> มี 3 services: db, backend, frontend</li>
+        <li>✅ backend ไม่เปิด port ออกนอก (ไม่มี ports: ใน backend service)</li>
+        <li>✅ <code>docker compose up --build</code> ผ่าน ไม่มี error</li>
+        <li>✅ เปิด <code>http://localhost</code> เห็นหน้า TaskBoard</li>
+        <li>✅ เพิ่มงานได้, เปลี่ยน status ได้, ลบได้ (CRUD ผ่าน Docker)</li>
+        <li>✅ <strong>Docker Hub</strong>: เห็น taskboard-backend:latest และ taskboard-frontend:latest</li>
+        <li>✅ <code>docker-compose.prod.yml</code> pull จาก Docker Hub ได้</li>
+        <li>✅ PR feature/dockerize → develop merge แล้ว</li>
+      </ul>
+      <div style="margin-top:1rem;padding:1rem;background:#fff;border-radius:8px;border:1px solid #6ee7b7">
+        <strong style="color:#065f46">📸 จุดบันทึกภาพเพื่อส่งงาน:</strong>
+        <ol style="padding-left:1.2rem;margin-top:.5rem;font-size:.88rem;color:#047857">
+          <li>Screenshot browser แสดง http://localhost — เห็นหน้า TaskBoard พร้อมรายการงาน</li>
+          <li>Screenshot Docker Desktop → Containers แสดง 3 containers กำลัง running (taskboard-db, taskboard-backend, taskboard-frontend)</li>
+          <li>Screenshot Docker Hub → Repositories แสดง taskboard-backend และ taskboard-frontend</li>
+          <li>Screenshot terminal แสดง <code>docker compose -f docker-compose.prod.yml pull</code> (เห็น Pull complete)</li>
+        </ol>
+      </div>
+      <div style="margin-top:1rem;text-align:right">
+        <a href="activity-part4.html" style="display:inline-block;background:var(--primary);color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;text-decoration:none;font-size:.9rem">
+          ไป Part 4 — CI/CD Pipeline →
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nginx.min.js"></script>
+<script>
+window.addEventListener('scroll',()=>{
+  const d=document.documentElement;
+  const pct=(d.scrollTop/(d.scrollHeight-d.clientHeight))*100;
+  document.getElementById('pbar').style.width=pct+'%';
+});
+function copyCode(btn){
+  const code=btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+const sections=document.querySelectorAll('[id]');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.toc-item a').forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0% -60%'});
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>

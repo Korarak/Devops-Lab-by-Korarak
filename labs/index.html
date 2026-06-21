@@ -83,6 +83,8 @@
     .lab-card.week3 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#42b883); }
     .lab-card.week4 { --accent: #fbbf24; --gradient: linear-gradient(90deg,#0ea5e9,#f59e0b); }
     .lab-card.week5 { --accent: #34d399; --gradient: linear-gradient(90deg,#059669,#10b981); }
+    .lab-card.final-activity { --accent: #f472b6; --gradient: linear-gradient(90deg,#7c3aed,#0ea5e9,#10b981); }
+    .activity-banner { background: linear-gradient(90deg,#7c3aed,#0ea5e9,#10b981); border-radius: 10px; padding: .5rem 1rem; margin-bottom: 1rem; font-size: .8rem; font-weight: 700; color: #fff; letter-spacing: .05em; text-align: center; }
     .lab-card.week6 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#8b5cf6); }
 
     .theory-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
@@ -285,6 +287,36 @@
         <div class="lab-footer">
           <span class="lab-time">⏱ 5 ชั่วโมง | 14 ขั้นตอน</span>
           <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- FINAL ACTIVITY (Week 1-4 Integration) -->
+    <a class="lab-card final-activity" href="final-activity/index.html" style="grid-column: 1 / -1; border: 2px solid #7c3aed;">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="activity-banner">🎯 ใบกิจกรรมพาทำ — รวม Week 1–4 | 4 Parts | 100 คะแนน</div>
+        <div class="lab-title">TaskBoard — ระบบจัดการงาน (CRUD)</div>
+        <div class="lab-desc">ใบกิจกรรม step-by-step ที่นำความรู้ Week 1–4 มาสร้างโปรเจคจริง: GitHub → Backend Express API (Controller/Route) → Docker Desktop + Docker Hub → CI/CD GitHub Actions — ไม่มี Login ใช้ PostgreSQL เป็น DB</div>
+        <div class="lab-chips">
+          <span class="chip">GitHub</span>
+          <span class="chip">Express.js + PostgreSQL</span>
+          <span class="chip">Vue 3 + Vite</span>
+          <span class="chip">Docker Desktop</span>
+          <span class="chip">Docker Hub</span>
+          <span class="chip">GitHub Actions CI/CD</span>
+          <span class="chip">.env แยก Backend/Frontend</span>
+          <span class="chip">Controller-Route Pattern</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li><strong>Part 1</strong> (Week 1): สร้าง GitHub Repo, Folder Structure, .gitignore, GitFlow — 15 คะแนน</li>
+          <li><strong>Part 2</strong> (Week 2): Backend REST API แยก Controller/Route/DB, .env, PostgreSQL, ESLint — 30 คะแนน</li>
+          <li><strong>Part 3</strong> (Week 3): Dockerfiles, docker-compose 3 services, Push image ขึ้น Docker Hub — 30 คะแนน</li>
+          <li><strong>Part 4</strong> (Week 4): CI workflow (lint+build) + CD workflow (push to Hub), Final Checklist, Rubric — 25 คะแนน</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ ~4 ชั่วโมง | 4 Parts | 4 Checkpoints</span>
+          <span class="lab-btn">เปิดใบกิจกรรม →</span>
         </div>
       </div>
     </a>
