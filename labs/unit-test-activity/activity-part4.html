@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Part 4 — แบบฝึกหัด ออกแบบ Test | ScoreCalc · DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#d97706;--primary-dark:#b45309;--primary-light:#fef3c7;
+  --green:#059669;--green-light:#d1fae5;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --red:#dc2626;--red-light:#fee2e2;
+  --bg:#fffbeb;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#f59e0b);width:0;transition:width .3s}
+.site-header{background:linear-gradient(135deg,#451a03,#92400e,#d97706);color:#fff;padding:3rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.nav-top{position:absolute;top:1rem;left:1.25rem;display:flex;gap:.5rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25)}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:.75rem}
+.site-header h1{font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:800;margin-bottom:.4rem}
+.site-header .subtitle{font-size:1rem;opacity:.85}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .8rem;font-size:.82rem}
+.part-nav{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;padding:1rem 1.5rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.38rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;max-width:1280px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:70px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:1rem}
+.sb-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem}
+.toc-list{list-style:none;display:grid;gap:.15rem}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.35rem .55rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.81rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:#e2e8f0;color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-style:normal}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2.5rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.ex-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border)}
+.ex-header.a{background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+.ex-header.b{background:linear-gradient(135deg,#f0fdf4,#d1fae5)}
+.ex-header.c{background:linear-gradient(135deg,#faf5ff,#ede9fe)}
+.ex-header.d{background:linear-gradient(135deg,#fff7ed,#fed7aa)}
+.ex-header.e{background:linear-gradient(135deg,#0f172a,#1e293b)}
+.ex-num{width:44px;height:44px;border-radius:12px;color:#fff;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.num-a{background:linear-gradient(135deg,#2563eb,#38bdf8)}
+.num-b{background:linear-gradient(135deg,#059669,#10b981)}
+.num-c{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.num-d{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.num-e{background:linear-gradient(135deg,#1d4ed8,#7c3aed)}
+.ex-title-wrap{}
+.ex-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.label-a{color:#1e40af}
+.label-b{color:#065f46}
+.label-c{color:#5b21b6}
+.label-d{color:#92400e}
+.label-e{color:#c7d2fe}
+.ex-title{font-size:1.1rem;font-weight:700}
+.ex-header.e .ex-title{color:#e2e8f0}
+.ex-score{margin-left:auto;border-radius:8px;padding:.3rem .8rem;font-size:.82rem;font-weight:700;white-space:nowrap}
+.score-a{background:var(--blue-light);color:#1e40af}
+.score-b{background:var(--green-light);color:#065f46}
+.score-c{background:var(--purple-light);color:#5b21b6}
+.score-d{background:#fed7aa;color:#92400e}
+.score-e{background:rgba(139,92,246,.2);color:#a78bfa}
+.ex-body{padding:1.5rem;display:grid;gap:1.25rem}
+.ex-body h4{font-size:.95rem;font-weight:700;color:var(--text);margin-top:.5rem}
+.ex-body p{line-height:1.85}
+.ex-body ul{padding-left:1.4rem}
+.ex-body li{margin-bottom:.4rem;line-height:1.8}
+.code-wrap{position:relative;border-radius:10px;overflow:hidden;margin:.25rem 0}
+.code-label{background:#1e293b;color:#64748b;font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:.4rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.code-label span{color:#94a3b8}
+pre[class*=language-]{margin:0!important;border-radius:0!important;font-size:.83rem!important;line-height:1.65!important;padding:1rem 1.25rem!important}
+.copy-btn{background:#334155;border:none;color:#94a3b8;padding:.22rem .6rem;border-radius:5px;font-size:.72rem;cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif}
+.copy-btn:hover{background:var(--primary);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff}
+.alert{border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem;font-size:.92rem}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
+.alert.info{background:var(--blue-light);border-left:4px solid var(--blue)}
+.alert.warning{background:var(--primary-light);border-left:4px solid var(--primary)}
+.alert.success{background:var(--green-light);border-left:4px solid var(--green)}
+.alert.tip{background:var(--purple-light);border-left:4px solid var(--purple)}
+.alert.danger{background:var(--red-light);border-left:4px solid var(--red)}
+.alert strong{display:block;margin-bottom:.2rem}
+.task-table{width:100%;border-collapse:collapse;font-size:.87rem}
+.task-table th{background:#1e293b;color:#e2e8f0;padding:.65rem 1rem;text-align:left;font-size:.8rem;font-weight:700}
+.task-table td{padding:.65rem 1rem;border-bottom:1px solid var(--border);vertical-align:top}
+.task-table tr:nth-child(even) td{background:#fafafa}
+.task-table input[type=text]{width:100%;padding:.3rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Sarabun',sans-serif;font-size:.85rem;background:#fff}
+.task-table input[type=text]:focus{outline:none;border-color:var(--primary)}
+.blank{display:inline-block;border-bottom:2px solid var(--primary);min-width:100px;height:1.2em;vertical-align:bottom}
+.blank-input{display:inline;border:none;border-bottom:2px solid var(--primary);min-width:80px;font-family:'JetBrains Mono',monospace;font-size:.83rem;background:transparent;color:var(--blue);font-weight:700}
+.blank-input:focus{outline:none;border-bottom-color:var(--green)}
+.scaffold-code{background:#0f172a;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.83rem;line-height:1.8}
+.sc-dim{color:#475569}
+.sc-blank{color:#fcd34d;font-weight:700}
+.sc-normal{color:#e2e8f0}
+.sc-green{color:#86efac}
+.sc-comment{color:#64748b;font-style:italic}
+.answer-toggle{background:var(--primary-light);border:1px solid var(--primary);color:var(--primary-dark);border-radius:8px;padding:.4rem 1rem;font-size:.84rem;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .2s;margin-top:.5rem}
+.answer-toggle:hover{background:var(--primary);color:#fff}
+.answer-box{display:none;margin-top:.75rem;border-radius:10px;overflow:hidden}
+.answer-box.show{display:block}
+.debug-box{background:#0f172a;border:2px solid #dc2626;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.83rem;line-height:1.8}
+.db-fail{color:#f87171}
+.db-normal{color:#e2e8f0}
+.db-comment{color:#64748b}
+.db-bug{color:#fbbf24;text-decoration:underline wavy red}
+.rubric-table{width:100%;border-collapse:collapse;font-size:.87rem}
+.rubric-table th{background:#1e293b;color:#e2e8f0;padding:.65rem 1rem;text-align:left;font-size:.8rem}
+.rubric-table td{padding:.65rem 1rem;border-bottom:1px solid var(--border)}
+.rubric-table tr:nth-child(even) td{background:#fafafa}
+.score-cell{font-weight:700;text-align:center}
+.nav-bottom{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:2rem}
+.nav-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:700;font-size:.88rem;transition:all .2s}
+.nav-btn.finish{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+.nav-btn.finish:hover{opacity:.9}
+.nav-btn.prev{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.nav-btn.prev:hover{background:#e2e8f0}
+.congrats{background:linear-gradient(135deg,#052e16,#065f46,#059669);color:#fff;border-radius:16px;padding:2rem;text-align:center;margin-top:1rem}
+.congrats h2{font-size:1.5rem;font-weight:800;margin-bottom:.5rem}
+.congrats p{opacity:.85;line-height:1.7}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<div class="site-header">
+  <div class="nav-top">
+    <a href="index.html" class="back-link">← ภาพรวม</a>
+    <a href="../index.html" class="back-link">🏠 Labs</a>
+  </div>
+  <div class="part-badge">🧪 ใบกิจกรรม Unit Testing · ScoreCalc</div>
+  <h1>Part 4 — ออกแบบ Test ด้วยตัวเอง</h1>
+  <p class="subtitle">แบบฝึกหัด 5 ข้อ: ออกแบบ Test Cases, เติมโค้ด, เขียนเอง, Debug และ Challenge</p>
+  <div class="header-meta">
+    <span class="meta-chip">✏️ 5 Exercises</span>
+    <span class="meta-chip">⏱ ~45 นาที</span>
+    <span class="meta-chip">💡 25 คะแนน</span>
+  </div>
+</div>
+
+<div class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1: เริ่มต้น</a>
+  <a href="activity-part2.html" class="part-btn">Part 2: Jest In Depth</a>
+  <a href="activity-part3.html" class="part-btn">Part 3: API Testing</a>
+  <a href="activity-part4.html" class="part-btn active">Part 4: แบบฝึกหัด</a>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-title">แบบฝึกหัด</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#exA"><span class="toc-num" style="font-style:normal">A</span>ออกแบบ Test Cases</a></li>
+        <li class="toc-item"><a href="#exB"><span class="toc-num" style="font-style:normal">B</span>เติมโค้ด expect</a></li>
+        <li class="toc-item"><a href="#exC"><span class="toc-num" style="font-style:normal">C</span>เขียน Test Suite</a></li>
+        <li class="toc-item"><a href="#exD"><span class="toc-num" style="font-style:normal">D</span>Debug Failing Test</a></li>
+        <li class="toc-item"><a href="#exE"><span class="toc-num" style="font-style:normal">E</span>Challenge: API Test</a></li>
+        <li class="toc-item"><a href="#rubric"><span class="toc-num">📋</span>เกณฑ์คะแนน</a></li>
+      </ul>
+    </div>
+    <div class="sb-card">
+      <div class="sb-title">คะแนนรวม</div>
+      <div style="font-size:2rem;font-weight:800;color:var(--primary);text-align:center;padding:.5rem">25</div>
+      <div style="text-align:center;font-size:.8rem;color:var(--muted)">คะแนน Part 4</div>
+    </div>
+  </nav>
+
+  <main class="content">
+
+    <!-- EXERCISE A -->
+    <div class="ex-card" id="exA">
+      <div class="ex-header a">
+        <div class="ex-num num-a">A</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label label-a">แบบฝึกหัด A — 5 คะแนน</div>
+          <div class="ex-title">ออกแบบ Test Cases (ตาราง)</div>
+        </div>
+        <div class="ex-score score-a">5 คะแนน</div>
+      </div>
+      <div class="ex-body">
+        <p>อ่านฟังก์ชันด้านล่างให้เข้าใจ แล้ว <strong>ออกแบบ Test Cases</strong> ให้ครอบคลุมโดยเติมลงในตาราง — คิดถึงทั้ง normal cases และ edge cases</p>
+
+        <h4>ฟังก์ชันที่ต้องออกแบบ Test</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>ฟังก์ชัน isPassScore()</span></div>
+          <pre class="language-javascript"><code>/**
+ * ตรวจสอบว่านักเรียนผ่านเกณฑ์หรือไม่
+ * @param {number} score - คะแนนที่ได้ (0-100)
+ * @param {number} passThreshold - เกณฑ์ผ่าน (ค่า default = 50)
+ * @returns {boolean} true ถ้าผ่าน, false ถ้าไม่ผ่าน
+ * @throws {Error} ถ้า score ไม่ใช่ตัวเลขหรืออยู่นอกช่วง 0-100
+ */
+function isPassScore(score, passThreshold = 50) {
+  if (typeof score !== 'number' || score < 0 || score > 100) {
+    throw new Error('Invalid score');
+  }
+  return score >= passThreshold;
+}</code></pre>
+        </div>
+
+        <h4>เติม Test Cases ลงในตาราง</h4>
+        <p>สำหรับแต่ละ row ให้เติม: ชื่อ test (<em>it should...</em>), ค่า input, ค่าที่คาดหวัง และ matcher ที่จะใช้</p>
+        <table class="task-table">
+          <tr>
+            <th>#</th>
+            <th>ชื่อ Test (it should...)</th>
+            <th>score</th>
+            <th>passThreshold</th>
+            <th>Expected</th>
+            <th>Matcher</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><input type="text" placeholder="เช่น return true เมื่อ..."/></td>
+            <td><input type="text" placeholder="เช่น 75"/></td>
+            <td><input type="text" placeholder="(default)"/></td>
+            <td><input type="text" placeholder="true/false"/></td>
+            <td><input type="text" placeholder=".toBe(...)"/></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><input type="text" placeholder="ขอบล่างของการผ่าน..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><input type="text" placeholder="ขอบล่างของการไม่ผ่าน..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><input type="text" placeholder="ใช้ passThreshold ที่กำหนดเอง..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" placeholder="เช่น 60"/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><input type="text" placeholder="score = 0..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><input type="text" placeholder="score = 100..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><input type="text" placeholder="score เป็น string..."/></td>
+            <td><input type="text" placeholder='"abc"'/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" placeholder="throws Error"/></td>
+            <td><input type="text" placeholder=".toThrow(...)"/></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><input type="text" placeholder="score = -1 (ออกนอกช่วง)..."/></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+            <td><input type="text" /></td>
+          </tr>
+        </table>
+
+        <button class="answer-toggle" onclick="toggleAnswer('ansA')">ดูเฉลย Exercise A</button>
+        <div id="ansA" class="answer-box">
+          <div class="code-wrap">
+            <div class="code-label"><span>เฉลย — ตัวอย่าง Test Cases</span></div>
+            <pre class="language-javascript"><code>describe('isPassScore()', () => {
+  // 1. Normal pass — default threshold 50
+  it('should return true when score >= 50 (default)', () => {
+    expect(isPassScore(75)).toBe(true);
+  });
+
+  // 2. Boundary — ขอบล่างของการผ่าน
+  it('should return true when score equals threshold exactly (50)', () => {
+    expect(isPassScore(50)).toBe(true);
+  });
+
+  // 3. Boundary — ขอบล่างของการไม่ผ่าน
+  it('should return false when score is 1 below threshold (49)', () => {
+    expect(isPassScore(49)).toBe(false);
+  });
+
+  // 4. Custom threshold
+  it('should use custom passThreshold when provided', () => {
+    expect(isPassScore(55, 60)).toBe(false); // 55 < 60
+    expect(isPassScore(60, 60)).toBe(true);  // 60 >= 60
+  });
+
+  // 5. Edge case — score = 0
+  it('should return false when score = 0', () => {
+    expect(isPassScore(0)).toBe(false);
+  });
+
+  // 6. Edge case — score = 100
+  it('should return true when score = 100', () => {
+    expect(isPassScore(100)).toBe(true);
+  });
+
+  // 7. Error — string input
+  it('should throw Error when score is a string', () => {
+    expect(() => isPassScore('abc')).toThrow(Error);
+  });
+
+  // 8. Error — negative score
+  it('should throw Error when score is negative', () => {
+    expect(() => isPassScore(-1)).toThrow('Invalid score');
+  });
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE B -->
+    <div class="ex-card" id="exB">
+      <div class="ex-header b">
+        <div class="ex-num num-b">B</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label label-b">แบบฝึกหัด B — 5 คะแนน</div>
+          <div class="ex-title">เติมโค้ด expect ให้สมบูรณ์</div>
+        </div>
+        <div class="ex-score score-b">5 คะแนน</div>
+      </div>
+      <div class="ex-body">
+        <p>โค้ด test ด้านล่างยังไม่สมบูรณ์ — <strong>เติม expect statement</strong> ให้ถูกต้อง (ช่องสีเหลืองคือส่วนที่ต้องเติม) พิมพ์คำตอบในกล่อง input</p>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div><strong>ข้อมูล</strong>ฟังก์ชัน <code>formatScore(score, name)</code> คืนค่า string ในรูปแบบ <code>"[ชื่อ]: XX คะแนน (เกรด Y)"</code> เช่น <code>"สมชาย: 85 คะแนน (เกรด A)"</code></div>
+        </div>
+
+        <h4>โค้ดที่ต้องเติม</h4>
+        <div class="scaffold-code">
+<span class="sc-comment">// src/utils/formatter.js</span>
+<span class="sc-normal">function formatScore(score, name) {</span>
+<span class="sc-normal">  const grade = getGrade(score);</span>
+<span class="sc-normal">  return `${name}: ${score} คะแนน (เกรด ${grade})`;</span>
+<span class="sc-normal">}</span>
+<br/>
+<span class="sc-comment">// tests/formatter.test.js</span>
+<span class="sc-normal">describe('formatScore()', () => {</span>
+<br/>
+<span class="sc-comment">  // B1: ตรวจว่า output เป็น string ที่ถูกต้อง</span>
+<span class="sc-normal">  it('should format score with name and grade correctly', () => {</span>
+<span class="sc-normal">    const result = formatScore(85, 'สมชาย');</span>
+<span class="sc-normal">    </span><span class="sc-blank">expect(result).toBe( ___?___ );</span>
+<span class="sc-normal">  });</span>
+<br/>
+<span class="sc-comment">  // B2: ตรวจว่า output เป็น string</span>
+<span class="sc-normal">  it('should return a string', () => {</span>
+<span class="sc-normal">    const result = formatScore(72, 'สมหญิง');</span>
+<span class="sc-normal">    </span><span class="sc-blank">expect(typeof result).toBe( ___?___ );</span>
+<span class="sc-normal">  });</span>
+<br/>
+<span class="sc-comment">  // B3: ตรวจว่า output มีชื่อนักเรียน</span>
+<span class="sc-normal">  it('should contain the student name', () => {</span>
+<span class="sc-normal">    const result = formatScore(60, 'มานะ');</span>
+<span class="sc-normal">    </span><span class="sc-blank">expect(result).toContain( ___?___ );</span>
+<span class="sc-normal">  });</span>
+<br/>
+<span class="sc-comment">  // B4: ตรวจว่า output มีตัวเลขคะแนน</span>
+<span class="sc-normal">  it('should contain the score number', () => {</span>
+<span class="sc-normal">    const result = formatScore(45, 'สุดา');</span>
+<span class="sc-normal">    </span><span class="sc-blank">expect(result).toMatch( ___regex___ );</span>
+<span class="sc-normal">  });</span>
+<br/>
+<span class="sc-normal">});</span></div>
+
+        <h4>พิมพ์คำตอบที่จะเติมใน ___ :</h4>
+        <table class="task-table">
+          <tr><th>#</th><th>ช่อง ___?___</th><th>คำตอบของคุณ</th></tr>
+          <tr><td>B1</td><td><code>toBe( ___?___ )</code></td><td><input type="text" placeholder="พิมพ์ค่าที่ถูกต้อง..."/></td></tr>
+          <tr><td>B2</td><td><code>typeof result).toBe( ___?___ )</code></td><td><input type="text" placeholder="พิมพ์ชนิดข้อมูล..."/></td></tr>
+          <tr><td>B3</td><td><code>toContain( ___?___ )</code></td><td><input type="text" placeholder="พิมพ์ค่าที่ต้องมี..."/></td></tr>
+          <tr><td>B4</td><td><code>toMatch( ___regex___ )</code></td><td><input type="text" placeholder="เช่น /45/"/></td></tr>
+        </table>
+
+        <button class="answer-toggle" onclick="toggleAnswer('ansB')">ดูเฉลย Exercise B</button>
+        <div id="ansB" class="answer-box">
+          <div class="code-wrap">
+            <div class="code-label"><span>เฉลย Exercise B</span></div>
+            <pre class="language-javascript"><code>// B1: ค่าที่ถูกต้องคือ string ที่ format ครบ
+expect(result).toBe('สมชาย: 85 คะแนน (เกรด A)');
+
+// B2: typeof string คือ 'string'
+expect(typeof result).toBe('string');
+
+// B3: ต้องมีชื่อ 'มานะ' ใน output
+expect(result).toContain('มานะ');
+
+// B4: ใช้ regex ตรวจตัวเลข 45 ใน output
+expect(result).toMatch(/45/);</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE C -->
+    <div class="ex-card" id="exC">
+      <div class="ex-header c">
+        <div class="ex-num num-c">C</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label label-c">แบบฝึกหัด C — 5 คะแนน</div>
+          <div class="ex-title">เขียน Test Suite เองทั้งหมด</div>
+        </div>
+        <div class="ex-score score-c">5 คะแนน</div>
+      </div>
+      <div class="ex-body">
+        <p>อ่านฟังก์ชัน <code>getTopScorer()</code> ด้านล่าง แล้ว <strong>เขียน Test Suite ทั้งหมด</strong> ด้วยตัวเอง ไฟล์ test ควรมีอย่างน้อย <strong>6 test cases</strong> ครอบคลุมทั้ง normal และ edge cases</p>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>src/utils/scores.js — อ่านแล้วเขียน test</span></div>
+          <pre class="language-javascript"><code>/**
+ * หาผู้ที่ได้คะแนนสูงสุดจาก array ของ objects
+ * @param {Array} students - Array ของ {name: string, score: number}
+ * @returns {object} student object ที่มีคะแนนสูงสุด
+ * @throws {Error} ถ้า students ว่างหรือไม่ใช่ Array
+ *
+ * ตัวอย่าง:
+ *   getTopScorer([{name:'A', score:80}, {name:'B', score:90}])
+ *   → {name:'B', score:90}
+ *
+ * กรณีคะแนนเท่ากัน คืน student ตัวแรกที่พบ
+ */
+function getTopScorer(students) {
+  if (!Array.isArray(students) || students.length === 0) {
+    throw new Error('students ต้องเป็น Array ที่ไม่ว่าง');
+  }
+  return students.reduce((top, current) =>
+    current.score > top.score ? current : top
+  );
+}
+
+module.exports = { getTopScorer };</code></pre>
+        </div>
+
+        <h4>เขียน Test Suite ของคุณที่นี่ (ในไฟล์จริง)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/scores.test.js — เขียนเองทั้งหมด</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { getTopScorer } = require('../src/utils/scores');
+
+describe('getTopScorer()', () => {
+
+  // เขียน test cases ของคุณที่นี่
+  // ต้องมีอย่างน้อย 6 cases ครอบคลุม:
+  // 1. Normal case — array ปกติ
+  // 2. คนเดียวใน array
+  // 3. คะแนนเท่ากัน — ต้องได้คนแรก
+  // 4. คนสุดท้ายมีคะแนนสูงสุด
+  // 5. Error — array ว่าง
+  // 6. Error — ไม่ใช่ Array
+
+});</code></pre>
+        </div>
+
+        <button class="answer-toggle" onclick="toggleAnswer('ansC')">ดูเฉลย Exercise C</button>
+        <div id="ansC" class="answer-box">
+          <div class="code-wrap">
+            <div class="code-label"><span>เฉลย Exercise C</span></div>
+            <pre class="language-javascript"><code>const { getTopScorer } = require('../src/utils/scores');
+
+describe('getTopScorer()', () => {
+
+  it('คืนผู้ที่มีคะแนนสูงสุดจาก array ปกติ', () => {
+    // Arrange
+    const students = [
+      { name: 'สมชาย', score: 80 },
+      { name: 'สมหญิง', score: 95 },
+      { name: 'มานะ', score: 72 },
+    ];
+    // Act
+    const top = getTopScorer(students);
+    // Assert
+    expect(top.name).toBe('สมหญิง');
+    expect(top.score).toBe(95);
+  });
+
+  it('คืน object นักเรียนทั้งหมด (ไม่ใช่แค่ชื่อ)', () => {
+    const students = [{ name: 'A', score: 90 }, { name: 'B', score: 70 }];
+    const top = getTopScorer(students);
+    expect(top).toEqual({ name: 'A', score: 90 });
+  });
+
+  it('array ที่มีคนเดียว — คืนคนนั้น', () => {
+    const students = [{ name: 'สุดา', score: 65 }];
+    const top = getTopScorer(students);
+    expect(top.name).toBe('สุดา');
+  });
+
+  it('คะแนนเท่ากัน — คืนคนแรก', () => {
+    const students = [
+      { name: 'ก', score: 90 },
+      { name: 'ข', score: 90 },
+    ];
+    expect(getTopScorer(students).name).toBe('ก');
+  });
+
+  it('คนสุดท้ายมีคะแนนสูงสุด', () => {
+    const students = [
+      { name: 'A', score: 60 },
+      { name: 'B', score: 70 },
+      { name: 'C', score: 85 },
+    ];
+    expect(getTopScorer(students).score).toBe(85);
+  });
+
+  it('throw Error เมื่อ array ว่าง', () => {
+    expect(() => getTopScorer([])).toThrow(Error);
+  });
+
+  it('throw Error เมื่อ input ไม่ใช่ Array', () => {
+    expect(() => getTopScorer(null)).toThrow('students ต้องเป็น Array ที่ไม่ว่าง');
+    expect(() => getTopScorer('ไม่ใช่ array')).toThrow();
+  });
+
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE D -->
+    <div class="ex-card" id="exD">
+      <div class="ex-header d">
+        <div class="ex-num num-d">D</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label label-d">แบบฝึกหัด D — 5 คะแนน</div>
+          <div class="ex-title">Debug — ทำไม Test ถึง Fail?</div>
+        </div>
+        <div class="ex-score score-d">5 คะแนน</div>
+      </div>
+      <div class="ex-body">
+        <p>Test ทั้ง 4 ข้อด้านล่าง <strong>Fail ทั้งหมด</strong> ให้ตอบคำถาม: <em>ทำไมจึง fail?</em> และ <em>จะแก้ยังไง?</em></p>
+
+        <h4>Test D1 — ทำไม Fail?</h4>
+        <div class="debug-box">
+<span class="db-comment">// Test:</span>
+<span class="db-normal">test('object เท่ากัน', () => {</span>
+<span class="db-normal">  const a = { name: 'สมชาย', score: 85 };</span>
+<span class="db-normal">  const b = { name: 'สมชาย', score: 85 };</span>
+<span class="db-bug">  expect(a).toBe(b);</span>
+<span class="db-normal">});</span></div>
+        <p>สาเหตุ: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนสาเหตุ..."/></p>
+        <p>วิธีแก้: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนวิธีแก้..."/></p>
+
+        <h4>Test D2 — ทำไม Fail?</h4>
+        <div class="debug-box">
+<span class="db-comment">// Test:</span>
+<span class="db-normal">test('ทดสอบ error', () => {</span>
+<span class="db-bug">  expect(divide(10, 0)).toThrow('ไม่สามารถหารด้วย 0 ได้');</span>
+<span class="db-normal">});</span></div>
+        <p>สาเหตุ: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนสาเหตุ..."/></p>
+        <p>วิธีแก้: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนวิธีแก้..."/></p>
+
+        <h4>Test D3 — ทำไม Fail?</h4>
+        <div class="debug-box">
+<span class="db-comment">// Test:</span>
+<span class="db-normal">test('average ของเลขทศนิยม', () => {</span>
+<span class="db-normal">  const result = average([0.1, 0.2]);</span>
+<span class="db-bug">  expect(result).toBe(0.3); // 0.1 + 0.2 = ?</span>
+<span class="db-normal">});</span></div>
+        <p>สาเหตุ: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนสาเหตุ..."/></p>
+        <p>วิธีแก้: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนวิธีแก้..."/></p>
+
+        <h4>Test D4 — ทำไม Fail?</h4>
+        <div class="debug-box">
+<span class="db-comment">// ฟังก์ชัน:</span>
+<span class="db-normal">function greetStudent(name) {</span>
+<span class="db-normal">  return `สวัสดี ${name}!`;</span>
+<span class="db-normal">}</span>
+<span class="db-comment">// Test:</span>
+<span class="db-normal">test('greet ถูกต้อง', () => {</span>
+<span class="db-normal">  const result = greetStudent('สมชาย');</span>
+<span class="db-bug">  expect(result).toBe('สวัสดี สมชาย'); // ขาดอะไรสักอย่าง?</span>
+<span class="db-normal">});</span></div>
+        <p>สาเหตุ: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนสาเหตุ..."/></p>
+        <p>วิธีแก้: <input type="text" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px;margin-top:.4rem;font-family:Sarabun" placeholder="เขียนวิธีแก้..."/></p>
+
+        <button class="answer-toggle" onclick="toggleAnswer('ansD')">ดูเฉลย Exercise D</button>
+        <div id="ansD" class="answer-box">
+          <div class="code-wrap">
+            <div class="code-label"><span>เฉลย Exercise D</span></div>
+            <pre class="language-javascript"><code>// D1: ทำไม Fail?
+// สาเหตุ: .toBe() ใช้ === ซึ่งเปรียบที่ reference ไม่ใช่ค่าภายใน
+//         a และ b เป็น object คนละตัวในหน่วยความจำ
+// วิธีแก้: ใช้ .toEqual() แทน
+expect(a).toEqual(b); // ✅
+
+// D2: ทำไม Fail?
+// สาเหตุ: expect(fn()).toThrow() ต้องรับ FUNCTION ที่จะ throw
+//         ถ้าเรียก divide(10, 0) ตรงๆ มันจะ throw ก่อนที่ expect จะรับ
+//         ทำให้ test crash แทนที่จะ fail แบบปกติ
+// วิธีแก้: ห่อด้วย arrow function
+expect(() => divide(10, 0)).toThrow('ไม่สามารถหารด้วย 0 ได้'); // ✅
+
+// D3: ทำไม Fail?
+// สาเหตุ: Floating Point Precision — ใน JavaScript
+//         0.1 + 0.2 = 0.30000000000000004 (ไม่ใช่ 0.3 พอดี!)
+// วิธีแก้: ใช้ .toBeCloseTo() สำหรับทศนิยม
+expect(result).toBeCloseTo(0.3); // ✅
+
+// D4: ทำไม Fail?
+// สาเหตุ: ฟังก์ชันคืน 'สวัสดี สมชาย!' (มีเครื่องหมาย !)
+//         แต่ test ตรวจ 'สวัสดี สมชาย' (ไม่มี !)
+// วิธีแก้: เติม ! ใน expected value
+expect(result).toBe('สวัสดี สมชาย!'); // ✅</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE E -->
+    <div class="ex-card" id="exE">
+      <div class="ex-header e">
+        <div class="ex-num num-e">E</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label label-e">แบบฝึกหัด E — Challenge — 5 คะแนน</div>
+          <div class="ex-title" style="color:#e2e8f0">เขียน API Test ด้วย Supertest</div>
+        </div>
+        <div class="ex-score score-e">5 คะแนน</div>
+      </div>
+      <div class="ex-body">
+        <p>เพิ่ม endpoint ใหม่ <strong>GET /api/class-summary</strong> ใน <code>app.js</code> แล้ว <strong>เขียน test ให้ครอบคลุม</strong> ทั้ง happy path และ error cases</p>
+
+        <h4>1. เพิ่ม Endpoint ใน src/app.js</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/app.js — เพิ่มต่อจากเดิม</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// GET /api/class-summary?scores=85,72,60,90,45
+// รับคะแนนเป็น comma-separated string
+// คืนค่า: { count, average, highest, lowest, gradeDistribution }
+app.get('/api/class-summary', (req, res) => {
+  const { scores: scoresStr } = req.query;
+
+  if (!scoresStr) {
+    return res.status(400).json({ error: 'ต้องส่ง scores parameter' });
+  }
+
+  const scores = scoresStr.split(',').map(Number);
+
+  if (scores.some(isNaN)) {
+    return res.status(400).json({ error: 'scores ต้องเป็นตัวเลขทั้งหมด' });
+  }
+
+  const avg = average(scores);
+  const highest = Math.max(...scores);
+  const lowest = Math.min(...scores);
+
+  const gradeDistribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+  scores.forEach(s => {
+    const g = getGrade(s);
+    gradeDistribution[g]++;
+  });
+
+  res.json({
+    count: scores.length,
+    average: avg,
+    highest,
+    lowest,
+    gradeDistribution,
+  });
+});</code></pre>
+        </div>
+
+        <h4>2. เขียน Test Suite (ต้องมีอย่างน้อย 5 test cases)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/api.test.js — เพิ่ม describe block ใหม่</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>describe('GET /api/class-summary', () => {
+
+  // เขียน test cases ของคุณที่นี่
+  // คิดถึง:
+  // 1. Happy path — ส่ง scores ปกติ, ตรวจสอบ response fields
+  // 2. ตรวจสอบค่า average, highest, lowest
+  // 3. ตรวจสอบ gradeDistribution
+  // 4. Error — ไม่ส่ง scores parameter
+  // 5. Error — ส่ง scores ที่ไม่ใช่ตัวเลข
+
+});</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div><strong>Hint: ตัวอย่าง URL ที่จะทดสอบ</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>GET /api/class-summary?scores=85,72,60,90,45</code></li>
+            <li><code>GET /api/class-summary</code> (ไม่ส่ง parameter)</li>
+            <li><code>GET /api/class-summary?scores=abc,def</code> (ตัวเลขผิด)</li>
+          </ul></div>
+        </div>
+
+        <button class="answer-toggle" onclick="toggleAnswer('ansE')">ดูเฉลย Exercise E</button>
+        <div id="ansE" class="answer-box">
+          <div class="code-wrap">
+            <div class="code-label"><span>เฉลย Exercise E</span></div>
+            <pre class="language-javascript"><code>describe('GET /api/class-summary', () => {
+
+  it('คืน summary ที่ถูกต้องจาก scores ปกติ', async () => {
+    const res = await request(app)
+      .get('/api/class-summary?scores=85,72,60,90,45');
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(5);
+    expect(res.body.highest).toBe(90);
+    expect(res.body.lowest).toBe(45);
+  });
+
+  it('คำนวณ average ได้ถูกต้อง', async () => {
+    const res = await request(app)
+      .get('/api/class-summary?scores=80,90,70');
+
+    expect(res.status).toBe(200);
+    expect(res.body.average).toBe(80);
+  });
+
+  it('gradeDistribution ต้องมี fields ครบ', async () => {
+    const res = await request(app)
+      .get('/api/class-summary?scores=85,72,60,50,45');
+
+    expect(res.body).toHaveProperty('gradeDistribution');
+    const dist = res.body.gradeDistribution;
+    expect(dist).toHaveProperty('A');
+    expect(dist).toHaveProperty('F');
+    expect(dist.A).toBe(1); // 85 = A
+    expect(dist.F).toBe(1); // 45 = F
+  });
+
+  it('scores เดียว — summary ถูกต้อง', async () => {
+    const res = await request(app)
+      .get('/api/class-summary?scores=100');
+
+    expect(res.body.count).toBe(1);
+    expect(res.body.highest).toBe(100);
+    expect(res.body.lowest).toBe(100);
+  });
+
+  it('ไม่ส่ง scores parameter ต้องได้ 400', async () => {
+    const res = await request(app)
+      .get('/api/class-summary');
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('ส่ง scores ที่ไม่ใช่ตัวเลขต้องได้ 400', async () => {
+    const res = await request(app)
+      .get('/api/class-summary?scores=abc,def');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('ตัวเลข');
+  });
+
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RUBRIC -->
+    <div class="ex-card" id="rubric">
+      <div class="ex-header" style="background:linear-gradient(135deg,#0f172a,#1e293b)">
+        <div class="ex-num" style="background:linear-gradient(135deg,#f59e0b,#d97706)">📋</div>
+        <div class="ex-title-wrap">
+          <div class="ex-label" style="color:#fcd34d">เกณฑ์การให้คะแนน</div>
+          <div class="ex-title" style="color:#e2e8f0">Rubric — Part 4 ทั้งหมด 25 คะแนน</div>
+        </div>
+      </div>
+      <div class="ex-body">
+        <table class="rubric-table">
+          <tr>
+            <th>Exercise</th>
+            <th>เกณฑ์</th>
+            <th style="text-align:center">คะแนน</th>
+          </tr>
+          <tr>
+            <td><strong>A — ออกแบบ Test Cases</strong></td>
+            <td>
+              <ul style="margin:0;padding-left:1.2rem;font-size:.84rem">
+                <li>5 คะแนน: ครอบคลุมทั้ง normal, boundary และ error cases (6+ rows)</li>
+                <li>3-4 คะแนน: ครอบคลุม normal และ boundary แต่ error ไม่ครบ</li>
+                <li>1-2 คะแนน: มีเฉพาะ normal cases</li>
+                <li>0 คะแนน: ไม่ทำหรือผิดทั้งหมด</li>
+              </ul>
+            </td>
+            <td class="score-cell">5</td>
+          </tr>
+          <tr>
+            <td><strong>B — เติมโค้ด</strong></td>
+            <td>
+              <ul style="margin:0;padding-left:1.2rem;font-size:.84rem">
+                <li>5 คะแนน: ถูกทุกช่อง (4/4)</li>
+                <li>3-4 คะแนน: ถูก 3/4 ช่อง</li>
+                <li>1-2 คะแนน: ถูก 1-2/4 ช่อง</li>
+                <li>0 คะแนน: ไม่ทำหรือผิดทั้งหมด</li>
+              </ul>
+            </td>
+            <td class="score-cell">5</td>
+          </tr>
+          <tr>
+            <td><strong>C — เขียน Test Suite</strong></td>
+            <td>
+              <ul style="margin:0;padding-left:1.2rem;font-size:.84rem">
+                <li>5 คะแนน: ≥6 tests, ผ่านทุกตัว, ใช้ AAA Pattern, ครอบคลุม edge cases</li>
+                <li>3-4 คะแนน: 4-5 tests ผ่าน หรือไม่ครบ edge cases</li>
+                <li>1-2 คะแนน: มีแต่ไม่ผ่าน หรือ &lt;4 tests</li>
+                <li>0 คะแนน: ไม่ทำ</li>
+              </ul>
+            </td>
+            <td class="score-cell">5</td>
+          </tr>
+          <tr>
+            <td><strong>D — Debug</strong></td>
+            <td>
+              <ul style="margin:0;padding-left:1.2rem;font-size:.84rem">
+                <li>5 คะแนน: อธิบายสาเหตุและวิธีแก้ถูกทุกข้อ (4/4)</li>
+                <li>3-4 คะแนน: ถูก 3/4 ข้อ</li>
+                <li>1-2 คะแนน: ถูก 1-2/4 ข้อ</li>
+                <li>0 คะแนน: ไม่ทำ</li>
+              </ul>
+            </td>
+            <td class="score-cell">5</td>
+          </tr>
+          <tr>
+            <td><strong>E — Challenge API Test</strong></td>
+            <td>
+              <ul style="margin:0;padding-left:1.2rem;font-size:.84rem">
+                <li>5 คะแนน: ≥5 tests ผ่านทั้ง happy path และ error cases</li>
+                <li>3-4 คะแนน: ≥3 tests ผ่าน</li>
+                <li>1-2 คะแนน: เขียน test แต่ไม่ผ่าน</li>
+                <li>0 คะแนน: ไม่ทำ</li>
+              </ul>
+            </td>
+            <td class="score-cell">5</td>
+          </tr>
+          <tr style="background:#f0fdf4">
+            <td><strong>รวม</strong></td>
+            <td><strong>ผ่าน ≥ 18/25 คะแนน (72%)</strong></td>
+            <td class="score-cell" style="color:#059669;font-size:1.1rem">25</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONGRATS -->
+    <div class="congrats">
+      <h2>🎉 จบกิจกรรม Unit Testing แล้ว!</h2>
+      <p>คุณได้เรียนรู้การเขียน Unit Test ตั้งแต่ฐานจนถึงการทดสอบ API จริง<br>นำความรู้นี้ไปใช้ใน CI Pipeline ของโปรเจกต์จริงใน Week 5-6 ได้เลย!</p>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="nav-bottom">
+      <a href="activity-part3.html" class="nav-btn prev">← Part 3: API Testing</a>
+      <a href="index.html" class="nav-btn finish">กลับหน้าภาพรวม ✓</a>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function toggleAnswer(id) {
+  const box = document.getElementById(id);
+  box.classList.toggle('show');
+  const btn = box.previousElementSibling;
+  btn.textContent = box.classList.contains('show') ? 'ซ่อนเฉลย' : 'ดูเฉลย Exercise ' + id.replace('ans','');
+}
+window.addEventListener('scroll', () => {
+  const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('prog').style.width = p + '%';
+  document.querySelectorAll('.ex-card').forEach(el => {
+    const a = document.querySelector(`.toc-item a[href="#${el.id}"]`);
+    if (!a) return;
+    const r = el.getBoundingClientRect();
+    if (r.top <= 120 && r.bottom > 120) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>

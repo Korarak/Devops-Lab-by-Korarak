@@ -86,6 +86,8 @@
     .lab-card.final-activity { --accent: #f472b6; --gradient: linear-gradient(90deg,#7c3aed,#0ea5e9,#10b981); }
     .activity-banner { background: linear-gradient(90deg,#7c3aed,#0ea5e9,#10b981); border-radius: 10px; padding: .5rem 1rem; margin-bottom: 1rem; font-size: .8rem; font-weight: 700; color: #fff; letter-spacing: .05em; text-align: center; }
     .lab-card.week6 { --accent: #a78bfa; --gradient: linear-gradient(90deg,#7c3aed,#8b5cf6); }
+    .lab-card.unittest { --accent: #34d399; --gradient: linear-gradient(90deg,#059669,#0891b2); }
+    .unittest-banner { background: linear-gradient(90deg,#059669,#0891b2); border-radius: 10px; padding: .5rem 1rem; margin-bottom: 1rem; font-size: .8rem; font-weight: 700; color: #fff; letter-spacing: .05em; text-align: center; }
 
     .theory-section { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 3rem; }
     .theory-section h2 { font-size: 1.15rem; font-weight: 700; color: #94a3b8; margin-bottom: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
@@ -372,6 +374,34 @@
         <div class="lab-footer">
           <span class="lab-time">⏱ 5 ชั่วโมง | 15 ขั้นตอน</span>
           <span class="lab-btn">เปิด Tutorial →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- UNIT TEST ACTIVITY -->
+    <a class="lab-card unittest" href="unit-test-activity/index.html" style="grid-column: 1 / -1; border: 2px solid #059669;">
+      <div class="lab-card-banner"></div>
+      <div class="lab-card-body">
+        <div class="unittest-banner">🧪 ใบกิจกรรม Unit Testing — 4 Parts | 100 คะแนน | ระดับเริ่มต้น</div>
+        <div class="lab-title">ScoreCalc — เรียน Unit Testing ตั้งแต่ 0</div>
+        <div class="lab-desc">ใบกิจกรรม step-by-step สำหรับผู้เริ่มต้น: ตั้งแต่ Unit Testing คืออะไร → Jest In Depth → API Testing กับ Supertest → แบบฝึกหัดออกแบบ Test Cases ด้วยตัวเอง โปรเจกต์ใช้ ScoreCalc (API คำนวณคะแนน-เกรด)</div>
+        <div class="lab-chips">
+          <span class="chip">Jest</span>
+          <span class="chip">Supertest</span>
+          <span class="chip">AAA Pattern</span>
+          <span class="chip">Edge Cases</span>
+          <span class="chip">Code Coverage</span>
+          <span class="chip">Express.js</span>
+        </div>
+        <ul class="lab-outcomes">
+          <li><strong>Part 1</strong>: Unit Testing คืออะไร + Testing Pyramid + ติดตั้ง Jest + Test แรก (5 Steps) — 25 คะแนน</li>
+          <li><strong>Part 2</strong>: AAA Pattern + describe/it + Matchers + Edge Cases + beforeEach (5 Steps) — 25 คะแนน</li>
+          <li><strong>Part 3</strong>: แยก app.js + Supertest + Test GET/POST + Error Cases + Coverage (5 Steps) — 25 คะแนน</li>
+          <li><strong>Part 4</strong>: แบบฝึกหัด 5 ข้อ: ออกแบบ Test Cases, เติมโค้ด, เขียนเอง, Debug, Challenge — 25 คะแนน</li>
+        </ul>
+        <div class="lab-footer">
+          <span class="lab-time">⏱ ~3 ชั่วโมง | 15 Steps + 5 Exercises</span>
+          <span class="lab-btn">เปิดใบกิจกรรม →</span>
         </div>
       </div>
     </a>

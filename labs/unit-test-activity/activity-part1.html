@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Part 1 — เริ่มต้น Unit Testing | ScoreCalc · DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#059669;--primary-dark:#047857;--primary-light:#d1fae5;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --red:#dc2626;--red-light:#fee2e2;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --bg:#f0fdf4;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#10b981);width:0;transition:width .3s}
+.site-header{background:linear-gradient(135deg,#052e16,#065f46,#059669);color:#fff;padding:3rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.nav-top{position:absolute;top:1rem;left:1.25rem;display:flex;gap:.5rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:.75rem}
+.site-header h1{font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:800;margin-bottom:.4rem}
+.site-header .subtitle{font-size:1rem;opacity:.85}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .8rem;font-size:.82rem}
+.part-nav{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;padding:1rem 1.5rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.38rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;max-width:1280px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:70px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:1rem}
+.sb-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem}
+.toc-list{list-style:none;display:grid;gap:.15rem}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.35rem .55rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.81rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:#e2e8f0;color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#10b981);color:#fff;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.77rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem;display:grid;gap:1.1rem}
+.step-body h4{font-size:.95rem;font-weight:700;color:var(--primary-dark);margin-top:.5rem}
+.step-body p{line-height:1.85}
+.step-body ul,.step-body ol{padding-left:1.4rem}
+.step-body li{margin-bottom:.35rem;line-height:1.8}
+.code-wrap{position:relative;border-radius:10px;overflow:hidden;margin:.25rem 0}
+.code-label{background:#1e293b;color:#64748b;font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:.4rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.code-label span{color:#94a3b8}
+pre[class*=language-]{margin:0!important;border-radius:0!important;font-size:.83rem!important;line-height:1.65!important;padding:1rem 1.25rem!important}
+.copy-btn{background:#334155;border:none;color:#94a3b8;padding:.22rem .6rem;border-radius:5px;font-size:.72rem;cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif}
+.copy-btn:hover{background:var(--primary);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff}
+.alert{border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem;font-size:.92rem}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
+.alert.info{background:var(--blue-light);border-left:4px solid var(--blue)}
+.alert.warning{background:var(--accent-light);border-left:4px solid var(--accent)}
+.alert.success{background:var(--primary-light);border-left:4px solid var(--primary)}
+.alert.tip{background:var(--purple-light);border-left:4px solid var(--purple)}
+.alert strong{display:block;margin-bottom:.2rem}
+.verify{background:var(--primary-light);border:1.5px solid var(--primary);border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem}
+.verify-icon{font-size:1.2rem;flex-shrink:0}
+.verify-title{font-weight:700;color:var(--primary-dark);margin-bottom:.3rem}
+.verify ul{list-style:none;display:grid;gap:.25rem}
+.verify ul li{font-size:.88rem;display:flex;gap:.5rem;align-items:flex-start}
+.verify ul li::before{content:'✓';color:var(--primary);font-weight:700;flex-shrink:0}
+.concept-box{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.concept-box h4{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:.75rem}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.compare-box{border-radius:10px;padding:1rem}
+.compare-box.before{background:var(--red-light);border:1px solid #fca5a5}
+.compare-box.after{background:var(--primary-light);border:1px solid #6ee7b7}
+.compare-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.compare-label.red{color:var(--red)}
+.compare-label.green{color:var(--primary-dark)}
+.compare-box p{font-size:.84rem;line-height:1.7}
+.pyramid{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center}
+.pyramid-level{padding:.85rem 1.5rem;border-radius:8px;margin:0 auto .4rem;display:flex;align-items:center;justify-content:space-between;max-width:480px}
+.pyr-e2e{background:#fee2e2;border:1px solid #fca5a5;width:40%}
+.pyr-int{background:#fef3c7;border:1px solid #fcd34d;width:65%}
+.pyr-unit{background:var(--primary-light);border:1px solid #6ee7b7;width:100%}
+.pyr-name{font-weight:700;font-size:.9rem}
+.pyr-e2e .pyr-name{color:#991b1b}
+.pyr-int .pyr-name{color:#78350f}
+.pyr-unit .pyr-name{color:var(--primary-dark)}
+.pyr-note{font-size:.78rem;opacity:.75}
+.folder-tree{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;white-space:pre}
+.ft-new{color:#86efac;font-weight:700}
+.ft-dim{color:#475569}
+.results-box{background:#0f172a;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.8}
+.r-pass{color:#4ade80}
+.r-check{color:#86efac}
+.r-fail{color:#f87171}
+.r-info{color:#94a3b8}
+.r-bold{font-weight:700}
+.nav-bottom{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:2rem}
+.nav-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:700;font-size:.88rem;transition:all .2s}
+.nav-btn.next{background:var(--primary);color:#fff}
+.nav-btn.next:hover{background:var(--primary-dark)}
+.nav-btn.prev{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.nav-btn.prev:hover{background:#e2e8f0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<div class="site-header">
+  <div class="nav-top">
+    <a href="index.html" class="back-link">← ภาพรวม</a>
+    <a href="../index.html" class="back-link">🏠 Labs</a>
+  </div>
+  <div class="part-badge">🧪 ใบกิจกรรม Unit Testing · ScoreCalc</div>
+  <h1>Part 1 — เริ่มต้น Unit Testing</h1>
+  <p class="subtitle">ทำความรู้จัก Unit Test, ติดตั้ง Jest และเขียน Test แรกของคุณ</p>
+  <div class="header-meta">
+    <span class="meta-chip">📖 5 Steps</span>
+    <span class="meta-chip">⏱ ~45 นาที</span>
+    <span class="meta-chip">💡 25 คะแนน</span>
+  </div>
+</div>
+
+<div class="part-nav">
+  <a href="activity-part1.html" class="part-btn active">Part 1: เริ่มต้น</a>
+  <a href="activity-part2.html" class="part-btn">Part 2: Jest In Depth</a>
+  <a href="activity-part3.html" class="part-btn">Part 3: API Testing</a>
+  <a href="activity-part4.html" class="part-btn">Part 4: แบบฝึกหัด</a>
+</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-title">Part 1 — เนื้อหา</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#step1"><span class="toc-num">1</span>Unit Testing คืออะไร?</a></li>
+        <li class="toc-item"><a href="#step2"><span class="toc-num">2</span>Testing Pyramid</a></li>
+        <li class="toc-item"><a href="#step3"><span class="toc-num">3</span>ตั้งค่าโปรเจกต์</a></li>
+        <li class="toc-item"><a href="#step4"><span class="toc-num">4</span>เขียน Test แรก</a></li>
+        <li class="toc-item"><a href="#step5"><span class="toc-num">5</span>รัน Test + ผลลัพธ์</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="content">
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="step1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">Unit Testing คืออะไร? และทำไมต้องใช้</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>Unit Test</strong> คือการทดสอบ "หน่วยย่อยที่เล็กที่สุด" ของโค้ด — โดยทั่วไปคือ <strong>function เดียว</strong> หรือ method เดียว โดยแยกออกจากส่วนอื่นๆ ของโปรแกรม</p>
+
+        <div class="compare-grid">
+          <div class="compare-box before">
+            <div class="compare-label red">❌ ไม่มี Unit Test</div>
+            <p>แก้โค้ด → รันโปรแกรมทั้งหมด → ทดสอบด้วยมือ → หวังว่าจะไม่พัง → พบ bug ที่ production</p>
+          </div>
+          <div class="compare-box after">
+            <div class="compare-label green">✅ มี Unit Test</div>
+            <p>แก้โค้ด → รัน Test อัตโนมัติ → รู้ทันทีว่า function ไหนพัง → แก้ก่อน merge</p>
+          </div>
+        </div>
+
+        <h4>ทำไมต้องเขียน Unit Test?</h4>
+        <ul>
+          <li><strong>ป้องกัน bug:</strong> ตรวจพบปัญหาก่อนที่จะถึง production</li>
+          <li><strong>Refactor ได้อย่างมั่นใจ:</strong> เปลี่ยนโค้ดแล้วรัน test → รู้ทันทีว่าอะไรพัง</li>
+          <li><strong>เป็น Documentation ที่รันได้:</strong> Test บอกว่า function นี้ "ควรทำอะไร" อย่างชัดเจน</li>
+          <li><strong>Debug ง่ายขึ้น:</strong> เมื่อ test fail รู้ทันทีว่า function ไหนมีปัญหา</li>
+          <li><strong>ความมั่นใจในการ Deploy:</strong> ทีมงานมั่นใจว่าโค้ดทำงานถูกต้องก่อน deploy</li>
+        </ul>
+
+        <h4>เปรียบเทียบให้เข้าใจง่าย</h4>
+        <div class="concept-box">
+          <p>นึกภาพการผลิตรถยนต์ — วิศวกรจะ <strong>ทดสอบอะไหล่แต่ละชิ้น</strong> ก่อนประกอบ:</p>
+          <ul style="margin-top:.6rem">
+            <li>ทดสอบเบรก → ต้องหยุดได้ในระยะ X เมตร</li>
+            <li>ทดสอบเครื่องยนต์ → ต้องได้แรงม้า X แรงม้า</li>
+            <li>ทดสอบไฟ → ต้องสว่างได้ X ลูเมน</li>
+          </ul>
+          <p style="margin-top:.6rem">Unit Test ก็คือการทดสอบ "อะไหล่" แต่ละชิ้นของโค้ดเช่นกัน</p>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div><strong>หลักการสำคัญ</strong>Unit Test ที่ดีต้องทดสอบ <strong>function เดียว</strong>, ทำงาน <strong>เร็วมาก</strong> (ไม่กี่มิลลิวินาที), และ <strong>ไม่ขึ้นกับสิ่งภายนอก</strong> เช่น database, network หรือ file system</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="step2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">Testing Pyramid — Unit Test อยู่ตรงไหน?</div>
+        <span class="step-time">⏱ 7 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>Testing Pyramid อธิบายความสัมพันธ์ระหว่างการทดสอบ 3 ประเภท โดยจัดเรียงตาม <strong>ความเร็ว, ต้นทุน</strong> และ <strong>จำนวน</strong>:</p>
+
+        <div class="pyramid">
+          <div class="pyramid-level pyr-e2e">
+            <span class="pyr-name">E2E Tests</span>
+            <span class="pyr-note">น้อย · ช้า · แพง</span>
+          </div>
+          <div class="pyramid-level pyr-int">
+            <span class="pyr-name">Integration Tests</span>
+            <span class="pyr-note">ปานกลาง</span>
+          </div>
+          <div class="pyramid-level pyr-unit">
+            <span class="pyr-name">Unit Tests ← เราอยู่นี่</span>
+            <span class="pyr-note">เยอะสุด · เร็วสุด · ถูกสุด</span>
+          </div>
+          <p style="margin-top:.75rem;font-size:.82rem;color:var(--muted)">ฐานกว้างสุด = Unit Tests มากที่สุด</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+          <div class="concept-box">
+            <h4 style="color:var(--primary-dark)">Unit Tests (ฐาน)</h4>
+            <ul style="font-size:.85rem;margin-top:.5rem">
+              <li>ทดสอบ function เดียว</li>
+              <li>รันใน &lt; 1 วินาที</li>
+              <li>ไม่ต้องการ DB หรือ Network</li>
+              <li>เขียนเยอะที่สุด (70-80%)</li>
+            </ul>
+          </div>
+          <div class="concept-box">
+            <h4 style="color:#78350f">Integration Tests (กลาง)</h4>
+            <ul style="font-size:.85rem;margin-top:.5rem">
+              <li>ทดสอบหลาย component ร่วมกัน</li>
+              <li>อาจใช้ DB หรือ API จริง</li>
+              <li>ช้ากว่า unit test</li>
+              <li>เขียนปานกลาง (15-20%)</li>
+            </ul>
+          </div>
+          <div class="concept-box">
+            <h4 style="color:#991b1b">E2E Tests (ยอด)</h4>
+            <ul style="font-size:.85rem;margin-top:.5rem">
+              <li>จำลองการใช้งานจริงของ user</li>
+              <li>ช้ามาก อาจใช้ browser จริง</li>
+              <li>เปราะบาง (flaky) ง่าย</li>
+              <li>เขียนน้อยที่สุด (5-10%)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎯</span>
+          <div><strong>เป้าหมายกิจกรรมนี้</strong>เรียนรู้การเขียน <strong>Unit Tests</strong> และ <strong>Integration Tests</strong> ระดับเบื้องต้น (การทดสอบ API endpoint ด้วย Supertest)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="step3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">ตั้งค่าโปรเจกต์ ScoreCalc + ติดตั้ง Jest</div>
+        <span class="step-time">⏱ 10 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>เราจะสร้างโปรเจกต์ <strong>ScoreCalc</strong> ซึ่งเป็น API คำนวณคะแนนและเกรดนักเรียน — เหมาะสำหรับเริ่มเรียนรู้การเขียน Test เพราะ business logic ชัดเจนและเข้าใจง่าย</p>
+
+        <h4>1. สร้างโปรเจกต์</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>mkdir scorecalc
+cd scorecalc
+npm init -y
+npm install express
+npm install --save-dev jest supertest</code></pre>
+        </div>
+
+        <h4>2. โครงสร้างโฟลเดอร์ที่ควรได้</h4>
+        <div class="folder-tree">scorecalc/
+├── src/
+│   ├── <span class="ft-new">utils/</span>
+│   │   └── <span class="ft-new">calculator.js</span>      ← ฟังก์ชันคำนวณ (จะสร้างใน Step 4)
+│   └── <span class="ft-new">app.js</span>               ← Express app (จะสร้างใน Part 3)
+├── tests/
+│   └── <span class="ft-new">calculator.test.js</span>   ← Test file (จะสร้างใน Step 4)
+├── <span class="ft-dim">node_modules/</span>
+└── <span class="ft-new">package.json</span></div>
+
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal — สร้างโฟลเดอร์</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>mkdir -p src/utils tests</code></pre>
+        </div>
+
+        <h4>3. ตั้งค่า package.json</h4>
+        <p>เปิดไฟล์ <code>package.json</code> แล้วเพิ่ม/แก้ไขส่วน <code>scripts</code> และเพิ่ม <code>jest</code> config:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>package.json</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-json"><code>{
+  "name": "scorecalc",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coverageThresholds": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70
+      }
+    }
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
+  }
+}</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div><strong>อธิบาย scripts</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>npm test</code> → รัน Jest ครั้งเดียว</li>
+            <li><code>npm run test:watch</code> → รัน Jest แบบ watch mode (รันใหม่ทุกครั้งที่บันทึกไฟล์)</li>
+            <li><code>npm run test:coverage</code> → รันพร้อมสร้าง coverage report</li>
+          </ul></div>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">ตรวจสอบ</div>
+            <ul>
+              <li>โฟลเดอร์ <code>src/utils/</code> และ <code>tests/</code> ถูกสร้างแล้ว</li>
+              <li>package.json มี <code>"test": "jest"</code> ใน scripts</li>
+              <li><code>node_modules/jest</code> มีอยู่ (หลัง npm install)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-card" id="step4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">เขียน Test แรก — ฟังก์ชัน Calculator</div>
+        <span class="step-time">⏱ 12 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>เราจะสร้าง 2 ไฟล์: (1) ไฟล์โค้ดจริง และ (2) ไฟล์ test — นี่คือ pattern พื้นฐานของ Unit Testing</p>
+
+        <h4>1. สร้างไฟล์โค้ดจริง: src/utils/calculator.js</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/utils/calculator.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// ฟังก์ชันคำนวณพื้นฐาน
+function add(a, b) {
+  return a + b;
+}
+
+function subtract(a, b) {
+  return a - b;
+}
+
+function multiply(a, b) {
+  return a * b;
+}
+
+function divide(a, b) {
+  return a / b;
+}
+
+// ฟังก์ชันคำนวณคะแนนเฉลี่ย
+function average(scores) {
+  if (scores.length === 0) return 0;
+  const sum = scores.reduce((acc, val) => acc + val, 0);
+  return sum / scores.length;
+}
+
+// ฟังก์ชันแปลงคะแนนเป็นเกรด
+function getGrade(score) {
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C';
+  if (score >= 50) return 'D';
+  return 'F';
+}
+
+module.exports = { add, subtract, multiply, divide, average, getGrade };</code></pre>
+        </div>
+
+        <h4>2. สร้างไฟล์ Test: tests/calculator.test.js</h4>
+        <p>ชื่อไฟล์ test ต้องลงท้ายด้วย <code>.test.js</code> หรือ <code>.spec.js</code> — Jest จะหาไฟล์เหล่านี้อัตโนมัติ</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/calculator.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// import ฟังก์ชันที่ต้องการทดสอบ
+const { add, subtract, multiply, divide, average, getGrade } = require('../src/utils/calculator');
+
+// test() รับ 2 argument:
+//   1. ชื่อ Test (อธิบายว่าทดสอบอะไร)
+//   2. ฟังก์ชัน callback ที่มีโค้ด test
+
+test('add: 2 + 3 ต้องได้ 5', () => {
+  expect(add(2, 3)).toBe(5);
+});
+
+test('add: 0 + 0 ต้องได้ 0', () => {
+  expect(add(0, 0)).toBe(0);
+});
+
+test('subtract: 10 - 4 ต้องได้ 6', () => {
+  expect(subtract(10, 4)).toBe(6);
+});
+
+test('multiply: 3 × 4 ต้องได้ 12', () => {
+  expect(multiply(3, 4)).toBe(12);
+});
+
+test('divide: 15 ÷ 3 ต้องได้ 5', () => {
+  expect(divide(15, 3)).toBe(5);
+});
+
+test('average: คะแนน [80, 90, 70] ต้องได้เฉลี่ย 80', () => {
+  expect(average([80, 90, 70])).toBe(80);
+});
+
+test('average: array ว่างต้องได้ 0', () => {
+  expect(average([])).toBe(0);
+});
+
+test('getGrade: คะแนน 85 ต้องได้เกรด A', () => {
+  expect(getGrade(85)).toBe('A');
+});
+
+test('getGrade: คะแนน 72 ต้องได้เกรด B', () => {
+  expect(getGrade(72)).toBe('B');
+});
+
+test('getGrade: คะแนน 45 ต้องได้เกรด F', () => {
+  expect(getGrade(45)).toBe('F');
+});</code></pre>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧠</span>
+          <div><strong>โครงสร้างพื้นฐานของ Test</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>test('ชื่อ', () => { ... })</code> — กำหนด test case</li>
+            <li><code>expect(ผลลัพธ์)</code> — บอกว่าต้องการตรวจสอบอะไร</li>
+            <li><code>.toBe(ค่าที่คาดหวัง)</code> — บอกว่าคาดว่าจะได้อะไร</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-card" id="step5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">รัน Test + ทำความเข้าใจผลลัพธ์</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <h4>1. รัน Test</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>npm test</code></pre>
+        </div>
+
+        <h4>2. ผลลัพธ์เมื่อ Test ผ่านทั้งหมด (PASS)</h4>
+        <div class="results-box">
+<span class="r-pass r-bold">PASS</span> <span class="r-info">tests/calculator.test.js</span>
+<span class="r-check">  ✓</span> add: 2 + 3 ต้องได้ 5 <span class="r-info">(4ms)</span>
+<span class="r-check">  ✓</span> add: 0 + 0 ต้องได้ 0 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> subtract: 10 - 4 ต้องได้ 6 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> multiply: 3 × 4 ต้องได้ 12 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> divide: 15 ÷ 3 ต้องได้ 5 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> average: คะแนน [80, 90, 70] ต้องได้เฉลี่ย 80 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> average: array ว่างต้องได้ 0 <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> getGrade: คะแนน 85 ต้องได้เกรด A <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> getGrade: คะแนน 72 ต้องได้เกรด B <span class="r-info">(1ms)</span>
+<span class="r-check">  ✓</span> getGrade: คะแนน 45 ต้องได้เกรด F <span class="r-info">(1ms)</span>
+
+<span class="r-info">Test Suites: <span class="r-pass">1 passed</span>, 1 total</span>
+<span class="r-info">Tests:       <span class="r-pass">10 passed</span>, 10 total</span>
+<span class="r-info">Time:        0.8s</span></div>
+
+        <h4>3. ทดลองทำให้ Test Fail</h4>
+        <p>เพื่อเข้าใจว่า test ทำงานอย่างไร ลองแก้ <code>src/utils/calculator.js</code> ให้ <code>add</code> ทำผิด:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/utils/calculator.js — แก้ชั่วคราว (อย่าลืมแก้กลับ!)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// แก้ให้ผิดชั่วคราว
+function add(a, b) {
+  return a * b;  // Bug: คูณแทนที่จะบวก!
+}</code></pre>
+        </div>
+
+        <h4>4. ผลลัพธ์เมื่อ Test Fail</h4>
+        <div class="results-box">
+<span class="r-fail r-bold">FAIL</span> <span class="r-info">tests/calculator.test.js</span>
+<span class="r-fail">  ✗</span> add: 2 + 3 ต้องได้ 5 <span class="r-info">(8ms)</span>
+
+<span class="r-fail">  ● add: 2 + 3 ต้องได้ 5</span>
+
+    expect(received).toBe(expected)
+
+    Expected: <span class="r-pass">5</span>
+    Received: <span class="r-fail">6</span>   ← 2 × 3 = 6 (ผิด!)
+
+<span class="r-check">  ✓</span> add: 0 + 0 ต้องได้ 0 <span class="r-info">(1ms)</span> ← ผ่าน เพราะ 0*0 = 0 ก็ถูก
+  ...
+
+<span class="r-info">Tests: <span class="r-fail">1 failed</span>, <span class="r-pass">9 passed</span>, 10 total</span></div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>อย่าลืม!</strong>แก้ <code>add</code> กลับเป็น <code>return a + b;</code> ก่อนดำเนินการต่อ</div>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div><strong>สังเกตว่า</strong>เมื่อ test fail, Jest บอก <strong>ค่าที่คาดหวัง (Expected)</strong> และ <strong>ค่าที่ได้จริง (Received)</strong> อย่างชัดเจน — ทำให้ debug ได้ทันที</div>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">Checkpoint Part 1 — ตรวจสอบก่อนไป Part 2</div>
+            <ul>
+              <li>รัน <code>npm test</code> แล้วผ่านทั้ง 10 tests</li>
+              <li>เข้าใจว่า <code>test()</code>, <code>expect()</code>, <code>.toBe()</code> ทำงานอย่างไร</li>
+              <li>เคยเห็น output ทั้งแบบ PASS และ FAIL</li>
+              <li>โครงสร้างโปรเจกต์ถูกต้อง (src/utils/ และ tests/)</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="nav-bottom">
+      <a href="index.html" class="nav-btn prev">← ภาพรวม</a>
+      <a href="activity-part2.html" class="nav-btn next">Part 2: Jest In Depth →</a>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+window.addEventListener('scroll', () => {
+  const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('prog').style.width = p + '%';
+  document.querySelectorAll('.step-card').forEach(el => {
+    const a = document.querySelector(`.toc-item a[href="#${el.id}"]`);
+    if (!a) return;
+    const r = el.getBoundingClientRect();
+    if (r.top <= 120 && r.bottom > 120) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>

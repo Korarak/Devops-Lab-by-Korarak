@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Part 2 — Jest In Depth | ScoreCalc · DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#dbeafe;
+  --green:#059669;--green-light:#d1fae5;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --bg:#eff6ff;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#38bdf8);width:0;transition:width .3s}
+.site-header{background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#2563eb);color:#fff;padding:3rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.nav-top{position:absolute;top:1rem;left:1.25rem;display:flex;gap:.5rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:.75rem}
+.site-header h1{font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:800;margin-bottom:.4rem}
+.site-header .subtitle{font-size:1rem;opacity:.85}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .8rem;font-size:.82rem}
+.part-nav{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;padding:1rem 1.5rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.38rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;max-width:1280px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:70px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:1rem}
+.sb-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem}
+.toc-list{list-style:none;display:grid;gap:.15rem}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.35rem .55rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.81rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:#e2e8f0;color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#38bdf8);color:#fff;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.77rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem;display:grid;gap:1.1rem}
+.step-body h4{font-size:.95rem;font-weight:700;color:var(--primary-dark);margin-top:.5rem}
+.step-body p{line-height:1.85}
+.step-body ul,.step-body ol{padding-left:1.4rem}
+.step-body li{margin-bottom:.4rem;line-height:1.8}
+.code-wrap{position:relative;border-radius:10px;overflow:hidden;margin:.25rem 0}
+.code-label{background:#1e293b;color:#64748b;font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:.4rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.code-label span{color:#94a3b8}
+pre[class*=language-]{margin:0!important;border-radius:0!important;font-size:.83rem!important;line-height:1.65!important;padding:1rem 1.25rem!important}
+.copy-btn{background:#334155;border:none;color:#94a3b8;padding:.22rem .6rem;border-radius:5px;font-size:.72rem;cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif}
+.copy-btn:hover{background:var(--primary);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff}
+.alert{border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem;font-size:.92rem}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
+.alert.info{background:var(--primary-light);border-left:4px solid var(--primary)}
+.alert.warning{background:var(--accent-light);border-left:4px solid var(--accent)}
+.alert.success{background:var(--green-light);border-left:4px solid var(--green)}
+.alert.tip{background:var(--purple-light);border-left:4px solid var(--purple)}
+.alert strong{display:block;margin-bottom:.2rem}
+.verify{background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem}
+.verify-icon{font-size:1.2rem;flex-shrink:0}
+.verify-title{font-weight:700;color:#065f46;margin-bottom:.3rem}
+.verify ul{list-style:none;display:grid;gap:.25rem}
+.verify ul li{font-size:.88rem;display:flex;gap:.5rem;align-items:flex-start}
+.verify ul li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.aaa-diagram{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:.5rem 0}
+.aaa-box{border-radius:12px;padding:1.1rem;text-align:center}
+.aaa-arrange{background:#eff6ff;border:2px solid #93c5fd}
+.aaa-act{background:#fef3c7;border:2px solid #fcd34d}
+.aaa-assert{background:#d1fae5;border:2px solid #6ee7b7}
+.aaa-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.aaa-arrange .aaa-label{color:#1e40af}
+.aaa-act .aaa-label{color:#78350f}
+.aaa-assert .aaa-label{color:#065f46}
+.aaa-title{font-size:1rem;font-weight:800}
+.aaa-desc{font-size:.8rem;margin-top:.3rem;opacity:.8;line-height:1.5}
+.matcher-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.matcher-table th{background:#1e293b;color:#e2e8f0;padding:.6rem .9rem;text-align:left;font-size:.78rem;font-weight:700}
+.matcher-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border);vertical-align:top}
+.matcher-table tr:nth-child(even){background:#f8fafc}
+.matcher-table td:first-child{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--primary-dark);font-weight:600;white-space:nowrap}
+.matcher-table td:last-child{color:var(--muted)}
+.results-box{background:#0f172a;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.8}
+.r-pass{color:#4ade80}
+.r-check{color:#86efac}
+.r-fail{color:#f87171}
+.r-info{color:#94a3b8}
+.r-bold{font-weight:700}
+.r-yellow{color:#fcd34d}
+.nav-bottom{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:2rem}
+.nav-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:700;font-size:.88rem;transition:all .2s}
+.nav-btn.next{background:var(--primary);color:#fff}
+.nav-btn.next:hover{background:var(--primary-dark)}
+.nav-btn.prev{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.nav-btn.prev:hover{background:#e2e8f0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+@media(max-width:640px){.aaa-diagram{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<div class="site-header">
+  <div class="nav-top">
+    <a href="index.html" class="back-link">← ภาพรวม</a>
+    <a href="../index.html" class="back-link">🏠 Labs</a>
+  </div>
+  <div class="part-badge">🧪 ใบกิจกรรม Unit Testing · ScoreCalc</div>
+  <h1>Part 2 — Jest In Depth</h1>
+  <p class="subtitle">AAA Pattern, describe/it, Matchers, Edge Cases และ beforeEach/afterEach</p>
+  <div class="header-meta">
+    <span class="meta-chip">📖 Steps 6–10</span>
+    <span class="meta-chip">⏱ ~45 นาที</span>
+    <span class="meta-chip">💡 25 คะแนน</span>
+  </div>
+</div>
+
+<div class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1: เริ่มต้น</a>
+  <a href="activity-part2.html" class="part-btn active">Part 2: Jest In Depth</a>
+  <a href="activity-part3.html" class="part-btn">Part 3: API Testing</a>
+  <a href="activity-part4.html" class="part-btn">Part 4: แบบฝึกหัด</a>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-title">Part 2 — เนื้อหา</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#step6"><span class="toc-num">6</span>AAA Pattern</a></li>
+        <li class="toc-item"><a href="#step7"><span class="toc-num">7</span>describe() + it()</a></li>
+        <li class="toc-item"><a href="#step8"><span class="toc-num">8</span>Matchers สำคัญ</a></li>
+        <li class="toc-item"><a href="#step9"><span class="toc-num">9</span>Test Edge Cases</a></li>
+        <li class="toc-item"><a href="#step10"><span class="toc-num">10</span>beforeEach / afterEach</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="content">
+
+    <!-- STEP 6 -->
+    <div class="step-card" id="step6">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div class="step-title">AAA Pattern — โครงสร้าง Test ที่ดี</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>AAA Pattern</strong> (Arrange-Act-Assert) คือโครงสร้างมาตรฐานของ Unit Test ที่ช่วยให้โค้ด test อ่านง่ายและเป็นระเบียบ ทุก Test ควรแบ่งเป็น 3 ส่วนนี้</p>
+
+        <div class="aaa-diagram">
+          <div class="aaa-box aaa-arrange">
+            <div class="aaa-label">Arrange</div>
+            <div class="aaa-title">จัดเตรียม</div>
+            <div class="aaa-desc">เตรียมข้อมูล, ค่า input, และสิ่งที่จำเป็นก่อน test</div>
+          </div>
+          <div class="aaa-box aaa-act">
+            <div class="aaa-label">Act</div>
+            <div class="aaa-title">กระทำ</div>
+            <div class="aaa-desc">เรียกฟังก์ชัน/method ที่ต้องการทดสอบ</div>
+          </div>
+          <div class="aaa-box aaa-assert">
+            <div class="aaa-label">Assert</div>
+            <div class="aaa-title">ตรวจสอบ</div>
+            <div class="aaa-desc">ตรวจสอบว่าผลลัพธ์ตรงกับที่คาดหวังหรือไม่</div>
+          </div>
+        </div>
+
+        <h4>ตัวอย่าง Test ที่ไม่ได้ใช้ AAA (อ่านยาก)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>❌ ไม่แนะนำ</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>test('average test', () => {
+  expect(average([80, 90, 70])).toBe(80); // ยัดทุกอย่างในบรรทัดเดียว อ่านยาก
+});</code></pre>
+        </div>
+
+        <h4>ตัวอย่าง Test ที่ใช้ AAA Pattern (อ่านง่าย)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>✅ แนะนำ — tests/calculator.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>test('average: คะแนน 3 วิชาต้องได้เฉลี่ยถูกต้อง', () => {
+  // Arrange — เตรียมข้อมูล input
+  const scores = [80, 90, 70];
+  const expectedAverage = 80;
+
+  // Act — เรียกฟังก์ชันที่ต้องการทดสอบ
+  const result = average(scores);
+
+  // Assert — ตรวจสอบผลลัพธ์
+  expect(result).toBe(expectedAverage);
+});
+
+test('getGrade: คะแนน 85 ต้องได้เกรด A', () => {
+  // Arrange
+  const score = 85;
+
+  // Act
+  const grade = getGrade(score);
+
+  // Assert
+  expect(grade).toBe('A');
+});</code></pre>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">✅</span>
+          <div><strong>ข้อดีของ AAA Pattern</strong>
+          <ul style="margin-top:.4rem">
+            <li>เห็นชัดว่าแต่ละส่วนทำอะไร — คนอื่นอ่านแล้วเข้าใจทันที</li>
+            <li>เมื่อ test fail จะรู้ว่าปัญหาอยู่ที่ Act หรือ Assert</li>
+            <li>ง่ายต่อการ maintain และแก้ไขในอนาคต</li>
+          </ul></div>
+        </div>
+
+        <div class="alert tip">
+          <span class="alert-icon">💡</span>
+          <div><strong>เคล็ดลับ</strong>ถ้า "Act" ส่วนของคุณมีมากกว่า 1 บรรทัด อาจเป็นสัญญาณว่า function นั้นทำงานมากเกินไป (ควร refactor)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step-card" id="step7">
+      <div class="step-header">
+        <div class="step-num">7</div>
+        <div class="step-title">describe() + it() — จัดกลุ่ม Test</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><code>describe()</code> ใช้สำหรับ <strong>จัดกลุ่ม</strong> tests ที่เกี่ยวข้องกัน ส่วน <code>it()</code> เป็นคำพ้องความหมายกับ <code>test()</code> ที่ทำให้อ่านเป็นประโยคได้</p>
+
+        <h4>ก่อนใช้ describe (ยุ่งเหยิง)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>❌ ทุก test ปะปนกัน</span></div>
+          <pre class="language-javascript"><code>test('add: 2+3 = 5', ...);
+test('average: [80,90,70] = 80', ...);
+test('add: 0+0 = 0', ...);
+test('getGrade: 85 = A', ...);
+test('average: [] = 0', ...);</code></pre>
+        </div>
+
+        <h4>หลังใช้ describe (เป็นระเบียบ)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>✅ tests/calculator.test.js — เวอร์ชันปรับปรุง</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { add, subtract, multiply, divide, average, getGrade } = require('../src/utils/calculator');
+
+// describe() จัดกลุ่มตามฟังก์ชัน
+describe('add()', () => {
+  it('บวกเลขบวกสองตัวได้ถูกต้อง', () => {
+    expect(add(2, 3)).toBe(5);
+  });
+
+  it('บวกด้วย 0 ได้ถูกต้อง', () => {
+    expect(add(5, 0)).toBe(5);
+  });
+
+  it('บวกเลขลบได้ถูกต้อง', () => {
+    expect(add(-3, 7)).toBe(4);
+  });
+});
+
+describe('average()', () => {
+  it('คำนวณเฉลี่ยจาก array ปกติได้ถูกต้อง', () => {
+    expect(average([80, 90, 70])).toBe(80);
+  });
+
+  it('คืนค่า 0 เมื่อ array ว่าง', () => {
+    expect(average([])).toBe(0);
+  });
+
+  it('คำนวณเฉลี่ยจากตัวเลขเดียวได้ถูกต้อง', () => {
+    expect(average([100])).toBe(100);
+  });
+});
+
+describe('getGrade()', () => {
+  it('คะแนน 80-100 ได้เกรด A', () => {
+    expect(getGrade(80)).toBe('A');
+    expect(getGrade(100)).toBe('A');
+  });
+
+  it('คะแนน 70-79 ได้เกรด B', () => {
+    expect(getGrade(70)).toBe('B');
+    expect(getGrade(79)).toBe('B');
+  });
+
+  it('คะแนน 60-69 ได้เกรด C', () => {
+    expect(getGrade(60)).toBe('C');
+  });
+
+  it('คะแนน 50-59 ได้เกรด D', () => {
+    expect(getGrade(50)).toBe('D');
+  });
+
+  it('คะแนนต่ำกว่า 50 ได้เกรด F', () => {
+    expect(getGrade(49)).toBe('F');
+    expect(getGrade(0)).toBe('F');
+  });
+});</code></pre>
+        </div>
+
+        <h4>ผลลัพธ์ที่ได้ — เป็นระเบียบชัดเจน</h4>
+        <div class="results-box">
+<span class="r-pass r-bold">PASS</span> <span class="r-info">tests/calculator.test.js</span>
+
+<span class="r-yellow">  add()</span>
+<span class="r-check">    ✓</span> บวกเลขบวกสองตัวได้ถูกต้อง
+<span class="r-check">    ✓</span> บวกด้วย 0 ได้ถูกต้อง
+<span class="r-check">    ✓</span> บวกเลขลบได้ถูกต้อง
+
+<span class="r-yellow">  average()</span>
+<span class="r-check">    ✓</span> คำนวณเฉลี่ยจาก array ปกติได้ถูกต้อง
+<span class="r-check">    ✓</span> คืนค่า 0 เมื่อ array ว่าง
+<span class="r-check">    ✓</span> คำนวณเฉลี่ยจากตัวเลขเดียวได้ถูกต้อง
+
+<span class="r-yellow">  getGrade()</span>
+<span class="r-check">    ✓</span> คะแนน 80-100 ได้เกรด A
+<span class="r-check">    ✓</span> คะแนน 70-79 ได้เกรด B
+<span class="r-check">    ✓</span> คะแนน 60-69 ได้เกรด C
+<span class="r-check">    ✓</span> คะแนน 50-59 ได้เกรด D
+<span class="r-check">    ✓</span> คะแนนต่ำกว่า 50 ได้เกรด F</div>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div><strong>it() vs test()</strong>ทั้งสองเหมือนกันทุกอย่าง — ใช้ <code>it()</code> เมื่อต้องการให้ชื่อ test อ่านเป็นประโยค เช่น <em>"it should return 5"</em> หรือ <em>"it คืนค่า 0 เมื่อ array ว่าง"</em></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="step8">
+      <div class="step-header">
+        <div class="step-num">8</div>
+        <div class="step-title">Matchers สำคัญ — ตรวจสอบผลลัพธ์ได้ทุกรูปแบบ</div>
+        <span class="step-time">⏱ 10 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>Matchers</strong> คือฟังก์ชันที่ต่อท้าย <code>expect()</code> เพื่อบอกว่าต้องการตรวจสอบอะไร Jest มี matchers หลายสิบตัว เราจะเรียน 12 ตัวที่ใช้บ่อยที่สุด</p>
+
+        <table class="matcher-table">
+          <tr><th>Matcher</th><th>ใช้เมื่อ</th><th>ตัวอย่าง</th></tr>
+          <tr><td>.toBe(val)</td><td>ตรวจค่าแบบ strict (===)</td><td><code>expect(1+1).toBe(2)</code></td></tr>
+          <tr><td>.toEqual(obj)</td><td>ตรวจ object/array (เปรียบค่า)</td><td><code>expect([1,2]).toEqual([1,2])</code></td></tr>
+          <tr><td>.toBeNull()</td><td>ตรวจว่าเป็น null</td><td><code>expect(result).toBeNull()</code></td></tr>
+          <tr><td>.toBeUndefined()</td><td>ตรวจว่าเป็น undefined</td><td><code>expect(val).toBeUndefined()</code></td></tr>
+          <tr><td>.toBeTruthy()</td><td>ตรวจค่า truthy (ไม่ว่าง)</td><td><code>expect('hello').toBeTruthy()</code></td></tr>
+          <tr><td>.toBeFalsy()</td><td>ตรวจค่า falsy (ว่าง/false/0)</td><td><code>expect(0).toBeFalsy()</code></td></tr>
+          <tr><td>.toContain(item)</td><td>ตรวจว่า array/string มี item</td><td><code>expect([1,2,3]).toContain(2)</code></td></tr>
+          <tr><td>.toHaveLength(n)</td><td>ตรวจความยาว array/string</td><td><code>expect([1,2,3]).toHaveLength(3)</code></td></tr>
+          <tr><td>.toBeGreaterThan(n)</td><td>ตรวจว่ามากกว่า</td><td><code>expect(5).toBeGreaterThan(3)</code></td></tr>
+          <tr><td>.toBeLessThan(n)</td><td>ตรวจว่าน้อยกว่า</td><td><code>expect(2).toBeLessThan(5)</code></td></tr>
+          <tr><td>.toMatch(regex)</td><td>ตรวจ string ด้วย regex</td><td><code>expect('hello').toMatch(/ell/)</code></td></tr>
+          <tr><td>.toThrow()</td><td>ตรวจว่า function throw error</td><td><code>expect(() => fn()).toThrow()</code></td></tr>
+        </table>
+
+        <h4>ตัวอย่างการใช้งาน Matchers กับ ScoreCalc</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/matchers-demo.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { add, average, getGrade } = require('../src/utils/calculator');
+
+describe('ตัวอย่าง Matchers ต่างๆ', () => {
+
+  // toBe — ตรวจค่า primitive (number, string, boolean)
+  it('toBe: ตรวจค่าตัวเลข', () => {
+    expect(add(2, 3)).toBe(5);
+  });
+
+  // toEqual — ตรวจ object หรือ array (ห้ามใช้ toBe กับ object!)
+  it('toEqual: ตรวจ array', () => {
+    const grades = ['A', 'B', 'C'].map(g => g);
+    expect(grades).toEqual(['A', 'B', 'C']);
+  });
+
+  // toBeGreaterThanOrEqual — ตรวจ range
+  it('toBeGreaterThanOrEqual: ตรวจ threshold', () => {
+    const avg = average([75, 80, 85]);
+    expect(avg).toBeGreaterThanOrEqual(70); // ต้องได้คะแนนเฉลี่ยอย่างน้อย 70
+  });
+
+  // toBeTruthy — ตรวจว่ามีค่า
+  it('toBeTruthy: ตรวจว่าได้เกรด', () => {
+    const grade = getGrade(75);
+    expect(grade).toBeTruthy(); // ต้องไม่ใช่ null, undefined, '', 0
+  });
+
+  // toHaveLength — ตรวจความยาว
+  it('toHaveLength: เกรดต้องเป็น string 1 ตัวอักษร', () => {
+    expect(getGrade(85)).toHaveLength(1);
+  });
+
+  // toContain — ตรวจว่า array มีค่า
+  it('toContain: เกรดที่เป็นไปได้', () => {
+    const validGrades = ['A', 'B', 'C', 'D', 'F'];
+    expect(validGrades).toContain(getGrade(85));
+  });
+
+});</code></pre>
+        </div>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>ข้อควรระวัง: toBe vs toEqual</strong>
+          <div class="code-wrap" style="margin-top:.75rem">
+            <div class="code-label"><span>ตัวอย่างความแตกต่าง</span></div>
+            <pre class="language-javascript"><code>// ❌ จะ FAIL — object ต่างตัวกัน แม้ค่าเดียวกัน
+expect({name: 'test'}).toBe({name: 'test'});
+
+// ✅ จะ PASS — toEqual เปรียบค่าภายใน
+expect({name: 'test'}).toEqual({name: 'test'});</code></pre>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="step-card" id="step9">
+      <div class="step-header">
+        <div class="step-num">9</div>
+        <div class="step-title">Test Edge Cases + toThrow() — กรณีพิเศษ</div>
+        <span class="step-time">⏱ 10 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>Edge Cases</strong> คือกรณีพิเศษที่อยู่ที่ขอบเขตของ input เช่น ค่า 0, ค่าลบ, string ว่าง, null, undefined หรือค่าที่ใหญ่มากๆ — มักเป็นแหล่งที่ bug ซ่อนอยู่</p>
+
+        <h4>1. เพิ่ม Edge Cases ให้ getGrade()</h4>
+        <p>ลองคิดว่า function ควรทำงานอย่างไรเมื่อรับค่าที่ไม่ปกติ ก่อนอื่นให้อัปเดตไฟล์โค้ดก่อน:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/utils/calculator.js — เพิ่ม validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>function divide(a, b) {
+  if (b === 0) {
+    throw new Error('ไม่สามารถหารด้วย 0 ได้');
+  }
+  return a / b;
+}
+
+function average(scores) {
+  if (!Array.isArray(scores)) {
+    throw new TypeError('scores ต้องเป็น Array');
+  }
+  if (scores.length === 0) return 0;
+  const sum = scores.reduce((acc, val) => acc + val, 0);
+  return sum / scores.length;
+}
+
+function getGrade(score) {
+  if (typeof score !== 'number' || score < 0 || score > 100) {
+    throw new RangeError('คะแนนต้องเป็นตัวเลข 0-100');
+  }
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C';
+  if (score >= 50) return 'D';
+  return 'F';
+}</code></pre>
+        </div>
+
+        <h4>2. เขียน Test สำหรับ Edge Cases และ Error</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/edge-cases.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const { divide, average, getGrade } = require('../src/utils/calculator');
+
+describe('Edge Cases — กรณีพิเศษ', () => {
+
+  describe('divide()', () => {
+    it('หารปกติได้ถูกต้อง', () => {
+      expect(divide(10, 2)).toBe(5);
+    });
+
+    // toThrow() — ตรวจว่า function 던져 error
+    it('หารด้วย 0 ต้อง throw Error', () => {
+      // ต้องห่อด้วย arrow function!
+      expect(() => divide(10, 0)).toThrow('ไม่สามารถหารด้วย 0 ได้');
+    });
+
+    it('หารด้วย 0 ต้อง throw instance ของ Error', () => {
+      expect(() => divide(5, 0)).toThrow(Error);
+    });
+  });
+
+  describe('average() — Edge Cases', () => {
+    it('คำนวณจากตัวเลขเดียวได้', () => {
+      expect(average([85])).toBe(85);
+    });
+
+    it('คำนวณจากคะแนนทศนิยมได้', () => {
+      expect(average([1, 2])).toBe(1.5);
+    });
+
+    it('array ว่างต้องคืนค่า 0', () => {
+      expect(average([])).toBe(0);
+    });
+
+    it('รับ input ที่ไม่ใช่ Array ต้อง throw TypeError', () => {
+      expect(() => average('ไม่ใช่ array')).toThrow(TypeError);
+    });
+  });
+
+  describe('getGrade() — Boundary Values', () => {
+    it('คะแนน 80 อยู่ที่ขอบล่างของเกรด A', () => {
+      expect(getGrade(80)).toBe('A');
+    });
+
+    it('คะแนน 79 อยู่ที่ขอบบนของเกรด B', () => {
+      expect(getGrade(79)).toBe('B');
+    });
+
+    it('คะแนน 0 ต้องได้เกรด F', () => {
+      expect(getGrade(0)).toBe('F');
+    });
+
+    it('คะแนน 100 ต้องได้เกรด A', () => {
+      expect(getGrade(100)).toBe('A');
+    });
+
+    it('คะแนน -1 ต้อง throw RangeError', () => {
+      expect(() => getGrade(-1)).toThrow(RangeError);
+    });
+
+    it('คะแนน 101 ต้อง throw RangeError', () => {
+      expect(() => getGrade(101)).toThrow(RangeError);
+    });
+
+    it('input ที่ไม่ใช่ตัวเลข ต้อง throw RangeError', () => {
+      expect(() => getGrade('A')).toThrow(RangeError);
+      expect(() => getGrade(null)).toThrow(RangeError);
+    });
+  });
+});</code></pre>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎯</span>
+          <div><strong>กลยุทธ์การเลือก Edge Cases</strong>
+          <ul style="margin-top:.4rem">
+            <li><strong>Boundary Values:</strong> ค่าที่ขอบบน/ล่าง เช่น 79, 80, 81</li>
+            <li><strong>Empty/Null:</strong> array ว่าง, string ว่าง, null, undefined</li>
+            <li><strong>ค่าลบ/ค่าผิดประเภท:</strong> -1, NaN, string แทนตัวเลข</li>
+            <li><strong>ค่าขนาดใหญ่มาก:</strong> Infinity, Number.MAX_SAFE_INTEGER</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="step-card" id="step10">
+      <div class="step-header">
+        <div class="step-num">10</div>
+        <div class="step-title">beforeEach / afterEach — จัดการ State</div>
+        <span class="step-time">⏱ 9 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><code>beforeEach</code> และ <code>afterEach</code> คือ <strong>lifecycle hooks</strong> ที่รันโค้ด <em>ก่อน</em> และ <em>หลัง</em> แต่ละ test — มีประโยชน์มากเมื่อ tests หลายตัวต้องการข้อมูลชุดเดียวกัน</p>
+
+        <h4>ปัญหาเมื่อไม่ใช้ beforeEach (โค้ดซ้ำ)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>❌ โค้ดซ้ำในทุก test</span></div>
+          <pre class="language-javascript"><code>describe('ScoreBook', () => {
+  it('เพิ่มคะแนนได้', () => {
+    const book = new ScoreBook(); // ซ้ำทุก test
+    book.add('สมชาย', 85);
+    expect(book.size()).toBe(1);
+  });
+
+  it('ลบคะแนนได้', () => {
+    const book = new ScoreBook(); // ซ้ำทุก test
+    book.add('สมชาย', 85);
+    book.remove('สมชาย');
+    expect(book.size()).toBe(0);
+  });
+});</code></pre>
+        </div>
+
+        <h4>เพิ่มไฟล์ ScoreBook ก่อน</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/utils/scorebook.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>class ScoreBook {
+  constructor() {
+    this.scores = {};
+  }
+
+  add(name, score) {
+    this.scores[name] = score;
+  }
+
+  remove(name) {
+    delete this.scores[name];
+  }
+
+  get(name) {
+    return this.scores[name];
+  }
+
+  size() {
+    return Object.keys(this.scores).length;
+  }
+
+  getAll() {
+    return { ...this.scores };
+  }
+}
+
+module.exports = ScoreBook;</code></pre>
+        </div>
+
+        <h4>ใช้ beforeEach และ afterEach</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>✅ tests/scorebook.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const ScoreBook = require('../src/utils/scorebook');
+const { getGrade } = require('../src/utils/calculator');
+
+describe('ScoreBook', () => {
+  let book; // ประกาศไว้ด้านนอก
+
+  // beforeEach รันก่อนทุก test — สร้าง instance ใหม่ทุกครั้ง
+  beforeEach(() => {
+    book = new ScoreBook();
+    book.add('สมชาย', 85);
+    book.add('สมหญิง', 72);
+    console.log('เตรียม ScoreBook แล้ว');
+  });
+
+  // afterEach รันหลังทุก test — cleanup
+  afterEach(() => {
+    book = null; // ล้างค่า เพื่อให้แต่ละ test เป็นอิสระ
+  });
+
+  it('ข้อมูลเริ่มต้นต้องมี 2 คน', () => {
+    expect(book.size()).toBe(2);
+  });
+
+  it('เพิ่มนักเรียนใหม่ได้', () => {
+    book.add('สมศรี', 90);
+    expect(book.size()).toBe(3);
+    expect(book.get('สมศรี')).toBe(90);
+  });
+
+  it('ลบนักเรียนได้', () => {
+    book.remove('สมชาย');
+    expect(book.size()).toBe(1);
+  });
+
+  it('ดึงคะแนนของนักเรียนได้', () => {
+    expect(book.get('สมชาย')).toBe(85);
+    expect(book.get('สมหญิง')).toBe(72);
+  });
+
+  it('ดึงเกรดของนักเรียนจากคะแนนใน book ได้', () => {
+    const score = book.get('สมชาย');
+    expect(getGrade(score)).toBe('A'); // 85 = A
+  });
+});</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div><strong>Lifecycle Hooks ทั้งหมด</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>beforeAll(() => {...})</code> — รัน 1 ครั้ง ก่อน describe block ทั้งหมด</li>
+            <li><code>beforeEach(() => {...})</code> — รันก่อนทุก test ใน describe</li>
+            <li><code>afterEach(() => {...})</code> — รันหลังทุก test ใน describe</li>
+            <li><code>afterAll(() => {...})</code> — รัน 1 ครั้ง หลัง describe block ทั้งหมด</li>
+          </ul></div>
+        </div>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">Checkpoint Part 2 — ตรวจสอบก่อนไป Part 3</div>
+            <ul>
+              <li>รัน <code>npm test</code> แล้วผ่านทุก tests ใน part2</li>
+              <li>เข้าใจ AAA Pattern และเขียน test แบบ 3 ส่วนได้</li>
+              <li>จัดกลุ่ม test ด้วย describe() ได้</li>
+              <li>ใช้ Matchers ต่างๆ ได้ถูกต้อง (toBe, toEqual, toThrow)</li>
+              <li>เขียน test สำหรับ Edge Cases ได้</li>
+              <li>ใช้ beforeEach เพื่อลด code ซ้ำได้</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="nav-bottom">
+      <a href="activity-part1.html" class="nav-btn prev">← Part 1: เริ่มต้น</a>
+      <a href="activity-part3.html" class="nav-btn next">Part 3: API Testing →</a>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+window.addEventListener('scroll', () => {
+  const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('prog').style.width = p + '%';
+  document.querySelectorAll('.step-card').forEach(el => {
+    const a = document.querySelector(`.toc-item a[href="#${el.id}"]`);
+    if (!a) return;
+    const r = el.getBoundingClientRect();
+    if (r.top <= 120 && r.bottom > 120) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>

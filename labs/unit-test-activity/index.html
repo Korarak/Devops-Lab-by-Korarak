@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ScoreCalc — ใบกิจกรรม Unit Testing | DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#059669;--primary-dark:#047857;--primary-light:#d1fae5;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --red:#dc2626;--red-light:#fee2e2;
+  --bg:#f0fdf4;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+.hero{background:linear-gradient(135deg,#052e16,#065f46,#059669);color:#fff;padding:4rem 2rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.4rem 1.25rem;font-size:.88rem;margin-bottom:1.25rem;backdrop-filter:blur(10px)}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:.75rem}
+.hero .subtitle{font-size:1.1rem;opacity:.85;max-width:620px;margin:0 auto 2rem}
+.back-btn{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:.45rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;margin-bottom:1.5rem;backdrop-filter:blur(8px)}
+.back-btn:hover{background:rgba(255,255,255,.22)}
+.tech-pills{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem}
+.tech-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:.35rem .9rem;font-size:.82rem;font-weight:600}
+.container{max-width:960px;margin:3rem auto;padding:0 1.5rem}
+.section-title{font-size:1.2rem;font-weight:800;margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem}
+
+/* Part cards */
+.parts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;margin-bottom:3rem}
+.part-card{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:1.5rem;text-decoration:none;color:var(--text);transition:all .25s;position:relative;overflow:hidden;display:block}
+.part-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.part-card.p1::before{background:linear-gradient(90deg,#059669,#10b981)}
+.part-card.p2::before{background:linear-gradient(90deg,#2563eb,#38bdf8)}
+.part-card.p3::before{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.part-card.p4::before{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.part-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,.12);border-color:transparent}
+.part-num{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.5rem}
+.part-card h3{font-size:1.1rem;font-weight:800;margin-bottom:.5rem}
+.part-card p{font-size:.87rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+.part-steps-list{list-style:none;margin-bottom:1.25rem;display:grid;gap:.3rem}
+.part-steps-list li{font-size:.82rem;color:#475569;display:flex;gap:.4rem;align-items:flex-start}
+.part-steps-list li::before{content:'→';color:var(--primary);font-weight:700;flex-shrink:0}
+.part-meta{display:flex;gap:.5rem;flex-wrap:wrap}
+.meta-chip{background:#f1f5f9;border-radius:6px;padding:.2rem .55rem;font-size:.75rem;font-weight:600;color:var(--muted)}
+.meta-chip.score{background:var(--accent-light);color:#92400e}
+.start-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:1.25rem;background:var(--primary);color:#fff;border-radius:8px;padding:.45rem 1.1rem;font-size:.85rem;font-weight:700;text-decoration:none;transition:opacity .2s}
+.start-btn:hover{opacity:.85}
+.p1-btn{background:linear-gradient(135deg,#059669,#10b981)}
+.p2-btn{background:linear-gradient(135deg,#2563eb,#38bdf8)}
+.p3-btn{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.p4-btn{background:linear-gradient(135deg,#d97706,#f59e0b)}
+
+/* Info boxes */
+.project-info{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fcd34d;border-radius:16px;padding:1.5rem;margin-bottom:2rem}
+.project-info h3{font-size:1rem;font-weight:800;color:#78350f;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.85rem}
+.info-item{background:rgba(255,255,255,.7);border-radius:10px;padding:.85rem 1rem}
+.info-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#78350f;margin-bottom:.25rem}
+.info-value{font-size:.88rem;color:#92400e;font-weight:600}
+
+.score-total{background:var(--text);color:#fff;border-radius:14px;padding:1.5rem;text-align:center;margin-bottom:2.5rem}
+.score-total h3{font-size:.95rem;opacity:.65;margin-bottom:.4rem}
+.score-total .num{font-size:3rem;font-weight:800;color:#fcd34d;line-height:1}
+.score-total p{opacity:.6;font-size:.87rem;margin-top:.5rem}
+.score-breakdown{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-top:1rem}
+.sb-item{text-align:center}
+.sb-num{font-size:1.5rem;font-weight:800;color:#a7f3d0}
+.sb-lbl{font-size:.75rem;opacity:.6;margin-top:.1rem}
+
+.learning-outcomes{background:var(--surface);border:2px solid var(--primary-light);border-left:5px solid var(--primary);border-radius:14px;padding:1.5rem;margin-bottom:2rem}
+.learning-outcomes h3{font-size:.95rem;font-weight:800;color:var(--primary-dark);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.outcome-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.5rem}
+.outcome-item{display:flex;gap:.6rem;align-items:flex-start;font-size:.87rem;padding:.3rem 0}
+.outcome-item::before{content:'✓';color:var(--primary);font-weight:800;flex-shrink:0;margin-top:.05rem}
+
+.tools-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:2.5rem}
+.tools-box h3{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem}
+.tool-item{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;display:flex;gap:.6rem;align-items:center}
+.tool-icon{font-size:1.4rem;flex-shrink:0}
+.tool-name{font-size:.85rem;font-weight:700;color:var(--text)}
+.tool-desc{font-size:.76rem;color:var(--muted);margin-top:.1rem}
+
+footer{text-align:center;padding:2rem;color:var(--muted);font-size:.84rem;border-top:1px solid var(--border);background:var(--surface);margin-top:2rem}
+@media(max-width:640px){.parts-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <a href="../index.html" class="back-btn">← กลับ Labs Home</a>
+    <div class="hero-badge">🧪 ใบกิจกรรม Unit Testing · วิชา DevOps 30901-2008</div>
+    <h1>ScoreCalc</h1>
+    <p class="subtitle">ระบบคำนวณคะแนน — เรียนรู้ Unit Testing ตั้งแต่พื้นฐานจนถึงการทดสอบ API จริง พร้อมแบบฝึกหัดออกแบบ Test</p>
+    <div class="tech-pills">
+      <span class="tech-pill">🧪 Jest</span>
+      <span class="tech-pill">🌐 Supertest</span>
+      <span class="tech-pill">⚡ Express.js</span>
+      <span class="tech-pill">📊 Code Coverage</span>
+      <span class="tech-pill">📐 AAA Pattern</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SCORE OVERVIEW -->
+  <div class="score-total" style="margin-top:0">
+    <h3>คะแนนรวมกิจกรรม</h3>
+    <div class="num">100</div>
+    <p>4 Parts | 15 Steps Tutorial + 5 แบบฝึกหัด</p>
+    <div class="score-breakdown">
+      <div class="sb-item"><div class="sb-num">25</div><div class="sb-lbl">Part 1 Tutorial</div></div>
+      <div class="sb-item"><div class="sb-num">25</div><div class="sb-lbl">Part 2 Tutorial</div></div>
+      <div class="sb-item"><div class="sb-num">25</div><div class="sb-lbl">Part 3 Tutorial</div></div>
+      <div class="sb-item"><div class="sb-num">25</div><div class="sb-lbl">Part 4 Exercises</div></div>
+    </div>
+  </div>
+
+  <!-- LEARNING OUTCOMES -->
+  <div class="learning-outcomes">
+    <h3>🎯 ผลการเรียนรู้ที่คาดหวัง</h3>
+    <div class="outcome-grid">
+      <div class="outcome-item">อธิบายความหมายของ Unit Test และ Testing Pyramid ได้</div>
+      <div class="outcome-item">ติดตั้งและตั้งค่า Jest สำหรับโปรเจกต์ Node.js ได้</div>
+      <div class="outcome-item">เขียน Unit Test ด้วย describe/it/expect ถูกต้อง</div>
+      <div class="outcome-item">ใช้ Matchers สำคัญ (toBe, toEqual, toThrow) ได้</div>
+      <div class="outcome-item">ออกแบบ Test Cases ครอบคลุม Normal และ Edge Cases</div>
+      <div class="outcome-item">ทดสอบ REST API Endpoint ด้วย Supertest</div>
+      <div class="outcome-item">อ่าน Code Coverage Report และปรับปรุง Test Coverage</div>
+      <div class="outcome-item">แก้ Failing Test และหาสาเหตุของ Bug จาก Test ได้</div>
+    </div>
+  </div>
+
+  <!-- PROJECT INFO -->
+  <div class="project-info">
+    <h3>📋 โปรเจกต์ที่ใช้ในกิจกรรม: ScoreCalc</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">ชื่อโปรเจกต์</div>
+        <div class="info-value">scorecalc</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Runtime</div>
+        <div class="info-value">Node.js 20+</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Test Framework</div>
+        <div class="info-value">Jest 29</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">API Testing</div>
+        <div class="info-value">Supertest</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Coverage Target</div>
+        <div class="info-value">≥ 70%</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Tests ทั้งหมด</div>
+        <div class="info-value">≥ 15 test cases</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="tools-box">
+    <h3>🛠️ เครื่องมือที่ใช้</h3>
+    <div class="tools-grid">
+      <div class="tool-item">
+        <div class="tool-icon">🧪</div>
+        <div><div class="tool-name">Jest</div><div class="tool-desc">JavaScript Test Framework</div></div>
+      </div>
+      <div class="tool-item">
+        <div class="tool-icon">🌐</div>
+        <div><div class="tool-name">Supertest</div><div class="tool-desc">HTTP API Testing</div></div>
+      </div>
+      <div class="tool-item">
+        <div class="tool-icon">⚡</div>
+        <div><div class="tool-name">Express.js</div><div class="tool-desc">Node.js Web Framework</div></div>
+      </div>
+      <div class="tool-item">
+        <div class="tool-icon">📊</div>
+        <div><div class="tool-name">Istanbul/NYC</div><div class="tool-desc">Code Coverage (built-in Jest)</div></div>
+      </div>
+      <div class="tool-item">
+        <div class="tool-icon">💻</div>
+        <div><div class="tool-name">VS Code</div><div class="tool-desc">Editor + Jest Extension</div></div>
+      </div>
+      <div class="tool-item">
+        <div class="tool-icon">📦</div>
+        <div><div class="tool-name">npm</div><div class="tool-desc">Package Manager</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTS GRID -->
+  <div class="section-title">📚 เนื้อหาทั้ง 4 Parts</div>
+  <div class="parts-grid">
+
+    <a class="part-card p1" href="activity-part1.html">
+      <div class="part-num">Part 1 · Tutorial · 5 Steps</div>
+      <h3>เริ่มต้น Unit Testing</h3>
+      <p>เรียนรู้ว่า Unit Test คืออะไร ทำไมต้องใช้ ติดตั้ง Jest และเขียน Test แรกของคุณ</p>
+      <ul class="part-steps-list">
+        <li>Unit Testing คืออะไร? (ทำไมต้องมี)</li>
+        <li>Testing Pyramid — ตำแหน่งของ Unit Test</li>
+        <li>ตั้งค่าโปรเจกต์ + ติดตั้ง Jest</li>
+        <li>เขียน Test แรก (ฟังก์ชัน Calculator)</li>
+        <li>รัน Test + อ่านผลลัพธ์ Pass/Fail</li>
+      </ul>
+      <div class="part-meta">
+        <span class="meta-chip">⏱ 45 นาที</span>
+        <span class="meta-chip score">25 คะแนน</span>
+      </div>
+      <span class="start-btn p1-btn">เริ่ม Part 1 →</span>
+    </a>
+
+    <a class="part-card p2" href="activity-part2.html">
+      <div class="part-num">Part 2 · Tutorial · 5 Steps</div>
+      <h3>Jest In Depth</h3>
+      <p>เจาะลึก Jest: AAA Pattern, จัดกลุ่ม Test ด้วย describe, Matchers และ Edge Cases</p>
+      <ul class="part-steps-list">
+        <li>AAA Pattern (Arrange-Act-Assert)</li>
+        <li>describe() + it() — จัดกลุ่ม Test</li>
+        <li>Matchers สำคัญ 10+ รายการ</li>
+        <li>Test Edge Cases + toThrow()</li>
+        <li>beforeEach / afterEach — จัดการ State</li>
+      </ul>
+      <div class="part-meta">
+        <span class="meta-chip">⏱ 45 นาที</span>
+        <span class="meta-chip score">25 คะแนน</span>
+      </div>
+      <span class="start-btn p2-btn">เริ่ม Part 2 →</span>
+    </a>
+
+    <a class="part-card p3" href="activity-part3.html">
+      <div class="part-num">Part 3 · Tutorial · 5 Steps</div>
+      <h3>API Testing กับ Supertest</h3>
+      <p>ทดสอบ REST API จริงด้วย Supertest ครอบคลุม GET, POST, Error Cases และ Coverage</p>
+      <ul class="part-steps-list">
+        <li>แยก app.js ออกจาก index.js</li>
+        <li>ติดตั้ง Supertest + Test GET Endpoint</li>
+        <li>Test POST Endpoint + ตรวจสอบ Body</li>
+        <li>Test Error Cases (400, 404, 422)</li>
+        <li>Code Coverage Report + Threshold</li>
+      </ul>
+      <div class="part-meta">
+        <span class="meta-chip">⏱ 45 นาที</span>
+        <span class="meta-chip score">25 คะแนน</span>
+      </div>
+      <span class="start-btn p3-btn">เริ่ม Part 3 →</span>
+    </a>
+
+    <a class="part-card p4" href="activity-part4.html">
+      <div class="part-num">Part 4 · Exercises · 5 แบบฝึกหัด</div>
+      <h3>ออกแบบ Test ด้วยตัวเอง</h3>
+      <p>ฝึกคิด Test Cases, เติมโค้ด, เขียน Test Suite เองและแก้ Failing Tests</p>
+      <ul class="part-steps-list">
+        <li>A: ออกแบบ Test Cases (ตาราง)</li>
+        <li>B: เติมโค้ด expect ให้สมบูรณ์</li>
+        <li>C: เขียน Test Suite เองทั้งหมด</li>
+        <li>D: Debug — ทำไม Test ถึง Fail?</li>
+        <li>E: (Challenge) เขียน API Test</li>
+      </ul>
+      <div class="part-meta">
+        <span class="meta-chip">⏱ 45 นาที</span>
+        <span class="meta-chip score">25 คะแนน</span>
+      </div>
+      <span class="start-btn p4-btn">เริ่ม Part 4 →</span>
+    </a>
+
+  </div>
+
+</div>
+
+<footer>
+  วิชา DevOps 30901-2008 · ใบกิจกรรม Unit Testing · ScoreCalc Project
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Part 3 — API Testing กับ Supertest | ScoreCalc · DevOps 30901-2008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#7c3aed;--primary-dark:#6d28d9;--primary-light:#ede9fe;
+  --green:#059669;--green-light:#d1fae5;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --bg:#faf5ff;--surface:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.progress-bar{position:fixed;top:0;left:0;right:0;z-index:1000;height:4px;background:#e2e8f0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#a78bfa);width:0;transition:width .3s}
+.site-header{background:linear-gradient(135deg,#2e1065,#5b21b6,#7c3aed);color:#fff;padding:3rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.nav-top{position:absolute;top:1rem;left:1.25rem;display:flex;gap:.5rem;z-index:10}
+.back-link{color:rgba(255,255,255,.85);font-size:.85rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.3rem .85rem;transition:background .2s}
+.back-link:hover{background:rgba(255,255,255,.25);color:#fff}
+.part-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.3rem 1rem;font-size:.85rem;margin-bottom:.75rem}
+.site-header h1{font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:800;margin-bottom:.4rem}
+.site-header .subtitle{font-size:1rem;opacity:.85}
+.header-meta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.meta-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .8rem;font-size:.82rem}
+.part-nav{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;padding:1rem 1.5rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:100}
+.part-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.38rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;border:1.5px solid var(--border);color:var(--muted);transition:all .2s}
+.part-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.part-btn:hover:not(.active){background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:2rem;max-width:1280px;margin:2rem auto;padding:0 1.5rem}
+.sidebar{position:sticky;top:70px;height:fit-content;max-height:calc(100vh - 80px);overflow-y:auto}
+.sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:1rem}
+.sb-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem}
+.toc-list{list-style:none;display:grid;gap:.15rem}
+.toc-item a{display:flex;align-items:center;gap:.5rem;padding:.35rem .55rem;border-radius:7px;text-decoration:none;color:var(--muted);font-size:.81rem;transition:all .2s}
+.toc-item a:hover,.toc-item a.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.toc-num{width:20px;height:20px;border-radius:50%;background:#e2e8f0;color:var(--muted);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-item a.active .toc-num{background:var(--primary);color:#fff}
+.content{min-width:0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;scroll-margin-top:80px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.step-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8fafc,#fff)}
+.step-num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#a78bfa);color:#fff;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:1.1rem;font-weight:700}
+.step-time{margin-left:auto;background:var(--accent-light);color:#92400e;border-radius:8px;padding:.2rem .65rem;font-size:.77rem;font-weight:700;white-space:nowrap}
+.step-body{padding:1.5rem;display:grid;gap:1.1rem}
+.step-body h4{font-size:.95rem;font-weight:700;color:var(--primary-dark);margin-top:.5rem}
+.step-body p{line-height:1.85}
+.step-body ul,.step-body ol{padding-left:1.4rem}
+.step-body li{margin-bottom:.4rem;line-height:1.8}
+.code-wrap{position:relative;border-radius:10px;overflow:hidden;margin:.25rem 0}
+.code-label{background:#1e293b;color:#64748b;font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:.4rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.code-label span{color:#94a3b8}
+pre[class*=language-]{margin:0!important;border-radius:0!important;font-size:.83rem!important;line-height:1.65!important;padding:1rem 1.25rem!important}
+.copy-btn{background:#334155;border:none;color:#94a3b8;padding:.22rem .6rem;border-radius:5px;font-size:.72rem;cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif}
+.copy-btn:hover{background:var(--primary);color:#fff}
+.copy-btn.copied{background:#10b981;color:#fff}
+.alert{border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem;font-size:.92rem}
+.alert-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
+.alert.info{background:var(--blue-light);border-left:4px solid var(--blue)}
+.alert.warning{background:var(--accent-light);border-left:4px solid var(--accent)}
+.alert.success{background:var(--green-light);border-left:4px solid var(--green)}
+.alert.tip{background:var(--primary-light);border-left:4px solid var(--primary)}
+.alert strong{display:block;margin-bottom:.2rem}
+.verify{background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:1rem 1.1rem;display:flex;gap:.75rem}
+.verify-icon{font-size:1.2rem;flex-shrink:0}
+.verify-title{font-weight:700;color:#065f46;margin-bottom:.3rem}
+.verify ul{list-style:none;display:grid;gap:.25rem}
+.verify ul li{font-size:.88rem;display:flex;gap:.5rem;align-items:flex-start}
+.verify ul li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.folder-tree{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;white-space:pre}
+.ft-new{color:#86efac;font-weight:700}
+.ft-chg{color:#fbbf24}
+.results-box{background:#0f172a;border-radius:10px;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.8}
+.r-pass{color:#4ade80}
+.r-check{color:#86efac}
+.r-fail{color:#f87171}
+.r-info{color:#94a3b8}
+.r-bold{font-weight:700}
+.r-yellow{color:#fcd34d}
+.r-cyan{color:#67e8f9}
+.http-badge{display:inline-block;border-radius:5px;padding:.12rem .5rem;font-size:.78rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-right:.4rem}
+.http-get{background:#dbeafe;color:#1e40af}
+.http-post{background:#d1fae5;color:#065f46}
+.http-del{background:#fee2e2;color:#991b1b}
+.coverage-box{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;overflow-x:auto}
+.cov-pass{color:#4ade80}
+.cov-warn{color:#fcd34d}
+.cov-head{color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:.5rem;margin-bottom:.5rem}
+.nav-bottom{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:2rem}
+.nav-btn{display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:700;font-size:.88rem;transition:all .2s}
+.nav-btn.next{background:var(--primary);color:#fff}
+.nav-btn.next:hover{background:var(--primary-dark)}
+.nav-btn.prev{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.nav-btn.prev:hover{background:#e2e8f0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<div class="site-header">
+  <div class="nav-top">
+    <a href="index.html" class="back-link">← ภาพรวม</a>
+    <a href="../index.html" class="back-link">🏠 Labs</a>
+  </div>
+  <div class="part-badge">🧪 ใบกิจกรรม Unit Testing · ScoreCalc</div>
+  <h1>Part 3 — API Testing กับ Supertest</h1>
+  <p class="subtitle">ทดสอบ REST API Endpoint จริง, Error Cases และ Code Coverage</p>
+  <div class="header-meta">
+    <span class="meta-chip">📖 Steps 11–15</span>
+    <span class="meta-chip">⏱ ~45 นาที</span>
+    <span class="meta-chip">💡 25 คะแนน</span>
+  </div>
+</div>
+
+<div class="part-nav">
+  <a href="activity-part1.html" class="part-btn">Part 1: เริ่มต้น</a>
+  <a href="activity-part2.html" class="part-btn">Part 2: Jest In Depth</a>
+  <a href="activity-part3.html" class="part-btn active">Part 3: API Testing</a>
+  <a href="activity-part4.html" class="part-btn">Part 4: แบบฝึกหัด</a>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-card">
+      <div class="sb-title">Part 3 — เนื้อหา</div>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#step11"><span class="toc-num">11</span>แยก app.js ออก</a></li>
+        <li class="toc-item"><a href="#step12"><span class="toc-num">12</span>Test GET Endpoint</a></li>
+        <li class="toc-item"><a href="#step13"><span class="toc-num">13</span>Test POST Endpoint</a></li>
+        <li class="toc-item"><a href="#step14"><span class="toc-num">14</span>Test Error Cases</a></li>
+        <li class="toc-item"><a href="#step15"><span class="toc-num">15</span>Code Coverage</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="content">
+
+    <!-- STEP 11 -->
+    <div class="step-card" id="step11">
+      <div class="step-header">
+        <div class="step-num">11</div>
+        <div class="step-title">แยก app.js ออกจาก index.js — เตรียม Testable App</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>ก่อนจะทดสอบ API ด้วย Supertest เราต้อง <strong>แยก Express app ออกจาก server</strong> — Supertest ต้องการ import <code>app</code> โดยไม่ให้มันเปิด port จริงๆ</p>
+
+        <div class="alert warning">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>ปัญหาถ้าไม่แยก</strong>ถ้า <code>app.listen()</code> อยู่ใน <code>app.js</code> เมื่อ Supertest import ไฟล์นี้ server จะ start จริงและอาจเกิด port conflict หรือ test ค้างไม่จบ</div>
+        </div>
+
+        <h4>โครงสร้างที่ถูกต้อง</h4>
+        <div class="folder-tree">scorecalc/
+├── src/
+│   ├── utils/
+│   │   ├── calculator.js
+│   │   └── scorebook.js
+│   ├── <span class="ft-new">app.js</span>       ← Express app (ไม่มี listen)
+│   └── <span class="ft-new">index.js</span>     ← จุดเริ่มต้น (import app แล้ว listen)
+└── tests/
+    ├── calculator.test.js
+    ├── scorebook.test.js
+    └── <span class="ft-new">api.test.js</span>  ← จะสร้างใน Step 12</div>
+
+        <h4>1. สร้าง src/app.js — ใส่ Express routes ที่นี่</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/app.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const express = require('express');
+const { getGrade, average } = require('./utils/calculator');
+
+const app = express();
+app.use(express.json());
+
+// สถานะ API
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', version: '1.0.0' });
+});
+
+// GET /api/grade?score=85 — แปลงคะแนนเป็นเกรด
+app.get('/api/grade', (req, res) => {
+  const score = parseFloat(req.query.score);
+
+  if (isNaN(score)) {
+    return res.status(400).json({
+      error: 'score ต้องเป็นตัวเลข'
+    });
+  }
+
+  if (score < 0 || score > 100) {
+    return res.status(422).json({
+      error: 'score ต้องอยู่ระหว่าง 0-100'
+    });
+  }
+
+  const grade = getGrade(score);
+  res.json({ score, grade });
+});
+
+// POST /api/average — คำนวณคะแนนเฉลี่ยจาก array
+// Body: { "scores": [85, 90, 72] }
+app.post('/api/average', (req, res) => {
+  const { scores } = req.body;
+
+  if (!scores || !Array.isArray(scores)) {
+    return res.status(400).json({
+      error: 'ต้องส่ง scores เป็น Array'
+    });
+  }
+
+  if (scores.length === 0) {
+    return res.status(400).json({
+      error: 'scores ต้องมีอย่างน้อย 1 ค่า'
+    });
+  }
+
+  const avg = average(scores);
+  const grade = getGrade(avg);
+  res.json({ scores, average: avg, grade });
+});
+
+// 404 สำหรับ route ที่ไม่มี
+app.use((req, res) => {
+  res.status(404).json({ error: 'ไม่พบ endpoint ที่ร้องขอ' });
+});
+
+// ส่ง app ออกไป โดยไม่ .listen()
+module.exports = app;</code></pre>
+        </div>
+
+        <h4>2. สร้าง src/index.js — จุดเริ่มต้น Server จริง</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>src/index.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const app = require('./app');
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`ScoreCalc API รันที่ http://localhost:${PORT}`);
+});</code></pre>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">✅</span>
+          <div><strong>ทำไมแยกแบบนี้?</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>app.js</code> export เฉพาะ Express instance — Supertest import ได้โดยไม่ start server</li>
+            <li><code>index.js</code> เป็นจุดเริ่มต้นจริง — production ใช้ <code>node src/index.js</code></li>
+            <li>Tests ใช้ <code>require('./src/app')</code> ได้โดยตรง</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 12 -->
+    <div class="step-card" id="step12">
+      <div class="step-header">
+        <div class="step-num">12</div>
+        <div class="step-title">ติดตั้ง Supertest + เขียน Test GET Endpoint</div>
+        <span class="step-time">⏱ 10 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>Supertest</strong> คือ library ที่ให้เราส่ง HTTP request จริงๆ ไปยัง Express app ใน test โดยไม่ต้องรัน server ขึ้นมาจริงๆ</p>
+
+        <div class="alert info">
+          <span class="alert-icon">📌</span>
+          <div><strong>Supertest ถูกติดตั้งไปแล้วใน Step 3</strong>(<code>npm install --save-dev supertest</code>) ไม่ต้องติดตั้งใหม่</div>
+        </div>
+
+        <h4>สร้างไฟล์ tests/api.test.js</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/api.test.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>const request = require('supertest');
+const app = require('../src/app');
+
+// ============================
+// GET /health
+// ============================
+describe('GET /health', () => {
+  it('ต้องตอบ 200 และมี status: ok', async () => {
+    // Arrange: ไม่ต้องเตรียมอะไร endpoint นี้ไม่รับ input
+
+    // Act: ส่ง GET request ไปที่ /health
+    const res = await request(app).get('/health');
+
+    // Assert: ตรวจสอบ response
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ok');
+    expect(res.body).toHaveProperty('version');
+  });
+});
+
+// ============================
+// GET /api/grade
+// ============================
+describe('GET /api/grade', () => {
+
+  it('ส่ง score=85 ต้องได้เกรด A', async () => {
+    // Act
+    const res = await request(app).get('/api/grade?score=85');
+
+    // Assert
+    expect(res.status).toBe(200);
+    expect(res.body.score).toBe(85);
+    expect(res.body.grade).toBe('A');
+  });
+
+  it('ส่ง score=72 ต้องได้เกรด B', async () => {
+    const res = await request(app).get('/api/grade?score=72');
+    expect(res.status).toBe(200);
+    expect(res.body.grade).toBe('B');
+  });
+
+  it('ส่ง score=0 ต้องได้เกรด F', async () => {
+    const res = await request(app).get('/api/grade?score=0');
+    expect(res.status).toBe(200);
+    expect(res.body.grade).toBe('F');
+  });
+
+  it('ส่ง score=100 ต้องได้เกรด A', async () => {
+    const res = await request(app).get('/api/grade?score=100');
+    expect(res.status).toBe(200);
+    expect(res.body.grade).toBe('A');
+  });
+
+});</code></pre>
+        </div>
+
+        <h4>รัน API Test</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>npm test</code></pre>
+        </div>
+
+        <div class="results-box">
+<span class="r-pass r-bold">PASS</span> <span class="r-info">tests/api.test.js</span>
+<span class="r-yellow">  GET /health</span>
+<span class="r-check">    ✓</span> ต้องตอบ 200 และมี status: ok <span class="r-info">(28ms)</span>
+<span class="r-yellow">  GET /api/grade</span>
+<span class="r-check">    ✓</span> ส่ง score=85 ต้องได้เกรด A <span class="r-info">(5ms)</span>
+<span class="r-check">    ✓</span> ส่ง score=72 ต้องได้เกรด B <span class="r-info">(3ms)</span>
+<span class="r-check">    ✓</span> ส่ง score=0 ต้องได้เกรด F <span class="r-info">(2ms)</span>
+<span class="r-check">    ✓</span> ส่ง score=100 ต้องได้เกรด A <span class="r-info">(2ms)</span></div>
+
+        <div class="alert tip">
+          <span class="alert-icon">🧠</span>
+          <div><strong>วิธีอ่าน Supertest</strong>
+          <ul style="margin-top:.4rem">
+            <li><code>request(app)</code> — สร้าง test client สำหรับ app ของเรา</li>
+            <li><code>.get('/path')</code> — ส่ง GET request</li>
+            <li><code>.post('/path')</code> — ส่ง POST request</li>
+            <li><code>.send({...})</code> — ส่ง request body (สำหรับ POST/PUT)</li>
+            <li><code>res.status</code> — HTTP status code (200, 400, 404...)</li>
+            <li><code>res.body</code> — response body (parse JSON อัตโนมัติ)</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 13 -->
+    <div class="step-card" id="step13">
+      <div class="step-header">
+        <div class="step-num">13</div>
+        <div class="step-title">Test POST Endpoint + ตรวจสอบ Response Body</div>
+        <span class="step-time">⏱ 10 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>สำหรับ POST request เราต้องใช้ <code>.send()</code> เพื่อส่ง request body และตั้งค่า Content-Type ด้วย</p>
+
+        <h4>เพิ่ม Test สำหรับ POST /api/average ใน tests/api.test.js</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/api.test.js — เพิ่มต่อจากเดิม</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// ============================
+// POST /api/average
+// ============================
+describe('POST /api/average', () => {
+
+  it('คำนวณคะแนนเฉลี่ยและเกรดได้ถูกต้อง', async () => {
+    // Arrange
+    const scores = [80, 90, 70];
+    const expectedAvg = 80;
+    const expectedGrade = 'A';
+
+    // Act: ส่ง POST พร้อม body
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores })           // ส่ง request body
+      .set('Content-Type', 'application/json'); // กำหนด Content-Type
+
+    // Assert
+    expect(res.status).toBe(200);
+    expect(res.body.average).toBe(expectedAvg);
+    expect(res.body.grade).toBe(expectedGrade);
+  });
+
+  it('response body ต้องมี fields ครบ: scores, average, grade', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores: [75, 85] })
+      .set('Content-Type', 'application/json');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('scores');
+    expect(res.body).toHaveProperty('average');
+    expect(res.body).toHaveProperty('grade');
+  });
+
+  it('คำนวณทศนิยมได้ถูกต้อง', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores: [70, 71] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.average).toBe(70.5);
+  });
+
+  it('คะแนนเฉลี่ย 80 ต้องได้เกรด A', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores: [80, 80, 80] });
+
+    expect(res.body.grade).toBe('A');
+  });
+
+});</code></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div><strong>Shorthand ของ Supertest</strong>ถ้า app ใช้ <code>express.json()</code> middleware แล้ว Supertest จะ set Content-Type เป็น application/json อัตโนมัติเมื่อใช้ <code>.send(object)</code> — ไม่ต้อง <code>.set('Content-Type', ...)</code> ทุกครั้ง</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 14 -->
+    <div class="step-card" id="step14">
+      <div class="step-header">
+        <div class="step-num">14</div>
+        <div class="step-title">Test Error Cases — 400, 404, 422</div>
+        <span class="step-time">⏱ 9 นาที</span>
+      </div>
+      <div class="step-body">
+        <p>การทดสอบ <strong>Error Cases</strong> มีความสำคัญมากพอๆ กับ happy path — เราต้องมั่นใจว่า API ส่ง error response ที่ถูกต้องกลับไป</p>
+
+        <h4>เพิ่ม Error Case Tests ใน tests/api.test.js</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>tests/api.test.js — Error Cases</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-javascript"><code>// ============================
+// Error Cases: GET /api/grade
+// ============================
+describe('GET /api/grade — Error Cases', () => {
+
+  it('ไม่ส่ง score ต้องได้ 400', async () => {
+    const res = await request(app).get('/api/grade');
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('ส่ง score เป็น string ต้องได้ 400', async () => {
+    const res = await request(app).get('/api/grade?score=abc');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('ตัวเลข');
+  });
+
+  it('ส่ง score=-1 ต้องได้ 422 (Unprocessable)', async () => {
+    const res = await request(app).get('/api/grade?score=-1');
+    expect(res.status).toBe(422);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('ส่ง score=101 ต้องได้ 422', async () => {
+    const res = await request(app).get('/api/grade?score=101');
+    expect(res.status).toBe(422);
+  });
+
+});
+
+// ============================
+// Error Cases: POST /api/average
+// ============================
+describe('POST /api/average — Error Cases', () => {
+
+  it('ไม่ส่ง body ต้องได้ 400', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('ส่ง scores เป็น string แทน Array ต้องได้ 400', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores: 'ไม่ใช่ array' });
+    expect(res.status).toBe(400);
+  });
+
+  it('ส่ง scores เป็น array ว่างต้องได้ 400', async () => {
+    const res = await request(app)
+      .post('/api/average')
+      .send({ scores: [] });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('อย่างน้อย 1');
+  });
+
+});
+
+// ============================
+// 404 Not Found
+// ============================
+describe('404 — Route ที่ไม่มี', () => {
+
+  it('GET /nonexistent ต้องได้ 404', async () => {
+    const res = await request(app).get('/nonexistent');
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('POST /unknown ต้องได้ 404', async () => {
+    const res = await request(app).post('/unknown');
+    expect(res.status).toBe(404);
+  });
+
+});</code></pre>
+        </div>
+
+        <div class="alert success">
+          <span class="alert-icon">🎯</span>
+          <div><strong>HTTP Status Codes ที่ควรรู้</strong>
+          <ul style="margin-top:.4rem">
+            <li><span class="http-badge http-get">200</span>OK — สำเร็จ</li>
+            <li><span class="http-badge http-get">201</span>Created — สร้าง resource ใหม่สำเร็จ</li>
+            <li><span class="http-badge" style="background:#fee2e2;color:#991b1b">400</span>Bad Request — input ไม่ถูกต้อง</li>
+            <li><span class="http-badge" style="background:#fee2e2;color:#991b1b">404</span>Not Found — ไม่พบ endpoint หรือ resource</li>
+            <li><span class="http-badge" style="background:#fee2e2;color:#991b1b">422</span>Unprocessable — format ถูกแต่ค่าไม่ valid</li>
+            <li><span class="http-badge" style="background:#fee2e2;color:#991b1b">500</span>Internal Server Error — bug ใน server</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 15 -->
+    <div class="step-card" id="step15">
+      <div class="step-header">
+        <div class="step-num">15</div>
+        <div class="step-title">Code Coverage Report + ตั้งค่า Threshold</div>
+        <span class="step-time">⏱ 8 นาที</span>
+      </div>
+      <div class="step-body">
+        <p><strong>Code Coverage</strong> วัดว่าโค้ดของเราถูก "ผ่าน" (executed) โดย test กี่เปอร์เซ็นต์ — ช่วยหาส่วนของโค้ดที่ยังไม่มี test คุ้มครอง</p>
+
+        <h4>1. รัน Coverage Report</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>npm run test:coverage</code></pre>
+        </div>
+
+        <h4>2. ผลลัพธ์ที่จะได้</h4>
+        <div class="coverage-box">
+<div class="cov-head">------------------------|---------|----------|---------|---------|
+File                    | % Stmts | % Branch | % Funcs | % Lines |
+------------------------|---------|----------|---------|---------|</div>
+ src/utils/calculator.js | <span class="cov-pass">  95.45</span> | <span class="cov-pass">   87.50</span> | <span class="cov-pass"> 100.00</span> | <span class="cov-pass">  95.45</span> |
+ src/utils/scorebook.js  | <span class="cov-warn">  75.00</span> | <span class="cov-pass"> 100.00</span> | <span class="cov-warn">  60.00</span> | <span class="cov-warn">  75.00</span> |
+ src/app.js              | <span class="cov-pass">  90.24</span> | <span class="cov-pass">   80.00</span> | <span class="cov-pass"> 100.00</span> | <span class="cov-pass">  90.24</span> |
+<div class="cov-head">------------------------|---------|----------|---------|---------|</div>
+ All files               | <span class="cov-pass">  88.09</span> | <span class="cov-pass">   83.33</span> | <span class="cov-pass">  87.50</span> | <span class="cov-pass">  88.09</span> |</div>
+
+        <h4>3. ความหมายของแต่ละ Column</h4>
+        <ul>
+          <li><strong>% Stmts (Statements):</strong> กี่ % ของ statement ทั้งหมดถูกรัน</li>
+          <li><strong>% Branch:</strong> กี่ % ของ if/else branch ถูกทดสอบ</li>
+          <li><strong>% Funcs:</strong> กี่ % ของ function ถูกเรียกใช้</li>
+          <li><strong>% Lines:</strong> กี่ % ของ line โค้ดถูกรัน</li>
+        </ul>
+
+        <h4>4. ตั้งค่า Coverage Threshold (ขั้นต่ำ)</h4>
+        <p>เปิด <code>package.json</code> ตรวจสอบให้มี coverageThresholds — Jest จะ fail หาก coverage ต่ำกว่าที่กำหนด:</p>
+        <div class="code-wrap">
+          <div class="code-label"><span>package.json — coverageThresholds (ควรมีอยู่แล้วจาก Step 3)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-json"><code>{
+  "jest": {
+    "coverageThresholds": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h4>5. ดู HTML Coverage Report (อ่านง่ายที่สุด)</h4>
+        <div class="code-wrap">
+          <div class="code-label"><span>Terminal</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre class="language-bash"><code>npm run test:coverage
+# เปิดไฟล์ coverage/lcov-report/index.html ใน browser</code></pre>
+        </div>
+        <p>ใน HTML report จะเห็นไฮไลต์บรรทัดที่ยังไม่ได้ทดสอบ (สีแดง)</p>
+
+        <div class="verify">
+          <span class="verify-icon">✅</span>
+          <div>
+            <div class="verify-title">Checkpoint Part 3 — เสร็จสมบูรณ์!</div>
+            <ul>
+              <li>แยก app.js และ index.js ได้ถูกต้อง</li>
+              <li>รัน <code>npm test</code> แล้วผ่านทุก tests รวมถึง API tests</li>
+              <li>มี test ครอบคลุม happy path และ error cases</li>
+              <li>รัน <code>npm run test:coverage</code> และ coverage ≥ 70%</li>
+              <li>เข้าใจว่าแต่ละ Coverage metric วัดอะไร</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="nav-bottom">
+      <a href="activity-part2.html" class="nav-btn prev">← Part 2: Jest In Depth</a>
+      <a href="activity-part4.html" class="nav-btn next">Part 4: แบบฝึกหัด →</a>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+window.addEventListener('scroll', () => {
+  const p = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('prog').style.width = p + '%';
+  document.querySelectorAll('.step-card').forEach(el => {
+    const a = document.querySelector(`.toc-item a[href="#${el.id}"]`);
+    if (!a) return;
+    const r = el.getBoundingClientRect();
+    if (r.top <= 120 && r.bottom > 120) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
